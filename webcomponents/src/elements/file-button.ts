@@ -15,7 +15,7 @@ import {kind2Icon} from "../fileTypeUtils";
 import {SelectedType} from "./files-menu";
 import {prettyFileSize} from "../utils";
 import {ParcelDescription} from "@ddd-qc/delivery";
-import {Hrl, WeServices} from "@lightningrodlabs/we-applet";
+import {Hrl, weaveUrlFromWal, WeServices} from "@lightningrodlabs/we-applet";
 //import {weClientContext} from "@lightningrodlabs/we-applet/context";
 import {createContext} from "@lit/context";
 import {WAL} from "@lightningrodlabs/we-applet/dist/types";
@@ -187,7 +187,11 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
                                 },
                             }
                             console.log("Copied to HrlClipboard", obj);
-                            if (this.weServices) this.weServices.walToPocket(obj);
+                            const wurl = weaveUrlFromWal(obj);
+                            navigator.clipboard.writeText(wurl);
+                            if (this.weServices) {
+                                this.weServices.walToPocket(obj);
+                            }
                             await delay(1200);
                             const tt = this.shadowRoot.getElementById("file-tip") as SlTooltip;
                             tt.hide();
