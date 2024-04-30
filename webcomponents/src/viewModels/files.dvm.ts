@@ -1,19 +1,16 @@
 import {AppProxy, delay, DnaViewModel, HCL, ZvmDef} from "@ddd-qc/lit-happ";
 import {
     DELIVERY_ZOME_NAME,
-    DeliveryNotice,
     DeliveryProperties,
-    DeliveryZvm, ParcelChunk, ParcelDescription, ParcelKindVariantManifest,
-    ParcelManifest, ParcelReference,
+    DeliveryZvm, ParcelChunk, ParcelKindVariantManifest,
+    ParcelManifest,
     SignalProtocol,
     SignalProtocolType
 } from "@ddd-qc/delivery";
 import {
-    ActionHashB64,
     AgentPubKeyB64,
     AppSignalCb,
-    decodeHashFromBase64, encodeHashToBase64,
-    EntryHash,
+    encodeHashToBase64,
     EntryHashB64,
 } from "@holochain/client";
 import {AppSignal} from "@holochain/client/lib/api/app/types";
@@ -61,7 +58,7 @@ export class FilesDvm extends DnaViewModel {
         FilesZvm,
         TaggingZvm,
         [DeliveryZvm, "zDelivery"],
-        [NotificationsZvm, "notifications"],
+        //[NotificationsZvm, "notifications"],
         [ProfilesAltZvm, "profiles"],
     ];
 
@@ -74,7 +71,7 @@ export class FilesDvm extends DnaViewModel {
 
     get taggingZvm(): TaggingZvm {return this.getZomeViewModel("zTagging") as TaggingZvm}
 
-    get notificationsZvm(): NotificationsZvm {return this.getZomeViewModel("notifications") as NotificationsZvm}
+    //get notificationsZvm(): NotificationsZvm {return this.getZomeViewModel("notifications") as NotificationsZvm}
 
     get profilesZvm(): ProfilesAltZvm {return this.getZomeViewModel("profiles") as ProfilesAltZvm}
 

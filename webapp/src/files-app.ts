@@ -328,6 +328,7 @@ export class FilesApp extends HappElement {
                 <files-edit-profile
                     .profile=${this._weProfilesDvm.profilesZvm.getMyProfile()}
                     @save-profile=${async (e: CustomEvent<ProfileInfo>) => {
+                      console.log("onSaveProfile() app ", e.detail);
                       await this.filesDvm.profilesZvm.createMyProfile(e.detail.profile);
                       this.requestUpdate();
                     }}

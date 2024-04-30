@@ -180,10 +180,10 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
     async firstUpdated() {
         console.log("<files-main-view> firstUpdated()", this.appletId);
 
-        /** Notifier */
-        const maybeNotifier = await this._dvm.notificationsZvm.selectNotifier();
-        console.log("firstUpdated() maybeNotifier:", maybeNotifier? encodeHashToBase64(maybeNotifier) : "none");
-        await this.initializeMailgunNotifierFromProfile();
+        // /** Notifier */
+        // const maybeNotifier = await this._dvm.notificationsZvm.selectNotifier();
+        // console.log("firstUpdated() maybeNotifier:", maybeNotifier? encodeHashToBase64(maybeNotifier) : "none");
+        // await this.initializeMailgunNotifierFromProfile();
 
         // /** Generate test data */
         // if (!this.appletId) {
@@ -195,17 +195,17 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
     /** */
     async initializeMailgunNotifier(email: string, domain: string, auth_token: string) {
-        console.log("initializeNotifier()", auth_token);
-        await this._dvm.notificationsZvm.zomeProxy.claimNotifier(this.cell.agentPubKey);
-        this._dvm.notificationsZvm.setConfig({"mailgun": {
-                "email_address": email, //"whosin@mg.flowplace.org",
-                "auth_token": "api:" + auth_token,
-                "domain": domain, //"mg.flowplace.org"
-            }});
-        console.log("Config keys:", this._dvm.notificationsZvm.config? Object.keys(this._dvm.notificationsZvm.config) : "none");
-        this._dvm.notificationsZvm.serviceName = "Files Notification";
-        const maybeNotifier = await this._dvm.notificationsZvm.selectNotifier();
-        console.log("init maybeNotifier:", maybeNotifier? encodeHashToBase64(maybeNotifier) : "none");
+        // console.log("initializeNotifier()", auth_token);
+        // await this._dvm.notificationsZvm.zomeProxy.claimNotifier(this.cell.agentPubKey);
+        // this._dvm.notificationsZvm.setConfig({"mailgun": {
+        //         "email_address": email, //"whosin@mg.flowplace.org",
+        //         "auth_token": "api:" + auth_token,
+        //         "domain": domain, //"mg.flowplace.org"
+        //     }});
+        // console.log("Config keys:", this._dvm.notificationsZvm.config? Object.keys(this._dvm.notificationsZvm.config) : "none");
+        // this._dvm.notificationsZvm.serviceName = "Files Notification";
+        // const maybeNotifier = await this._dvm.notificationsZvm.selectNotifier();
+        // console.log("init maybeNotifier:", maybeNotifier? encodeHashToBase64(maybeNotifier) : "none");
     }
 
 
@@ -321,7 +321,7 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
             ${myProfile.nickname}${this.groupProfiles? msg("from") + " " + this.groupProfiles[0].name : "" } ${msg("would like to send you the file")}: "${privateManifest.description.name}" (${prettyFileSize(privateManifest.description.size)}).
             ${msg("Please go to the Files app to Accept or Decline the request")}${this.appletId? `: ${weaveUrlFromAppletHash(decodeHashFromBase64(this.appletId))}` : "." }
             `;
-            this._dvm.notificationsZvm.sendNotification(notifMsg, subject, recipients);
+            //this._dvm.notificationsZvm.sendNotification(notifMsg, subject, recipients);
 
         }
         if (FilesNotificationType.ReceptionComplete == type) {
@@ -368,8 +368,8 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 .map((agent) => encodeHashToBase64(agent))
                 .filter((agent) => agent != this.cell.agentPubKey); // exclude self
             console.log("sendNotification() recipients", recipients.map((agent) => this._dvm.profilesZvm.getProfile(agent).nickname));
-            console.log("Publish. Config keys:", this._dvm.notificationsZvm.config? Object.keys(this._dvm.notificationsZvm.config) : "none");
-            this._dvm.notificationsZvm.sendNotification(notifMsg, subject, recipients);
+            //console.log("Publish. Config keys:", this._dvm.notificationsZvm.config? Object.keys(this._dvm.notificationsZvm.config) : "none");
+            //this._dvm.notificationsZvm.sendNotification(notifMsg, subject, recipients);
         }
         if (FilesNotificationType.PrivateCommitComplete == type) {
             const manifestEh = (notifLog[2] as FilesNotificationVariantPrivateCommitComplete).manifestEh;
@@ -474,20 +474,20 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
         } catch(e) {
             await this._dvm.profilesZvm.createMyProfile(profile);
         }
-        /** mailgun */
-        if (profileInfo.mailgun_token && profileInfo.mailgun_token.length > 0) {
-            await this.initializeMailgunNotifier(profileInfo.profile.fields['mailgun_email'], profileInfo.profile.fields['mailgun_domain'], profileInfo.mailgun_token);
-        }
-        /** email */
-        if (profile.fields["email"] && profile.fields["email"].length > 0) {
-            console.log("onSavProfile() email", profile.fields["email"]);
-            await this._dvm.notificationsZvm.createMyContact("", "", profile.fields["email"]);
-            let maybeNotifier = this._dvm.notificationsZvm.perspective.myNotifier;
-            if (!this._dvm.notificationsZvm.perspective.myNotifier) {
-                maybeNotifier = await this._dvm.notificationsZvm.selectNotifier();
-                console.log("New maybeNotifier:", maybeNotifier? encodeHashToBase64(maybeNotifier) : "none");
-            }
-        }
+        // /** mailgun */
+        // if (profileInfo.mailgun_token && profileInfo.mailgun_token.length > 0) {
+        //     await this.initializeMailgunNotifier(profileInfo.profile.fields['mailgun_email'], profileInfo.profile.fields['mailgun_domain'], profileInfo.mailgun_token);
+        // }
+        // /** email */
+        // if (profile.fields["email"] && profile.fields["email"].length > 0) {
+        //     console.log("onSavProfile() email", profile.fields["email"]);
+        //     await this._dvm.notificationsZvm.createMyContact("", "", profile.fields["email"]);
+        //     let maybeNotifier = this._dvm.notificationsZvm.perspective.myNotifier;
+        //     if (!this._dvm.notificationsZvm.perspective.myNotifier) {
+        //         maybeNotifier = await this._dvm.notificationsZvm.selectNotifier();
+        //         console.log("New maybeNotifier:", maybeNotifier? encodeHashToBase64(maybeNotifier) : "none");
+        //     }
+        // }
         /** Done */
         this.profileDialogElem.open = false;
         this.requestUpdate();
@@ -1022,30 +1022,30 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     ${isInDev? html`
                         <button type="button" @click=${async () => {
                             this._dvm.dumpLogs(); 
-                            await this._dvm.notificationsZvm.probeAll();
-                            await this._dvm.notificationsZvm.probeContacts(this._dvm.profilesZvm.getAgents());
-                            console.log("notificationsZvm.perspective", this._dvm.notificationsZvm.perspective);
-                            console.log("myNotifier:", this._dvm.notificationsZvm.perspective.myNotifier? encodeHashToBase64(this._dvm.notificationsZvm.perspective.myNotifier) : "none");
+                            // await this._dvm.notificationsZvm.probeAll();
+                            // await this._dvm.notificationsZvm.probeContacts(this._dvm.profilesZvm.getAgents());
+                            // console.log("notificationsZvm.perspective", this._dvm.notificationsZvm.perspective);
+                            // console.log("myNotifier:", this._dvm.notificationsZvm.perspective.myNotifier? encodeHashToBase64(this._dvm.notificationsZvm.perspective.myNotifier) : "none");
                         }}>dump</button>
                         <button type="button" @click=${() => {this.refresh();}}>refresh</button>
-                        <button type="button" @click=${() => {this._dvm.notificationsZvm.selectNotifier();}}>select</button>
-                        <button type="button" @click=${() => {this._dvm.notificationsZvm.zomeProxy.grantUnrestrictedCapability();}}>grant</button>
+                        <button type="button" @click=${() => {/*this._dvm.notificationsZvm.selectNotifier();*/}}>select</button>
+                        <button type="button" @click=${() => {/*this._dvm.notificationsZvm.zomeProxy.grantUnrestrictedCapability();*/}}>grant</button>
 
                         <button type="button" @click=${ async() => {
-                            //const myContact = this._dvm.notificationsZvm.perspective.contacts[this.cell.agentPubKey];
-                            await this._dvm.notificationsZvm.probeContacts([this.cell.agentPubKey]);
-                            const myContact = this._dvm.notificationsZvm.getMyContact();
-                            if (myContact && this._dvm.notificationsZvm.perspective.myNotifier) {
-                                console.log("sending my contact to notifier", myContact, encodeHashToBase64(this._dvm.notificationsZvm.perspective.myNotifier));
-                                this._dvm.notificationsZvm.zomeProxy.sendContact(myContact);
-                            } else {
-                                console.log("No Contact info or Notifier found");
-                            }
+                            // //const myContact = this._dvm.notificationsZvm.perspective.contacts[this.cell.agentPubKey];
+                            // await this._dvm.notificationsZvm.probeContacts([this.cell.agentPubKey]);
+                            // const myContact = this._dvm.notificationsZvm.getMyContact();
+                            // if (myContact && this._dvm.notificationsZvm.perspective.myNotifier) {
+                            //     console.log("sending my contact to notifier", myContact, encodeHashToBase64(this._dvm.notificationsZvm.perspective.myNotifier));
+                            //     this._dvm.notificationsZvm.zomeProxy.sendContact(myContact);
+                            // } else {
+                            //     console.log("No Contact info or Notifier found");
+                            // }
                         }}>contact</button>
                         <button type="button" @click=${() => {
-                            console.log("Send. Config keys:", this._dvm.notificationsZvm.config? Object.keys(this._dvm.notificationsZvm.config) : "none");
-                            const groupName = this.groupProfiles? this.groupProfiles[0].name : "No WeGroup";
-                            this._dvm.notificationsZvm.sendNotification(`This is a notif. ${this.appletId? weaveUrlFromAppletHash(decodeHashFromBase64(this.appletId)): ""}` ,  `Testing ${groupName}`, [this.cell.agentPubKey]);
+                            //console.log("Send. Config keys:", this._dvm.notificationsZvm.config? Object.keys(this._dvm.notificationsZvm.config) : "none");
+                            //const groupName = this.groupProfiles? this.groupProfiles[0].name : "No WeGroup";
+                            //this._dvm.notificationsZvm.sendNotification(`This is a notif. ${this.appletId? weaveUrlFromAppletHash(decodeHashFromBase64(this.appletId)): ""}` ,  `Testing ${groupName}`, [this.cell.agentPubKey]);
                         }}>send</button>
                     `: html``
                     }

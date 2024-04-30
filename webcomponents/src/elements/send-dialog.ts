@@ -153,12 +153,13 @@ export class SendDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
     render() {
         console.log("<send-dialog>.render()", this._recipients.length, this._file, this._allAgents, this._selectedTags);
 
-        const maybeNotifier = this._dvm.notificationsZvm.perspective.myNotifier;
-        let myNotifier = html`<div slot="footer" style="color:red;">${msg('No notifier')}</div>`;
-        if (maybeNotifier) {
-            //myNotifier = html`<div slot="footer" style="color:darkorange;">${msg('notifier selected')}</div>`;
-            myNotifier = html``;
-        }
+        let myNotifier = html`<div slot="footer" style="color:red;"></div>`;
+        // const maybeNotifier = this._dvm.notificationsZvm.perspective.myNotifier;
+        //let myNotifier = html`<div slot="footer" style="color:red;">${msg('No notifier')}</div>`;
+        // if (maybeNotifier) {
+        //     //myNotifier = html`<div slot="footer" style="color:darkorange;">${msg('notifier selected')}</div>`;
+        //     myNotifier = html``;
+        // }
 
 
         let content = html`<sl-spinner></sl-spinner>`;

@@ -49,26 +49,26 @@ export class EditProfile extends ZomeElement<unknown, FilesZvm> {
     delete formFields['nickname'];
 
     const fields = {}
-    fields['email'] = formFields['email'];
+    //fields['email'] = formFields['email'];
     fields['avatar'] = formFields['avatar']? formFields['avatar'] : "";
     fields['lang'] = formFields['option']? formFields['option'] : "";
-    fields['mailgun_domain'] = formFields['mailgun_domain']? formFields['mailgun_domain'] : "";
-    fields['mailgun_email'] = formFields['mailgun_email']? formFields['mailgun_email'] : "";
-
-    /** encrypt mailgun_token */
+    // fields['mailgun_domain'] = formFields['mailgun_domain']? formFields['mailgun_domain'] : "";
+    // fields['mailgun_email'] = formFields['mailgun_email']? formFields['mailgun_email'] : "";
+    //
+    // /** encrypt mailgun_token */
     let mailgun_token = '';
-    if (formFields['mailgun_token'] && formFields['mailgun_token'] != "") {
-      console.log("fireSaveProfile() encrypting mailgun token");
-      mailgun_token = formFields['mailgun_token'];
-      const utf8 = new TextEncoder().encode(formFields['mailgun_token']);
-      const encrypt = await this._zvm.zomeProxy.encryptData(utf8) as any;
-      const mailgun_token_b64 = Base64.fromUint8Array(encrypt.encrypted_data, true);
-      fields['mailgun_token'] = mailgun_token_b64;
-      fields['mailgun_token_nonce'] = Base64.fromUint8Array(encrypt.nonce, true);
-      console.log("fireSaveProfile() encrypting mailgun token done", fields['mailgun_token_nonce'], encrypt.nonce);
-      const unnonce = Base64.toUint8Array(fields['mailgun_token_nonce']);
-      console.log("fireSaveProfile() encrypting mailgun token done", unnonce);
-    }
+    // if (formFields['mailgun_token'] && formFields['mailgun_token'] != "") {
+    //   console.log("fireSaveProfile() encrypting mailgun token");
+    //   mailgun_token = formFields['mailgun_token'];
+    //   const utf8 = new TextEncoder().encode(formFields['mailgun_token']);
+    //   const encrypt = await this._zvm.zomeProxy.encryptData(utf8) as any;
+    //   const mailgun_token_b64 = Base64.fromUint8Array(encrypt.encrypted_data, true);
+    //   fields['mailgun_token'] = mailgun_token_b64;
+    //   fields['mailgun_token_nonce'] = Base64.fromUint8Array(encrypt.nonce, true);
+    //   console.log("fireSaveProfile() encrypting mailgun token done", fields['mailgun_token_nonce'], encrypt.nonce);
+    //   const unnonce = Base64.toUint8Array(fields['mailgun_token_nonce']);
+    //   console.log("fireSaveProfile() encrypting mailgun token done", unnonce);
+    // }
 
     const profile: ProfileMat = {
       fields,
@@ -153,6 +153,7 @@ export class EditProfile extends ZomeElement<unknown, FilesZvm> {
           </sl-radio-group>
         </div>
         
+          <!-- 
         <h3>Notifications</h3>
         <sl-input
                 name="email"
@@ -180,7 +181,7 @@ export class EditProfile extends ZomeElement<unknown, FilesZvm> {
                 .value=${this._mailgun_token}
                 style="margin-left: 16px;"
         ></sl-input>
-
+           -->
         <div class="row" style="margin-top: 8px;">
           <sl-button style="flex: 1;" variant="primary" type="submit"
             >${msg('Save Profile')}

@@ -16,8 +16,8 @@ integrity:
       bundled: ../../target/wasm32-unknown-unknown/release/delivery_integrity.wasm
     - name: tagging_integrity
       bundled: ../../target/wasm32-unknown-unknown/release/zome_tagging_integrity.wasm
-    - name: notifications_integrity
-      bundled: ../../target/wasm32-unknown-unknown/release/notifications_integrity.wasm
+    #- name: notifications_integrity
+    #  bundled: ../../target/wasm32-unknown-unknown/release/notifications_integrity.wasm
     - name: files_integrity # Must match value defined in integrity zome
       bundled: ../../target/wasm32-unknown-unknown/release/zome_files_integrity.wasm
     - name: profiles_integrity
@@ -34,10 +34,10 @@ coordinator:
       bundled: ../../target/wasm32-unknown-unknown/release/tagging.wasm
       dependencies:
         - name: tagging_integrity
-    - name: notifications
-      bundled: ../../target/wasm32-unknown-unknown/release/notifications.wasm
-      dependencies:
-        - name: notifications_integrity
+#    - name: notifications
+#      bundled: ../../target/wasm32-unknown-unknown/release/notifications.wasm
+#      dependencies:
+#        - name: notifications_integrity
     - name: zFiles # Must match value defined in integrity zome
       bundled: ../../target/wasm32-unknown-unknown/release/zome_files.wasm
       dependencies:
