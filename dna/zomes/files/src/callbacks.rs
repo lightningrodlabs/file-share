@@ -1,34 +1,13 @@
 use hdk::prelude::*;
-//use zome_utils::*;
 use zome_delivery_api::*;
-use crate::encrypt::*;
 
-/// Zome Callback
+
+///
 #[hdk_extern]
 fn init(_: ()) -> ExternResult<InitCallbackResult> {
-   /// Setup initial capabilities
-   //init_caps()?;
-   create_enc_key()?;
-   /// Done
-   debug!("*** zFiles.init() callback DONE");
    Ok(InitCallbackResult::Pass)
 }
-//
-//
-// fn init_caps() -> ExternResult<()> {
-//    let mut functions = BTreeSet::new();
-//    functions.insert((zome_info()?.name, "get_any_record".into()));
-//    functions.insert((zome_info()?.name, "receive_delivery_dm".into())); //HACK: Copied this from delivery zome since Holochain does not support multiple unrestricted capGrants.
-//
-//    create_cap_grant(
-//       CapGrantEntry {
-//          tag: "".into(),
-//          access: ().into(), // empty access converts to unrestricted
-//          functions: hdk::prelude::GrantedFunctions::Listed(functions),
-//       }
-//    )?;
-//    Ok(())
-// }
+
 
 
 /// Zome Callback
