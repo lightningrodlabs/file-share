@@ -449,20 +449,21 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
     async initializeMailgunNotifierFromProfile() {
         const profile = this._dvm.profilesZvm.getMyProfile();
         console.log("initializeMailgunNotifierFromProfile() profile", profile);
-        if (profile.fields['mailgun_email'] && profile.fields['mailgun_domain'] && profile.fields['mailgun_token'] && profile.fields['mailgun_token_nonce']) {
-            console.log("initializeMailgunNotifierFromProfile() has mailgun token", profile.fields['mailgun_token_nonce']);
-            const encrypted_data = Base64.toUint8Array(profile.fields['mailgun_token']);
-            let nonce = Base64.toUint8Array(profile.fields['mailgun_token_nonce']);
-            console.log("<edit-profile>.render() decrypt mailgun token nonce", nonce);
-            const wtf = { nonce, encrypted_data }
-            try {
-                const data = await this._dvm.filesZvm.zomeProxy.decryptData(wtf);
-                const mailgun_token = new TextDecoder().decode(data);
-                await this.initializeMailgunNotifier(profile.fields['mailgun_email'], profile.fields['mailgun_domain'], mailgun_token);
-            } catch(e) {
-                console.error("Failed to initializeMailgunNotifier()", e);
-            }
-        }
+
+        // if (profile.fields['mailgun_email'] && profile.fields['mailgun_domain'] && profile.fields['mailgun_token'] && profile.fields['mailgun_token_nonce']) {
+        //     console.log("initializeMailgunNotifierFromProfile() has mailgun token", profile.fields['mailgun_token_nonce']);
+        //     const encrypted_data = Base64.toUint8Array(profile.fields['mailgun_token']);
+        //     let nonce = Base64.toUint8Array(profile.fields['mailgun_token_nonce']);
+        //     console.log("<edit-profile>.render() decrypt mailgun token nonce", nonce);
+        //     const wtf = { nonce, encrypted_data }
+        //     try {
+        //         const data = await this._dvm.filesZvm.zomeProxy.decryptData(wtf);
+        //         const mailgun_token = new TextDecoder().decode(data);
+        //         await this.initializeMailgunNotifier(profile.fields['mailgun_email'], profile.fields['mailgun_domain'], mailgun_token);
+        //     } catch(e) {
+        //         console.error("Failed to initializeMailgunNotifier()", e);
+        //     }
+        // }
     }
 
     /** */

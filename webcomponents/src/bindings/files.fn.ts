@@ -13,8 +13,6 @@ export const filesFunctionNames: FunctionName[] = [
 
 
 	"commit_private_file",
-	"encrypt_data",
-	"decrypt_data",
 	"get_ah",
 	"get_file_info",
 	"get_private_files",

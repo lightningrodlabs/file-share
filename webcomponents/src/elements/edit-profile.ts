@@ -105,21 +105,21 @@ export class EditProfile extends ZomeElement<unknown, FilesZvm> {
   render() {
     console.log("<edit-profile>.render()", this.profile);
 
-    /** decrypt token */
-    if (this.profile.fields['mailgun_token'] && this.profile.fields['mailgun_token'] != "" && this._mailgun_token == '') {
-      console.log("<edit-profile>.render() decrypt mailgun token", this.profile.fields['mailgun_token_nonce'])
-      const encrypted_data = Base64.toUint8Array(this.profile.fields['mailgun_token']);
-      let nonce = Base64.toUint8Array(this.profile.fields['mailgun_token_nonce']);
-      console.log("<edit-profile>.render() decrypt mailgun token nonce", nonce);
-      const wtf = { nonce, encrypted_data }
-      try {
-        this._zvm.zomeProxy.decryptData(wtf).then((data) => {
-          this._mailgun_token = new TextDecoder().decode(data)
-        });
-      } catch(e) {
-        console.error("Failed to decryptData()", e);
-      }
-    }
+    // /** decrypt token */
+    // if (this.profile.fields['mailgun_token'] && this.profile.fields['mailgun_token'] != "" && this._mailgun_token == '') {
+    //   console.log("<edit-profile>.render() decrypt mailgun token", this.profile.fields['mailgun_token_nonce'])
+    //   const encrypted_data = Base64.toUint8Array(this.profile.fields['mailgun_token']);
+    //   let nonce = Base64.toUint8Array(this.profile.fields['mailgun_token_nonce']);
+    //   console.log("<edit-profile>.render() decrypt mailgun token nonce", nonce);
+    //   const wtf = { nonce, encrypted_data }
+    //   try {
+    //     this._zvm.zomeProxy.decryptData(wtf).then((data) => {
+    //       this._mailgun_token = new TextDecoder().decode(data)
+    //     });
+    //   } catch(e) {
+    //     console.error("Failed to decryptData()", e);
+    //   }
+    // }
 
     /** */
     return html`

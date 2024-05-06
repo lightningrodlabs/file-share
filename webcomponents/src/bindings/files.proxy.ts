@@ -173,14 +173,6 @@ export class FilesProxy extends ZomeProxy {
     return this.call('commit_private_file', input);
   }
 
-  async encryptData(data: Uint8Array): Promise<unknown> {
-    return this.call('encrypt_data', data);
-  }
-
-  async decryptData(data: unknown): Promise<Uint8Array> {
-    return this.call('decrypt_data', data);
-  }
-
   async getAh(eh: EntryHash): Promise<ActionHash | null> {
     return this.call('get_ah', eh);
   }
