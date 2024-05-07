@@ -45,6 +45,7 @@ export class FilesZvm extends ZomeViewModel {
     /** */
     async initializePerspectiveOffline(): Promise<void> {
         // N/A
+        this._dvmParent.dumpLogs();
     }
 
 
