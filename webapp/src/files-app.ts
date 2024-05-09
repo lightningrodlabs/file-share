@@ -3,9 +3,8 @@ import {property, state, customElement} from "lit/decorators.js";
 import {ContextProvider} from "@lit/context";
 import {
   AdminWebsocket,
-  AgentPubKeyB64,
   AppWebsocket, decodeHashFromBase64,
-  DnaDefinition, encodeHashToBase64, EntryHash, EntryHashB64,
+  encodeHashToBase64, EntryHash, EntryHashB64,
   InstalledAppId,
   ZomeName
 } from "@holochain/client";
@@ -30,7 +29,7 @@ import {DEFAULT_FILES_DEF} from "./happDef";
 import {setLocale} from "./localization";
 import { localized, msg, str } from '@lit/localize';
 
-import "./elements/files-main-view"
+import "./files-main-page"
 import "@ddd-qc/files";
 import {createContext} from "@lit/context";
 
@@ -238,7 +237,7 @@ export class FilesApp extends HappElement {
     //const zomeNames = this._dnaDef?.coordinator_zomes.map((zome) => { return zome[0]; });
     //console.log({zomeNames});
 
-    let view = html`<files-main-view .appletId=${this.appletId} .groupProfiles=${this.groupProfiles}></files-main-view>`;
+    let view = html`<files-main-page .appletId=${this.appletId} .groupProfiles=${this.groupProfiles}></files-main-page>`;
 
     if (this.appletView) {
       switch (this.appletView.type) {

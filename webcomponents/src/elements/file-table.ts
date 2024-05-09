@@ -75,8 +75,7 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
         /** render all */
         return html`
             <vaadin-grid id="grid" 
-                         .items="${this.items}"
-            >
+                         .items=${this.items}>
                 <vaadin-grid-selection-column></vaadin-grid-selection-column>
                 <vaadin-grid-column path="description" header=${msg("Filename")}
                                     ${columnBodyRenderer(
@@ -151,7 +150,7 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                     )}
                 ></vaadin-grid-column>
                 <vaadin-grid-column
-                        path="ppEh" header=""
+                        path="ppEh" header="" style="min-width: 300px"
                         ${columnBodyRenderer(
                                 ({ppEh}) => {
                                     if (this.selectable == "") {
@@ -169,34 +168,47 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                         `;
                                     } else {
                                         return html`
+                                            <sl-button size="small" variant="danger"
+                                                       @click=${async (e) => {
+                                                           console.log("Dispatching delete Event", ppEh)
+                                                           this.dispatchEvent(new CustomEvent('delete', {
+                                                               detail: ppEh,
+                                                               bubbles: true,
+                                                               composed: true
+                                                           }));
+                                                       }}>
+                                                <sl-icon name="trash"></sl-icon>
+                                            </sl-button>                                            
                                             <sl-button size="small" variant="primary" style="margin-left:5px"
                                                        @click=${async (e) => {
-                                            this.dispatchEvent(new CustomEvent('download', {
-                                                detail: ppEh,
-                                                bubbles: true,
-                                                composed: true
-                                            }));
-                                        }}>
+                                                          this.dispatchEvent(new CustomEvent('download', {
+                                                              detail: ppEh,
+                                                              bubbles: true,
+                                                              composed: true
+                                                          }));
+                                                      }}>
                                                 <sl-icon name="download"></sl-icon>
                                             </sl-button>
-                                            <sl-button size="small" variant="primary" @click=${async (e) => {
-                                            this.dispatchEvent(new CustomEvent('send', {
-                                                detail: ppEh,
-                                                bubbles: true,
-                                                composed: true
-                                            }));
-                                        }}>
+                                            <sl-button size="small" variant="primary" 
+                                                       @click=${async (e) => {
+                                                          this.dispatchEvent(new CustomEvent('send', {
+                                                              detail: ppEh,
+                                                              bubbles: true,
+                                                              composed: true
+                                                          }));
+                                                      }}>
                                                 <sl-icon name="send"></sl-icon>
                                             </sl-button>
-                                            <sl-button size="small" variant="primary" @click=${async (e) => {
-                                                this.dispatchEvent(new CustomEvent('view', {
-                                                    detail: ppEh,
-                                                    bubbles: true,
-                                                    composed: true
-                                                }));
-                                            }}>
+                                            <sl-button size="small" variant="neutral" 
+                                                       @click=${async (e) => {
+                                                          this.dispatchEvent(new CustomEvent('view', {
+                                                              detail: ppEh,
+                                                              bubbles: true,
+                                                              composed: true
+                                                          }));
+                                                      }}>
                                                 <sl-icon name="info-lg"></sl-icon>
-                                            </sl-button>                                            
+                                            </sl-button>
                                         `
                                     }
                                 },

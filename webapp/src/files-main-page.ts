@@ -75,7 +75,7 @@ import '@vaadin/combo-box/theme/lumo/vaadin-combo-box.js';
 import '@vaadin/grid/theme/lumo/vaadin-grid.js';
 import '@vaadin/grid/theme/lumo/vaadin-grid-selection-column.js';
 import '@vaadin/upload/theme/lumo/vaadin-upload.js';
-import {setLocale} from "../localization";
+import {setLocale} from "./localization";
 import {msg} from "@lit/localize";
 import {Base64} from "js-base64";
 import {wrapPathInSvg} from "@ddd-qc/we-utils";
@@ -89,8 +89,8 @@ const weClientContext = createContext<WeServices>('we_client');
 /**
  * @element
  */
-@customElement("files-main-view")
-export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
+@customElement("files-main-page")
+export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
     /** -- Fields -- */
 
@@ -104,6 +104,7 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
     private _notifCount = 0;
 
+    @state() private _deletableFile?;
 
     private _groupName = "";
 
@@ -141,6 +142,9 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
     get sendDialogElem() : SendDialog {
         return this.shadowRoot.querySelector("send-dialog") as SendDialog;
     }
+    get deleteDialogElem() : SlDialog {
+        return this.shadowRoot.getElementById("delete-dialog") as SlDialog;
+    }
 
     get searchInputElem() : SlInput {
         return this.shadowRoot.getElementById("search-input") as SlInput;
@@ -156,6 +160,30 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
     }
 
 
+
+    /** -- Handle global events -- */
+
+    onDownload(e) {this._dvm.downloadFile(e.detail)}
+    onSend(e) {this.sendDialogElem.open(e.detail)}
+    onViewFile(e) {this._viewFileEh = e.detail; this.viewFileDialogElem.open = true;}
+    onDeleteFile(e) {console.log("@delete", e.detail); this._deletableFile = e.detail; this.deleteDialogElem.open = true;}
+
+    connectedCallback() {
+        super.connectedCallback();
+        this.addEventListener('download', this.onDownload);
+        this.addEventListener('send', this.onSend);
+        this.addEventListener('view', this.onViewFile);
+        this.addEventListener('delete', this.onDeleteFile);
+    }
+
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        this.removeEventListener('download', this.onDownload);
+        this.removeEventListener('send', this.onSend);
+        this.removeEventListener('view', this.onViewFile);
+        this.removeEventListener('delete', this.onDeleteFile);
+    }
+
     /** -- Methods -- */
 
     /**
@@ -163,7 +191,7 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
      * Subscribe to ZVMs
      */
     protected async dvmUpdated(newDvm: FilesDvm, oldDvm?: FilesDvm): Promise<void> {
-        console.log("<files-main-view>.dvmUpdated()");
+        console.log("<files-main-page>.dvmUpdated()");
         if (oldDvm) {
             console.log("\t Unsubscribed to Zvms roleName = ", oldDvm.filesZvm.cell.name)
             //oldDvm.filesZvm.unsubscribe(this);
@@ -178,7 +206,7 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
     /** After first render only */
     async firstUpdated() {
-        console.log("<files-main-view> firstUpdated()", this.appletId);
+        console.log("<files-main-page> firstUpdated()", this.appletId);
 
         // /** Notifier */
         // const maybeNotifier = await this._dvm.notificationsZvm.selectNotifier();
@@ -211,7 +239,7 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
     /** */
     updated() {
-        //console.log("<files-main-view> UPDATED START");
+        //console.log("<files-main-page> UPDATED START");
         /** Add behavior to buttons in reply notification */
         const acceptButton = document.getElementById("accept-notice-btn") as HTMLInputElement;
         const declineButton = document.getElementById("decline-notice-btn") as HTMLInputElement;
@@ -568,9 +596,7 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
             ` : html``}
             <!-- Recent Activity -->
             <h2>${msg("Recent Activity")}</h2>
-            <activity-timeline 
-                    @download=${(e) => this._dvm.downloadFile(e.detail)} 
-                    @send=${(e) => this.sendDialogElem.open(e.detail)}
+            <activity-timeline
                     @tag=${(e) => this._selectedMenuItem = e.detail}
             ></activity-timeline>`;
     }
@@ -580,7 +606,7 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
     render() {
         const isInDev = HAPP_ENV == HappEnvType.Devtest || HAPP_ENV == HappEnvType.DevtestWe || HAPP_ENV == HappEnvType.DevTestHolo;
         //const isInDev = true;
-        console.log("<files-main-view>.render()", isInDev, this._initialized, this.deliveryPerspective.probeDhtCount, this._selectedMenuItem, this.deliveryPerspective, this._dvm.profilesZvm.perspective);
+        console.log("<files-main-page>.render()", isInDev, this._initialized, this.deliveryPerspective.probeDhtCount, this._selectedMenuItem, this.deliveryPerspective, this._dvm.profilesZvm.perspective);
 
 
         /** This agent's profile info */
@@ -612,8 +638,6 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
             console.log("searchInputElem", filter, results);
             searchResultItems = results.map((ppEh) => html`
                 <file-button    hash=${ppEh}
-                                @download=${(e) => this._dvm.downloadFile(e.detail)}
-                                @send=${(e) => this.sendDialogElem.open(e.detail)}
                                 @tag=${(e) => {this._selectedMenuItem = e.detail; this.searchInputElem.value = ""}}
                 ></file-button>
             `);
@@ -855,28 +879,19 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 const allItems = privateItems.concat(publicItems/*, myPublicItems*/);
                 mainArea = html`
                     <h2>${msg("All Files")}${this._typeFilter? ": " + this._typeFilter : ""}</h2>
-                    <file-table .items=${allItems} .profiles=${this._dvm.profilesZvm.perspective.profiles}
-                                @download=${(e) => this._dvm.downloadFile(e.detail)}
-                                @send=${(e) => this.sendDialogElem.open(e.detail)}
-                                @view=${(e) => {
-                                    //console.log("this._viewFileEh", this._viewFileEh);
-                                    this.viewFileDialogElem.open = true;
-                                    this._viewFileEh = e.detail;                                    
-                                }}
+                    <file-table .items=${allItems} 
+                                .profiles=${this._dvm.profilesZvm.perspective.profiles}
                     ></file-table>
                 `;
             }
             if (this._selectedMenuItem.type == SelectedType.PersonalFiles) {
                 mainArea = html`
                     <h2>${msg("Personal Files")}</h2>
-                    <file-table
-                            .items=${Object.entries(this.deliveryPerspective.privateManifests).map(([ppEh, [pm, timestamp]]) => {
-                                //const timestamp = this.deliveryPerspective.privateManifests[ppEh][1];
-                                return {ppEh, description: pm.description, timestamp} as FileTableItem;
-                            })}
-                            .profiles=${this._dvm.profilesZvm.perspective.profiles}
-                            @download=${(e) => this._dvm.downloadFile(e.detail)}
-                            @send=${(e) => this.sendDialogElem.open(e.detail)}
+                    <file-table .profiles=${this._dvm.profilesZvm.perspective.profiles}
+                                .items=${Object.entries(this.deliveryPerspective.privateManifests).map(([ppEh, [pm, timestamp]]) => {
+                                    //const timestamp = this.deliveryPerspective.privateManifests[ppEh][1];
+                                    return {ppEh, description: pm.description, timestamp} as FileTableItem;
+                                })}
                     ></file-table>
                 `;
             }
@@ -897,8 +912,6 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     <h2>${msg("Group Files")}</h2>
                     <file-table .items=${dhtPublicItems}
                                 .profiles=${this._dvm.profilesZvm.perspective.profiles}
-                                @download=${(e) => this._dvm.downloadFile(e.detail)}
-                                @send=${(e) => this.sendDialogElem.open(e.detail)}
                     ></file-table>
                 `;
             }
@@ -940,8 +953,6 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 mainArea = html`
                     <h2>${msg("Sent")}</h2>
                     <distribution-table .items=${distributionItems}
-                                        @download=${(e) => this._dvm.downloadFile(e.detail)}
-                                        @send=${(e) => this.sendDialogElem.open(e.detail)}
                     ></distribution-table>
                 `;
             }
@@ -969,8 +980,6 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     <h2>${msg("Group Files")}: <span class="tag" style="display:inline; font-size: inherit">${this._selectedMenuItem.tag}</span></h2>
                     <file-table .items=${taggedItems}
                                 .profiles=${this._dvm.profilesZvm.perspective.profiles}
-                                @download=${(e) => this._dvm.downloadFile(e.detail)}
-                                @send=${(e) => this.sendDialogElem.open(e.detail)}
                     ></file-table>
                 `;
             }
@@ -988,8 +997,6 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     <h2>${msg("Personal Files")}: <span class="tag" style="display:inline; font-size: inherit">${this._selectedMenuItem.tag}</span></h2>
                     <file-table .items=${taggedItems}
                                 .profiles=${this._dvm.profilesZvm.perspective.profiles}
-                                @download=${(e) => this._dvm.downloadFile(e.detail)}
-                                @send=${(e) => this.sendDialogElem.open(e.detail)}
                     ></file-table>
                 `;
             }
@@ -1099,6 +1106,22 @@ export class FilesMainView extends DnaElement<FilesDvmPerspective, FilesDvm> {
         }}></action-overlay>
         <store-dialog></store-dialog>
         <send-dialog></send-dialog>
+        <sl-dialog id="delete-dialog">
+            <div>Remove Public file?</div>
+            <file-preview .hash=${this._deletableFile}></file-preview>
+            <sl-button slot="footer" variant="neutral"
+                       @click=${(e) => {this._deletableFile = undefined; this.deleteDialogElem.open = false;}}>
+                ${msg("Cancel")}
+            </sl-button>
+            <sl-button slot="footer" variant="danger"
+                       @click=${async (e) => {
+                await this._dvm.filesZvm.removePublicFile(this._deletableFile);
+                this._deletableFile = undefined;
+                this.deleteDialogElem.open = false;
+            }}>
+                ${msg("Delete")}
+            </sl-button>
+        </sl-dialog>
         <!-- stack -->
         <div id="bottom-stack">
             <!-- commit button & panel -->

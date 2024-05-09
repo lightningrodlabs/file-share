@@ -63,7 +63,7 @@
     "local1"             : "cross-env INDEX=1 npm run _local",
     "local2"             : "cross-env INDEX=2 npm run _local",
 
-    "launch"             : "echo pass | hc-launch --piped -n 1 artifacts/files.webhapp network mem",
+    "launch"             : "cross-env HC_APP_PORT=$(port) HC_ADMIN_PORT=$(port) echo pass | hc-launch --piped -n 1 artifacts/files.webhapp network mem",
     "launch:we"          : "echo pass | hc-launch --piped -n 1 artifacts/files-we_applet.webhapp network mem",
 
     "package:webapp"     : "rm -rf artifacts/files-webapp-ui.zip && cd webapp/dist && rm -f *.map && bestzip ../../artifacts/files-webapp-ui.zip * && cd ../../ && $npm_package_config_bin/hc web-app pack webapp/webhapp.workdir -o artifacts/files.webhapp",
@@ -94,7 +94,7 @@
     "typescript": "~5.2.0"
   },
   "dependencies": {
-    "@holochain/client": "^0.17.0-dev.3",
+    "@holochain/client": "=0.17.0-dev.7",
     "@ddd-qc/cell-proxy": "=0.23.0",
     "@ddd-qc/lit-happ": "=0.23.1",
     "@ddd-qc/profiles-dvm": "=0.23.1",

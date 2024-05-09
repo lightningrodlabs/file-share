@@ -21,12 +21,9 @@ export class FilePreview extends DnaElement<FilesDvmPerspective, FilesDvm> {
     /** Hash of ParcelManifest to display */
     @property() hash: EntryHashB64 = ''
 
-
     /** Observed perspective from zvm */
     // @property({type: Object, attribute: false, hasChanged: (_v, _old) => true})
     // filesPerspective!: FileSharePerspective;
-
-    /** -- State variables -- */
 
     @state() private _loading = true;
     @state() private _manifest?: ParcelManifest;
@@ -34,13 +31,13 @@ export class FilePreview extends DnaElement<FilesDvmPerspective, FilesDvm> {
              //private _maybeDataUrl?: string | ArrayBuffer;
              private _maybeBlobUrl?: string;
 
-    /** -- Methods -- */
 
+    /** -- Methods -- */
 
     /** */
     protected async willUpdate(changedProperties: PropertyValues<this>) {
         super.willUpdate(changedProperties);
-        //console.log("<file-preview>.willUpdate()", changedProperties, !!this._dvm, this.hash);
+        console.log("<file-preview>.willUpdate()", changedProperties, !!this._dvm, this.hash);
         if (this._dvm && (changedProperties.has("hash") || (!this._manifest && this.hash))) {
             console.log("<file-preview>.willUpdate()", this.hash);
             this._loading = true;
@@ -95,7 +92,7 @@ export class FilePreview extends DnaElement<FilesDvmPerspective, FilesDvm> {
         const mime = kind2mime(this._manifest.description.kind_info);
         const fileType = kind2Type(this._manifest.description.kind_info);
 
-        let preview = html`<div id="preview">File too big for preview</div>`;
+        let preview = html`<div id="preview">File "${this._manifest.description.name}" too big for preview</div>`;
         if (this._maybeFile) {
             switch (fileType) {
                 // case FileType.Text:
