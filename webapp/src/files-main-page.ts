@@ -724,7 +724,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             .flat();
 
         let outboundTable = html`
-                    <vaadin-grid .items="${outboundList}">
+                    <vaadin-grid .items=${outboundList}>
                         <vaadin-grid-column path="distribution" header=${msg("Filename")}
                                             ${columnBodyRenderer(
                                                     ({ distribution }) => html`<span>${distribution.delivery_summary.parcel_reference.description.name}</span>`,
@@ -890,7 +890,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     <file-table .profiles=${this._dvm.profilesZvm.perspective.profiles}
                                 .items=${Object.entries(this.deliveryPerspective.privateManifests).map(([ppEh, [pm, timestamp]]) => {
                                     //const timestamp = this.deliveryPerspective.privateManifests[ppEh][1];
-                                    return {ppEh, description: pm.description, timestamp} as FileTableItem;
+                                    return {ppEh, description:pm.description, timestamp, author:this.cell.agentPubKey, isPrivate:true, isLocal:true} as FileTableItem;
                                 })}
                     ></file-table>
                 `;
@@ -904,7 +904,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 const dhtPublicItems = Object.entries(this.deliveryPerspective.publicParcels).map(([ppEh, [description, timestamp, author]]) => {
                     //const [description, timestamp, author] = this.deliveryPerspective.publicParcels[ppEh];
                     const isLocal = !!this.deliveryPerspective.localPublicManifests[ppEh];
-                    return {ppEh, description, timestamp, author, isLocal} as FileTableItem;
+                    return {ppEh, description, timestamp, author, isLocal, isPrivate: false} as FileTableItem;
                 });
                 //const publicItems = dhtPublicItems.concat(myPublicItems);
 
@@ -970,7 +970,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 const taggedItems = Object.entries(this.deliveryPerspective.publicParcels)
                     .map(([ppEh, [description, timestamp, author]]) => {
                         const isLocal = !!this.deliveryPerspective.localPublicManifests[ppEh];
-                        return {ppEh, description, timestamp, author, isLocal} as FileTableItem;
+                        return {ppEh, description, timestamp, author, isLocal, isPrivate:false} as FileTableItem;
                     })
                     .filter((item) => {
                         const publicTags = this._dvm.taggingZvm.perspective.publicTagsByTarget[item.ppEh];

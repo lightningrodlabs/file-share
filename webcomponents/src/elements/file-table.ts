@@ -167,7 +167,12 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                             </sl-button>
                                         `;
                                     } else {
+                                        // TODO: Optimize. Better way to get the item here instead of doing a search for each item.
+                                        const item = this.items.filter((item) => item.ppEh == ppEh);
+                                        const isPublic = !item[0].isPrivate;
+                                        console.log("isPublic", isPublic, item, ppEh)
                                         return html`
+                                            ${isPublic? html`
                                             <sl-button size="small" variant="danger"
                                                        @click=${async (e) => {
                                                            console.log("Dispatching delete Event", ppEh)
@@ -178,7 +183,7 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                                            }));
                                                        }}>
                                                 <sl-icon name="trash"></sl-icon>
-                                            </sl-button>                                            
+                                            </sl-button>`: html``}                                       
                                             <sl-button size="small" variant="primary" style="margin-left:5px"
                                                        @click=${async (e) => {
                                                           this.dispatchEvent(new CustomEvent('download', {
