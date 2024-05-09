@@ -125,7 +125,7 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
         //console.log("sortedPrivateParcels", sortedPrivateParcels);
 
         const newGroupFiles: ActivityLog[] = Object.entries(this.deliveryPerspective.publicParcels)
-            .map(([eh, [rp, timestamp, auth]]) => {
+            .map(([eh, [_prEh, pr, timestamp, auth]]) => {
                 return {timestamp, type: ActivityLogType.NewGroupFile, value: {manifestEh: eh, peer: auth}};
             });
         //console.log("sortedPublicParcels", sortedPublicParcels);

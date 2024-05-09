@@ -89,9 +89,9 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     fileDescription = tuple[0].description;
                 } else {
                     const tuple = this._dvm.deliveryZvm.perspective.publicParcels[this.hash];
-                    author = tuple[2];
+                    author = tuple[3];
                     if (tuple) {
-                        fileDescription = tuple[0];
+                        fileDescription = tuple[1];
                     } else {
                         return html`
                             <sl-button class="unknown" disabled>Unknown file</sl-button>`;

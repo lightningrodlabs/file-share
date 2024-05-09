@@ -267,9 +267,9 @@ export class FilesDvm extends DnaViewModel {
         }
         if (SignalProtocolType.NewPublicParcel in deliverySignal) {
             console.log("signal NewPublicParcel dvm", deliverySignal.NewPublicParcel);
-            const author = encodeHashToBase64(deliverySignal.NewPublicParcel[2]);
-            const pr = deliverySignal.NewPublicParcel[1];
-            //const timestamp = deliverySignal.NewPublicParcel[0];
+            const author = encodeHashToBase64(deliverySignal.NewPublicParcel[3]);
+            const pr = deliverySignal.NewPublicParcel[2];
+            //const timestamp = deliverySignal.NewPublicParcel[1];
             const ppEh = encodeHashToBase64(pr.eh);
             if (author != this.cell.agentPubKey) {
                 // FIXME: getManifest() fails because it gets received via gossip. Might be best to requestManifest instead?
@@ -374,7 +374,7 @@ export class FilesDvm extends DnaViewModel {
             return [];
         }
         const pps = Object.entries(this.deliveryZvm.perspective.publicParcels)
-            .filter(([_ppEh, [description, _ts, _agent]]) => description.name.toLowerCase().includes(filter))
+            .filter(([_ppEh, [_prEh, description, _ts, _agent]]) => description.name.toLowerCase().includes(filter))
             .map(([ppEh, _tuple]) => ppEh);
 
 

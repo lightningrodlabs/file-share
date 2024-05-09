@@ -552,7 +552,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         const privDescriptions = Object.values(this.deliveryPerspective.privateManifests)
             .map(([manifest, _ts]) => manifest.description);
         const pubDescriptions = Object.values(this.deliveryPerspective.publicParcels)
-            .map(([pd, _ts, _agent]) => pd);
+            .map(([_eh, pd, _ts, _agent]) => pd);
 
         let countMap: Record<string, number>;
         if (initialized) {
@@ -865,13 +865,13 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 //     return {pp_eh: decodeHashFromBase64(ppEh), description: pm.description, timestamp, author: this.cell.agentPubKey, isLocal: true, isPrivate: false} as FileTableItem;
                 // });
                 const publicItems = Object.entries(this.deliveryPerspective.publicParcels)
-                    .filter(([_ppEh, [description, _ts, _author]]) => {
+                    .filter(([_ppEh, [_prEh, description, _ts, _author]]) => {
                         const type = kind2Type(description.kind_info);
                         return !this._typeFilter
                             || this._typeFilter == type
                             || (this._typeFilter == FileType.Document && (type == FileType.Text || type == FileType.Pdf))
                     })
-                    .map(([ppEh, [description, timestamp, author]]) => {
+                    .map(([ppEh, [_prEh, description, timestamp, author]]) => {
                     //const [description, timestamp, author] = this.deliveryPerspective.publicParcels[ppEh];
                     const isLocal = !!this.deliveryPerspective.localPublicManifests[ppEh];
                     return {ppEh, description, timestamp, author, isLocal, isPrivate: false} as FileTableItem;
@@ -901,7 +901,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 //     //const timestamp = this.deliveryPerspective.localPublicManifests[ppEh][1];
                 //     return {pp_eh: decodeHashFromBase64(ppEh), description: pm.description, timestamp, author: this.cell.agentPubKey, isLocal: true} as FileTableItem;
                 // });
-                const dhtPublicItems = Object.entries(this.deliveryPerspective.publicParcels).map(([ppEh, [description, timestamp, author]]) => {
+                const dhtPublicItems = Object.entries(this.deliveryPerspective.publicParcels).map(([ppEh, [_prEh, description, timestamp, author]]) => {
                     //const [description, timestamp, author] = this.deliveryPerspective.publicParcels[ppEh];
                     const isLocal = !!this.deliveryPerspective.localPublicManifests[ppEh];
                     return {ppEh, description, timestamp, author, isLocal, isPrivate: false} as FileTableItem;
@@ -968,7 +968,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             if (this._selectedMenuItem.type == SelectedType.PublicTag) {
                 console.log("PublicTag", this._dvm.taggingZvm.perspective.publicTagsByTarget);
                 const taggedItems = Object.entries(this.deliveryPerspective.publicParcels)
-                    .map(([ppEh, [description, timestamp, author]]) => {
+                    .map(([ppEh, [_prEh, description, timestamp, author]]) => {
                         const isLocal = !!this.deliveryPerspective.localPublicManifests[ppEh];
                         return {ppEh, description, timestamp, author, isLocal, isPrivate:false} as FileTableItem;
                     })
@@ -1115,10 +1115,12 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             </sl-button>
             <sl-button slot="footer" variant="danger"
                        @click=${async (e) => {
-                await this._dvm.filesZvm.removePublicFile(this._deletableFile);
-                this._deletableFile = undefined;
-                this.deleteDialogElem.open = false;
-            }}>
+                         const prEh =   this._dvm.deliveryZvm.perspective.publicParcels[this._deletableFile][0];
+                         await this._dvm.deliveryZvm.zomeProxy.removePublicParcel(decodeHashFromBase64(prEh));
+                         this._deletableFile = undefined;
+                         this.deleteDialogElem.open = false;
+                         //this.requestUpdate();
+                       }}>
                 ${msg("Delete")}
             </sl-button>
         </sl-dialog>

@@ -155,12 +155,6 @@ export class FilesZvm extends ZomeViewModel {
 
 
     /** */
-    async removePublicFile(ppEh: EntryHashB64): Promise<Boolean> {
-        // FIXME
-        return true;
-    }
-
-    /** */
     async sendFile(manifestEh: EntryHashB64, recipientB64s: AgentPubKeyB64[]): Promise<ActionHashB64> {
         const recipients = recipientB64s.map((b64) => decodeHashFromBase64(b64));
         const input: SendFileInput = {
