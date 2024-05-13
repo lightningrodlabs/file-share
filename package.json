@@ -100,7 +100,7 @@
     "@ddd-qc/profiles-dvm": "=0.23.1",
     "@ddd-qc/we-utils": "=0.23.1",
     "@ddd-qc/path-explorer": "=0.4.0",
-    "@ddd-qc/delivery": "=0.10.4",
+    "@ddd-qc/delivery": "=0.10.6",
     "@holochain-open-dev/core-types": "0.7.0",
     "@holochain-open-dev/profiles": "=0.17.3",
     "@lightningrodlabs/we-applet": "0.16.0",

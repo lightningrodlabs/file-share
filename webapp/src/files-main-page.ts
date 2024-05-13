@@ -1,4 +1,4 @@
-import {css, html, TemplateResult} from "lit";
+import {css, html, LitElement, TemplateResult} from "lit";
 import {customElement, property, state} from "lit/decorators.js";
 import {DnaElement, HAPP_ENV, HappEnvType} from "@ddd-qc/lit-happ";
 import {Dictionary} from "@ddd-qc/cell-proxy";
@@ -385,7 +385,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             const timestamp = notifLog[0];
             const peers = this._dvm.profilesZvm.getAgents().map((peer) => decodeHashFromBase64(peer));
             console.log("PublicSharingComplete. notifying...", peers);
-            this._dvm.deliveryZvm.zomeProxy.notifyNewPublicParcel({peers, timestamp, pr});
+            this._dvm.deliveryZvm.zomeProxy.notifyPublicParcel({peers, timestamp, pr, removed:false});
             /** Ext. Notification */
             const subject = "" + myProfile.nickname + " " + msg("shared a file");
             const notifMsg = `
@@ -552,7 +552,8 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         const privDescriptions = Object.values(this.deliveryPerspective.privateManifests)
             .map(([manifest, _ts]) => manifest.description);
         const pubDescriptions = Object.values(this.deliveryPerspective.publicParcels)
-            .map(([_eh, pd, _ts, _agent]) => pd);
+            .filter((pprm) => !pprm.deleteInfo)
+            .map((pprm) => pprm.description);
 
         let countMap: Record<string, number>;
         if (initialized) {
@@ -604,6 +605,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
     /** */
     render() {
+        console.log("<files-main-page>.render()")
         const isInDev = HAPP_ENV == HappEnvType.Devtest || HAPP_ENV == HappEnvType.DevtestWe || HAPP_ENV == HappEnvType.DevTestHolo;
         //const isInDev = true;
         console.log("<files-main-page>.render()", isInDev, this._initialized, this.deliveryPerspective.probeDhtCount, this._selectedMenuItem, this.deliveryPerspective, this._dvm.profilesZvm.perspective);
@@ -865,16 +867,17 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 //     return {pp_eh: decodeHashFromBase64(ppEh), description: pm.description, timestamp, author: this.cell.agentPubKey, isLocal: true, isPrivate: false} as FileTableItem;
                 // });
                 const publicItems = Object.entries(this.deliveryPerspective.publicParcels)
-                    .filter(([_ppEh, [_prEh, description, _ts, _author]]) => {
-                        const type = kind2Type(description.kind_info);
+                    .filter(([_ppEh, pprm]) => !pprm.deleteInfo)
+                    .filter(([_ppEh, pprm]) => {
+                        const type = kind2Type(pprm.description.kind_info);
                         return !this._typeFilter
                             || this._typeFilter == type
                             || (this._typeFilter == FileType.Document && (type == FileType.Text || type == FileType.Pdf))
                     })
-                    .map(([ppEh, [_prEh, description, timestamp, author]]) => {
+                    .map(([ppEh, pprm]) => {
                     //const [description, timestamp, author] = this.deliveryPerspective.publicParcels[ppEh];
                     const isLocal = !!this.deliveryPerspective.localPublicManifests[ppEh];
-                    return {ppEh, description, timestamp, author, isLocal, isPrivate: false} as FileTableItem;
+                    return {ppEh, description: pprm.description, timestamp: pprm.creationTs, author: pprm.author, isLocal, isPrivate: false} as FileTableItem;
                 });
                 const allItems = privateItems.concat(publicItems/*, myPublicItems*/);
                 mainArea = html`
@@ -901,10 +904,12 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 //     //const timestamp = this.deliveryPerspective.localPublicManifests[ppEh][1];
                 //     return {pp_eh: decodeHashFromBase64(ppEh), description: pm.description, timestamp, author: this.cell.agentPubKey, isLocal: true} as FileTableItem;
                 // });
-                const dhtPublicItems = Object.entries(this.deliveryPerspective.publicParcels).map(([ppEh, [_prEh, description, timestamp, author]]) => {
+                const dhtPublicItems = Object.entries(this.deliveryPerspective.publicParcels)
+                  .filter(([_ppEh, pprm]) => !pprm.deleteInfo)
+                  .map(([ppEh, pprm]) => {
                     //const [description, timestamp, author] = this.deliveryPerspective.publicParcels[ppEh];
                     const isLocal = !!this.deliveryPerspective.localPublicManifests[ppEh];
-                    return {ppEh, description, timestamp, author, isLocal, isPrivate: false} as FileTableItem;
+                    return {ppEh, description: pprm.description, timestamp: pprm.creationTs, author: pprm.author, isLocal, isPrivate: false} as FileTableItem;
                 });
                 //const publicItems = dhtPublicItems.concat(myPublicItems);
 
@@ -968,9 +973,10 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             if (this._selectedMenuItem.type == SelectedType.PublicTag) {
                 console.log("PublicTag", this._dvm.taggingZvm.perspective.publicTagsByTarget);
                 const taggedItems = Object.entries(this.deliveryPerspective.publicParcels)
-                    .map(([ppEh, [_prEh, description, timestamp, author]]) => {
+                  .filter(([_ppEh, pprm]) => !pprm.deleteInfo)
+                  .map(([ppEh, pprm]) => {
                         const isLocal = !!this.deliveryPerspective.localPublicManifests[ppEh];
-                        return {ppEh, description, timestamp, author, isLocal, isPrivate:false} as FileTableItem;
+                        return {ppEh, description: pprm.description, timestamp: pprm.creationTs, author: pprm.author, isLocal, isPrivate:false} as FileTableItem;
                     })
                     .filter((item) => {
                         const publicTags = this._dvm.taggingZvm.perspective.publicTagsByTarget[item.ppEh];
@@ -1115,11 +1121,11 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             </sl-button>
             <sl-button slot="footer" variant="danger"
                        @click=${async (e) => {
-                         const prEh =   this._dvm.deliveryZvm.perspective.publicParcels[this._deletableFile][0];
+                         const prEh = this._dvm.deliveryZvm.perspective.publicParcels[this._deletableFile].prEh;
                          await this._dvm.deliveryZvm.zomeProxy.removePublicParcel(decodeHashFromBase64(prEh));
+                         await this._dvm.deliveryZvm.probeDht();
                          this._deletableFile = undefined;
                          this.deleteDialogElem.open = false;
-                         //this.requestUpdate();
                        }}>
                 ${msg("Delete")}
             </sl-button>

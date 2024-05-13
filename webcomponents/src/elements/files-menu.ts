@@ -180,7 +180,7 @@ export class FilesMenu extends DnaElement<FilesDvmPerspective, FilesDvm> {
         let pubOrphans = 0;
         if (this._initialized) {
             const [unreplieds, inbounds] = this._dvm.deliveryZvm.inbounds();
-            dhtPublicCount = Object.entries(this.deliveryPerspective.publicParcels).length;
+            dhtPublicCount = Object.entries(this.deliveryPerspective.publicParcels).filter(([_ppEh, pprm]) => !pprm.deleteInfo).length;
             inboundCount = Object.entries(inbounds).length;
             unrepliedCount = Object.entries(unreplieds).length;
             outboundCount = Object.entries(this._dvm.deliveryZvm.outbounds()).length;

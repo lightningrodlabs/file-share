@@ -40,6 +40,12 @@ export class FilePreview extends DnaElement<FilesDvmPerspective, FilesDvm> {
         console.log("<file-preview>.willUpdate()", changedProperties, !!this._dvm, this.hash);
         if (this._dvm && (changedProperties.has("hash") || (!this._manifest && this.hash))) {
             console.log("<file-preview>.willUpdate()", this.hash);
+            if (!this.hash) {
+                this._manifest = undefined;
+                this._maybeBlobUrl = undefined;
+                this._maybeFile = undefined;
+                return;
+            }
             this._loading = true;
             this._manifest = await this._dvm.filesZvm.zomeProxy.getFileInfo(decodeHashFromBase64(this.hash));
             //console.log(`<file-preview>.willUpdate() ${this._manifest.description.size} < ${this._dvm.dnaProperties.maxChunkSize}?`);

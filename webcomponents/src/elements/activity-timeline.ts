@@ -20,12 +20,14 @@ export enum ActivityLogType {
     NewPersonalFile = 'NewPersonalFile',
     ReceivedFile = 'ReceivedFile',
     NewGroupFile = 'NewGroupFile',
+    RemovedGroupFile = 'RemovedGroupFile',
 }
 
 export type ActivityLogTypeVariantDeliveryReceived = {distributionAh: ActionHashB64, peer: AgentPubKeyB64}
 export type ActivityLogTypeVariantDeliveryDeclined = {distributionAh: ActionHashB64, peer: AgentPubKeyB64}
 export type ActivityLogTypeVariantNewPersonalFile = {manifestEh: EntryHashB64, peer: AgentPubKeyB64}
 export type ActivityLogTypeVariantNewGroupFile = {manifestEh: EntryHashB64, peer: AgentPubKeyB64}
+export type ActivityLogTypeVariantRemovedGroupFile = {manifestEh: EntryHashB64, peer: AgentPubKeyB64}
 export type ActivityLogTypeVariantReceivedFile = {manifestEh: EntryHashB64, peer: AgentPubKeyB64}
 
 export type ActivityLogVariant =
@@ -34,6 +36,7 @@ export type ActivityLogVariant =
     | ActivityLogTypeVariantNewPersonalFile
     | ActivityLogTypeVariantReceivedFile
     | ActivityLogTypeVariantNewGroupFile
+    | ActivityLogTypeVariantRemovedGroupFile
 
 export type ActivityLog = {timestamp: Timestamp, type: ActivityLogType, value: ActivityLogVariant}
 
@@ -124,14 +127,20 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
             });
         //console.log("sortedPrivateParcels", sortedPrivateParcels);
 
-        const newGroupFiles: ActivityLog[] = Object.entries(this.deliveryPerspective.publicParcels)
-            .map(([eh, [_prEh, pr, timestamp, auth]]) => {
-                return {timestamp, type: ActivityLogType.NewGroupFile, value: {manifestEh: eh, peer: auth}};
+        const addGroupFiles: ActivityLog[] = Object.entries(this.deliveryPerspective.publicParcels)
+            .map(([eh, pprm]) => {
+                return {timestamp: pprm.creationTs, type: ActivityLogType.NewGroupFile, value: {manifestEh: eh, peer: pprm.author}}
             });
+        const removeGroupFiles: ActivityLog[] = Object.entries(this.deliveryPerspective.publicParcels)
+          .filter(([_ppEh, pprm]) => pprm.deleteInfo)
+          .map(([eh, pprm]) => {
+              return {timestamp: pprm.deleteInfo[0] , type: ActivityLogType.RemovedGroupFile, value: {manifestEh: eh, peer: pprm.deleteInfo[1]}};
+          });
         //console.log("sortedPublicParcels", sortedPublicParcels);
 
+
         /** Concat all */
-        const all = ReceivedFiles.concat(receivedDeliveries, declinedDeliveries, newPersonalFiles, newGroupFiles)
+        const all = ReceivedFiles.concat(receivedDeliveries, declinedDeliveries, newPersonalFiles, addGroupFiles, removeGroupFiles)
             .sort((logA, logB) => logB.timestamp - logA.timestamp);
 
         //console.table(all);
@@ -174,6 +183,12 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
                 const variant = log.value as ActivityLogTypeVariantNewGroupFile;
                 manifestEh = variant.manifestEh;
                 message = msg(`has been shared by`);
+                peer = variant.peer;
+                break;}
+            case ActivityLogType.RemovedGroupFile: {
+                const variant = log.value as ActivityLogTypeVariantRemovedGroupFile;
+                manifestEh = variant.manifestEh;
+                message = msg(`has been removed by`);
                 peer = variant.peer;
                 break;}
             case ActivityLogType.NewPersonalFile: {

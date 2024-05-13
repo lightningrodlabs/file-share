@@ -76,7 +76,7 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
         /** Retrieve File description */
         let fileDescription = this.description;
         let isPrivate = true;
-        let author = this.author? this.author : this.cell.agentPubKey;
+        //let author = this.author? this.author : this.cell.agentPubKey;
         if (this.hash != "") {
             const tuple = this._dvm.deliveryZvm.perspective.privateManifests[this.hash];
             isPrivate = false;
@@ -88,10 +88,10 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 if (tuple) {
                     fileDescription = tuple[0].description;
                 } else {
-                    const tuple = this._dvm.deliveryZvm.perspective.publicParcels[this.hash];
-                    author = tuple[3];
-                    if (tuple) {
-                        fileDescription = tuple[1];
+                    const pprm = this._dvm.deliveryZvm.perspective.publicParcels[this.hash];
+                    //author = pprm.author;
+                    if (pprm) {
+                        fileDescription = pprm.description;
                     } else {
                         return html`
                             <sl-button class="unknown" disabled>Unknown file</sl-button>`;

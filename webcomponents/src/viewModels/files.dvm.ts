@@ -168,7 +168,7 @@ export class FilesDvm extends DnaViewModel {
         try {
             localStorage.setItem("filesDvm/" + hash, contentB64);
         } catch(e) {
-            console.error("Failed to store in localStorage", "filesDvm/" + hash, e);
+            console.warn("Failed to store in localStorage", "filesDvm/" + hash, e);
         }
     }
 
@@ -264,6 +264,16 @@ export class FilesDvm extends DnaViewModel {
                 this._perspective.notificationLogs.push([now, FilesNotificationType.ReceptionComplete, notif]);
                 this.notifySubscribers();
             })
+        }
+        if (SignalProtocolType.RemovedPublicParcel in deliverySignal) {
+            console.log("signal RemovedPublicParcel dvm", deliverySignal.RemovedPublicParcel);
+            const author = encodeHashToBase64(deliverySignal.RemovedPublicParcel[3]);
+            const pr = deliverySignal.RemovedPublicParcel[2];
+            //const timestamp = deliverySignal.RemovedPublicParcel[1];
+            const ppEh = encodeHashToBase64(pr.eh);
+            if (author != this.cell.agentPubKey) {
+                this.probeAll();
+            }
         }
         if (SignalProtocolType.NewPublicParcel in deliverySignal) {
             console.log("signal NewPublicParcel dvm", deliverySignal.NewPublicParcel);
@@ -374,7 +384,8 @@ export class FilesDvm extends DnaViewModel {
             return [];
         }
         const pps = Object.entries(this.deliveryZvm.perspective.publicParcels)
-            .filter(([_ppEh, [_prEh, description, _ts, _agent]]) => description.name.toLowerCase().includes(filter))
+            .filter(([_ppEh, pprm]) => !pprm.deleteInfo)
+            .filter(([_ppEh, pprm]) => pprm.description.name.toLowerCase().includes(filter))
             .map(([ppEh, _tuple]) => ppEh);
 
 
