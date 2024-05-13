@@ -384,7 +384,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             const pr = {description: publicManifest.description, eh: decodeHashFromBase64(manifestEh)} as ParcelReference;
             const timestamp = notifLog[0];
             const peers = this._dvm.profilesZvm.getAgents().map((peer) => decodeHashFromBase64(peer));
-            console.log("PublicSharingComplete. notifying...", peers);
+            console.log("PublicSharingComplete. notifying...", peers.map((p) => encodeHashToBase64(p)));
             this._dvm.deliveryZvm.zomeProxy.notifyPublicParcel({peers, timestamp, pr, removed:false});
             /** Ext. Notification */
             const subject = "" + myProfile.nickname + " " + msg("shared a file");
@@ -1121,8 +1121,11 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             </sl-button>
             <sl-button slot="footer" variant="danger"
                        @click=${async (e) => {
-                         const prEh = this._dvm.deliveryZvm.perspective.publicParcels[this._deletableFile].prEh;
-                         await this._dvm.deliveryZvm.zomeProxy.removePublicParcel(decodeHashFromBase64(prEh));
+                         const pprm = this._dvm.deliveryZvm.perspective.publicParcels[this._deletableFile];
+                         await this._dvm.deliveryZvm.zomeProxy.removePublicParcel(decodeHashFromBase64(pprm.prEh));
+                         const pr = {eh: decodeHashFromBase64(pprm.ppEh), description: pprm.description};
+                         const peers = this._dvm.profilesZvm.getAgents().map((peer) => decodeHashFromBase64(peer));
+                         this._dvm.deliveryZvm.zomeProxy.notifyPublicParcel({peers, timestamp: pprm.creationTs /* fixme */, pr, removed: true});
                          await this._dvm.deliveryZvm.probeDht();
                          this._deletableFile = undefined;
                          this.deleteDialogElem.open = false;

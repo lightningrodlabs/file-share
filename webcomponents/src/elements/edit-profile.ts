@@ -125,15 +125,14 @@ export class EditProfile extends ZomeElement<unknown, FilesZvm> {
     return html`
       <form id="profile-form" class="column"
         ${onSubmit(fields => /*await*/ this.fireSaveProfile(fields))}>
-        
+          
         <div class="row"
-          style="justify-content: center; align-self: start; margin-bottom: 16px">
+          style="justify-content: center; align-self: start; margin-bottom: 16px; width: 100%;">
           <select-avatar
                   style="cursor:pointer"
                   name="avatar"
                 .value=${this.profile?.fields['avatar'] || undefined}
               ></select-avatar>
-
           <sl-input
             name="nickname"
             .label=${msg('Nickname')}
@@ -143,6 +142,8 @@ export class EditProfile extends ZomeElement<unknown, FilesZvm> {
             .helpText=${msg(str`Min. ${MIN_NICKNAME_LENGTH} characters`)}
             style="margin-left: 16px;"
           ></sl-input>
+            <div style="flex-grow:1;"></div>
+            <sl-tooltip .content=${this.cell.agentPubKey}><sl-icon name="hash" style="font-size: 24px;"></sl-icon></sl-tooltip>
         </div>
         
         <div class="row" style="justify-content: center; margin-bottom: 8px; align-self: start;" >
