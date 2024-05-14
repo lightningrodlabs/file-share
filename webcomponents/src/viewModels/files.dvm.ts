@@ -3,7 +3,7 @@ import {
     DELIVERY_ZOME_NAME,
     DeliveryProperties,
     DeliveryZvm, ParcelChunk, ParcelKindVariantManifest,
-    ParcelManifest,
+    ParcelManifest, ParcelReference,
     SignalProtocol,
     SignalProtocolType
 } from "@ddd-qc/delivery";
@@ -194,6 +194,28 @@ export class FilesDvm extends DnaViewModel {
 
 
     /** */
+    private async loopUntilFound(pr: ParcelReference){
+        let maybeParcel;
+        do  {
+            await delay(3000)
+            await this.probeAll();
+            maybeParcel = this.deliveryZvm.perspective.publicParcels[encodeHashToBase64(pr.eh)];
+            //console.log("loopUntilFound()", maybeParcel);
+        } while (maybeParcel === undefined)
+    }
+
+    /** */
+    private async loopUntilRemoved(pr: ParcelReference){
+        let maybeParcel;
+        do  {
+            await delay(3000)
+            await this.probeAll();
+            maybeParcel = this.deliveryZvm.perspective.publicParcels[encodeHashToBase64(pr.eh)];
+            //console.log("loopUntilRemoved()", maybeParcel);
+        } while (maybeParcel && !maybeParcel.deleteInfo)
+    }
+
+    /** */
     mySignalHandler(signal: AppSignal): void {
         const now = Date.now();
         //console.log("FilesDvm received signal", now, signal);
@@ -270,11 +292,12 @@ export class FilesDvm extends DnaViewModel {
             const author = encodeHashToBase64(deliverySignal.RemovedPublicParcel[3]);
             const pr = deliverySignal.RemovedPublicParcel[2];
             //const timestamp = deliverySignal.RemovedPublicParcel[1];
-            const ppEh = encodeHashToBase64(pr.eh);
+            //const ppEh = encodeHashToBase64(pr.eh);
             if (author != this.cell.agentPubKey) {
-                this.probeAll();
+                this.loopUntilRemoved(pr);
             }
         }
+
         if (SignalProtocolType.NewPublicParcel in deliverySignal) {
             console.log("signal NewPublicParcel dvm", deliverySignal.NewPublicParcel);
             const author = encodeHashToBase64(deliverySignal.NewPublicParcel[3]);
@@ -287,7 +310,7 @@ export class FilesDvm extends DnaViewModel {
                 //this.probePublicFiles();
                 //this._latestPublic.push(ppEh);
                 /** Have DeliveryZvm perform probePublicParcels */
-                this.probeAll();
+                this.loopUntilFound(pr);
             } else {
                 /** Notify UI that we finished publishing something */
                 const notif = {
