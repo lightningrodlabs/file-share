@@ -13,6 +13,7 @@ import {kind2Type} from "../fileTypeUtils";
 import {Profile as ProfileMat} from "@ddd-qc/profiles-dvm";
 import {msg} from "@lit/localize";
 
+
 export interface DistributionTableItem {
     distribAh: ActionHashB64,
     recipient: AgentPubKeyB64,
@@ -48,12 +49,12 @@ export class DistributionTable extends LitElement {
         return html`
             <vaadin-grid .items="${this.items}">
                 <vaadin-grid-selection-column></vaadin-grid-selection-column>
-                <vaadin-grid-column path="deliveryState" header=""
+                <!-- <vaadin-grid-column path="deliveryState" header=
                                     ${columnBodyRenderer(
                                             ({ deliveryState }) => html`<span>${deliveryState}</span>`,
                                             [],
                                     )}>
-                </vaadin-grid-column>                
+                </vaadin-grid-column> -->                
                 <vaadin-grid-column path="description" header=${msg("Filename")}
                                     ${columnBodyRenderer(
                                             ({ description }) => html`<span>${description.name}</span>`,
@@ -97,7 +98,7 @@ export class DistributionTable extends LitElement {
                                     )}
                 ></vaadin-grid-column>                
                 <vaadin-grid-column
-                        path="ppEh" header=""
+                        path="ppEh" header="" width="120px"
                         ${columnBodyRenderer(
                                 ({ppEh}) => {
                                     return html`
@@ -111,6 +112,16 @@ export class DistributionTable extends LitElement {
                                         }}>
                                             <sl-icon name="send"></sl-icon>
                                         </sl-button>
+                                        <sl-button size="small" variant="neutral"
+                                                   @click=${async (e) => {
+                                                       this.dispatchEvent(new CustomEvent('view', {
+                                                           detail: ppEh,
+                                                           bubbles: true,
+                                                           composed: true
+                                                       }));
+                                                   }}>
+                                            <sl-icon name="info-lg"></sl-icon>
+                                        </sl-button>                                        
                                     `
                                 },
                                 []

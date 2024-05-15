@@ -42,6 +42,8 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
     @property() items: FileTableItem[] = [];
     @property() profiles: Record<AgentPubKeyB64, ProfileMat> = {};
 
+    @property() type: string = ""
+
     @property() selectable?: string;
 
     @state() private _selectedItems: FileTableItem[] = [];
@@ -83,7 +85,7 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                             [],
                                     )}>
                 </vaadin-grid-column>
-                <vaadin-grid-column path="description" header=${msg("Size")}
+                <vaadin-grid-column path="description" header=${msg("Size")} width="80px"
                                     ${columnBodyRenderer(
                                 ({ description }) => html`<span>${prettyFileSize(description.size)}</span>`,
                             [],
@@ -120,7 +122,7 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                             [],
                                     )}
                 ></vaadin-grid-column>
-                <vaadin-grid-column path="author" header="Author" .hidden="${!this.items[0].author}"
+                <vaadin-grid-column path="author" header=${msg("Author")} .hidden=${!this.items[0].author}
                                     ${columnBodyRenderer(
                                             ({ author }) => {
                                                 const maybeProfile = this.profiles[author];
@@ -131,26 +133,28 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                     [],
                                     )}
                 ></vaadin-grid-column>
-                <vaadin-grid-column path="timestamp" header="Date"
+                <vaadin-grid-column path="timestamp" header=${msg("Date")}
                                     ${columnBodyRenderer(
                                             ({ timestamp }) => html`<span>${prettyTimestamp(timestamp)}</span>`,
                                             [],
                                     )}
                 ></vaadin-grid-column>
-                <vaadin-grid-column path="isLocal" header="Local" .hidden="${!("isLocal" in this.items[0])}"
+                <vaadin-grid-column path="isLocal" header=${msg("Local")} width="80px"
+                                    .hidden=${this.type == "personal"}
                                     ${columnBodyRenderer(
                                             ({ isLocal }) => html`<span>${isLocal? msg("Yes") : msg("No")}</span>`,
                                             [],
                                     )}
                 ></vaadin-grid-column>
-                <vaadin-grid-column path="isPrivate" header="Private" .hidden="${!("isPrivate" in this.items[0])}"
+                <vaadin-grid-column path="isPrivate" header=${msg("Private")} width="80px"
+                                    .hidden=${this.type == "group" || this.type == "personal"}
                                     ${columnBodyRenderer(
                                             ({ isPrivate }) => html`<span>${isPrivate? msg("Yes") : msg("No")}</span>`,
                                             [],
                                     )}
                 ></vaadin-grid-column>
                 <vaadin-grid-column
-                        path="ppEh" header="" style="min-width: 300px"
+                        path="ppEh" header="" width="160px" style="text-overflow: clip;"
                         ${columnBodyRenderer(
                                 ({ppEh}) => {
                                     if (this.selectable == "") {
@@ -167,23 +171,11 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                             </sl-button>
                                         `;
                                     } else {
-                                        // TODO: Optimize. Better way to get the item here instead of doing a search for each item.
+                                        // TODO: Optimize. Should have a better way to get the item here instead of doing a search for each item.
                                         const item = this.items.filter((item) => item.ppEh == ppEh);
                                         const isPublic = !item[0].isPrivate;
                                         console.log("isPublic", isPublic, item, ppEh)
                                         return html`
-                                            ${isPublic? html`
-                                            <sl-button size="small" variant="danger"
-                                                       @click=${async (e) => {
-                                                           console.log("Dispatching delete Event", ppEh)
-                                                           this.dispatchEvent(new CustomEvent('delete', {
-                                                               detail: ppEh,
-                                                               bubbles: true,
-                                                               composed: true
-                                                           }));
-                                                       }}>
-                                                <sl-icon name="trash"></sl-icon>
-                                            </sl-button>`: html``}                                       
                                             <sl-button size="small" variant="primary" style="margin-left:5px"
                                                        @click=${async (e) => {
                                                           this.dispatchEvent(new CustomEvent('download', {
@@ -214,6 +206,18 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                                       }}>
                                                 <sl-icon name="info-lg"></sl-icon>
                                             </sl-button>
+                                            ${isPublic? html`
+                                            <sl-button size="small" variant="danger"
+                                                       @click=${async (e) => {
+                                                console.log("Dispatching delete Event", ppEh)
+                                                this.dispatchEvent(new CustomEvent('delete', {
+                                                    detail: ppEh,
+                                                    bubbles: true,
+                                                    composed: true
+                                                }));
+                                            }}>
+                                                <sl-icon name="trash"></sl-icon>
+                                            </sl-button>`: html``}
                                         `
                                     }
                                 },

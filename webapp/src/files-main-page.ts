@@ -598,6 +598,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             <!-- Recent Activity -->
             <h2>${msg("Recent Activity")}</h2>
             <activity-timeline
+                    style="padding-right: 5px;"
                     @tag=${(e) => this._selectedMenuItem = e.detail}
             ></activity-timeline>`;
     }
@@ -882,7 +883,8 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 const allItems = privateItems.concat(publicItems/*, myPublicItems*/);
                 mainArea = html`
                     <h2>${msg("All Files")}${this._typeFilter? ": " + this._typeFilter : ""}</h2>
-                    <file-table .items=${allItems} 
+                    <file-table type="all"
+                                .items=${allItems} 
                                 .profiles=${this._dvm.profilesZvm.perspective.profiles}
                     ></file-table>
                 `;
@@ -890,7 +892,8 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             if (this._selectedMenuItem.type == SelectedType.PersonalFiles) {
                 mainArea = html`
                     <h2>${msg("Personal Files")}</h2>
-                    <file-table .profiles=${this._dvm.profilesZvm.perspective.profiles}
+                    <file-table type="personal"
+                                .profiles=${this._dvm.profilesZvm.perspective.profiles}
                                 .items=${Object.entries(this.deliveryPerspective.privateManifests).map(([ppEh, [pm, timestamp]]) => {
                                     //const timestamp = this.deliveryPerspective.privateManifests[ppEh][1];
                                     return {ppEh, description:pm.description, timestamp, author:this.cell.agentPubKey, isPrivate:true, isLocal:true} as FileTableItem;
@@ -915,7 +918,8 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
                 mainArea = html`
                     <h2>${msg("Group Files")}</h2>
-                    <file-table .items=${dhtPublicItems}
+                    <file-table type="group"
+                                .items=${dhtPublicItems}
                                 .profiles=${this._dvm.profilesZvm.perspective.profiles}
                     ></file-table>
                 `;
@@ -957,7 +961,9 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     .sort((a, b) => b.sentTs - a.sentTs);
                 mainArea = html`
                     <h2>${msg("Sent")}</h2>
-                    <distribution-table .items=${distributionItems}
+                    <distribution-table 
+                      .items=${distributionItems}
+                      .profiles=${this._dvm.profilesZvm.perspective.profiles}
                     ></distribution-table>
                 `;
             }
@@ -984,7 +990,8 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     });
                 mainArea = html`
                     <h2>${msg("Group Files")}: <span class="tag" style="display:inline; font-size: inherit">${this._selectedMenuItem.tag}</span></h2>
-                    <file-table .items=${taggedItems}
+                    <file-table type="group"
+                                .items=${taggedItems}
                                 .profiles=${this._dvm.profilesZvm.perspective.profiles}
                     ></file-table>
                 `;
@@ -1001,7 +1008,8 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
                 mainArea = html`
                     <h2>${msg("Personal Files")}: <span class="tag" style="display:inline; font-size: inherit">${this._selectedMenuItem.tag}</span></h2>
-                    <file-table .items=${taggedItems}
+                    <file-table type="personal"
+                                .items=${taggedItems}
                                 .profiles=${this._dvm.profilesZvm.perspective.profiles}
                     ></file-table>
                 `;
@@ -1024,15 +1032,19 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     <sl-button class="top-btn" variant="default" size="medium" disabled>
                         <sl-icon name="bell" label="notifications"></sl-icon>
                     </sl-button>
-                    <sl-button class="top-btn" variant="default" size="medium" href=${REPORT_BUG_URL} target="_blank">
-                        <sl-icon name="bug" label="Report bug"></sl-icon>
-                    </sl-button>
-                    <sl-button class="top-btn" variant="default" size="medium" @click=${async (e) => {
-                        const json = await this._dvm.exportPerspective();
-                        this.downloadTextFile("files_dump.json", json);
-                    }}>
-                        <sl-icon name="download" label="Export to JSON"></sl-icon>
-                    </sl-button>                    
+                    <sl-tooltip placement="bottom-end" content=${msg('Report a Bug')} style="--show-delay: 400;">
+                        <sl-button class="top-btn" variant="default" size="medium" href=${REPORT_BUG_URL} target="_blank">
+                            <sl-icon name="bug" label="Report bug"></sl-icon>
+                        </sl-button>
+                    </sl-tooltip>
+                    <sl-tooltip placement="bottom-end" content=${msg('Export file list')} style="--show-delay: 400;">
+                        <sl-button class="top-btn" variant="default" size="medium" @click=${async (e) => {
+                            const json = await this._dvm.exportPerspective();
+                            this.downloadTextFile("files_dump.json", json);
+                        }}>
+                            <sl-icon name="journal-text"></sl-icon>
+                        </sl-button>
+                    </sl-tooltip>
                     ${isInDev? html`
                         <button type="button" @click=${async () => {
                             this._dvm.dumpLogs(); 
@@ -1227,7 +1239,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
               #rhs {
                 width: 100%;
-                margin: 0px 5px 0px 30px;
+                margin: 0px 5px 0px 15px;
                 display: flex;
                 flex-direction: column;
               }
