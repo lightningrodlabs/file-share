@@ -156,12 +156,13 @@ export class TaggingProxy extends ZomeProxy {
   static readonly DEFAULT_ZOME_NAME = "zTagging"
   static readonly FN_NAMES = taggingFunctionNames
  
+
   async queryAllPrivateTags(): Promise<[EntryHash, Timestamp, string][]> {
     return this.call('query_all_PrivateTags', null);
   }
 
   async createPrivateTag(tagValue: string): Promise<EntryHash> {
-    return this.call('create_private_tag', tagValue);
+    return this.callBlocking('create_private_tag', tagValue);
   }
 
   async tagPrivateEntry(input: TaggingInput): Promise<void> {
@@ -185,7 +186,7 @@ export class TaggingProxy extends ZomeProxy {
   }
 
   async createPublicTag(tagValue: string): Promise<EntryHash> {
-    return this.call('create_public_tag', tagValue);
+    return this.callBlocking('create_public_tag', tagValue);
   }
 
   async tagPublicEntry(input: TaggingInput): Promise<void> {

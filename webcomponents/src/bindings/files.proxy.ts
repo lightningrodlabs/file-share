@@ -160,7 +160,7 @@ export class FilesProxy extends ZomeProxy {
   static readonly FN_NAMES = filesFunctionNames
  
   async attachToHrl(input: AttachInput): Promise<ActionHash> {
-    return this.call('attach_to_hrl', input);
+    return this.callBlocking('attach_to_hrl', input);
   }
 
   async getFilesFromHrl(hrl: [DnaHash, EntryHash]): Promise<EntryHash[]> {
@@ -206,7 +206,7 @@ export class FilesProxy extends ZomeProxy {
   }
 
   async publishFileManifest(input: WriteManifestInput): Promise<[EntryHash, ParcelDescription]> {
-    return this.call('publish_file_manifest', input);
+    return this.callZomeBlockPostCommit('PublicParcel','publish_file_manifest', input);
   }
 
   async refuseFileShare(parcelEh: EntryHash): Promise<EntryHash> {

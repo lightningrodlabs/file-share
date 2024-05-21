@@ -19,6 +19,7 @@ pub fn query_all_PrivateTags(_: ()) -> ExternResult<Vec<(EntryHash, Timestamp, S
 
 
 #[hdk_extern]
+#[feature(zits_blocking)]
 fn create_private_tag(tag_value: String) -> ExternResult<EntryHash> {
     std::panic::set_hook(Box::new(zome_panic_hook));
     /// Make sure Tag does not already exists
@@ -95,8 +96,8 @@ fn tag_private_entry(input: TaggingInput) -> ExternResult<()> {
                 eh
             }
         ;
-        let _ = create_link(tag_eh.clone(), input.target.clone(), TaggingLinkTypes::PrivateEntry, str2tag(&input.link_tag_to_entry.clone()))?;
-        let _ = create_link( input.target.clone(), tag_eh, TaggingLinkTypes::PrivateTags, LinkTag::from(()))?;
+        let _ = create_link_relaxed(tag_eh.clone(), input.target.clone(), TaggingLinkTypes::PrivateEntry, str2tag(&input.link_tag_to_entry.clone()))?;
+        let _ = create_link_relaxed( input.target.clone(), tag_eh, TaggingLinkTypes::PrivateTags, LinkTag::from(()))?;
     }
     /// Done
     Ok(())

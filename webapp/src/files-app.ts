@@ -285,9 +285,9 @@ export class FilesApp extends HappElement {
           };
           if (creatableViewInfo.name == "File") {
             view = html`<store-dialog wait="true"
-              @create=${async (e: CustomEvent<EntryHashB64>) => {
+              @created=${async (e: CustomEvent<EntryHashB64>) => {
                 try {
-                  console.log("@create event", e.detail);
+                  console.log("@created event", e.detail);
                   const wal: WAL = {hrl: [decodeHashFromBase64(this.filesDvm.cell.dnaHash), decodeHashFromBase64(e.detail)], context: null}
                   await creatableViewInfo.resolve(wal);
                 } catch(e) {

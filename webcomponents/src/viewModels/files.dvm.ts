@@ -218,7 +218,6 @@ export class FilesDvm extends DnaViewModel {
     /** */
     mySignalHandler(signal: AppSignal): void {
         const now = Date.now();
-        //console.log("FilesDvm received signal", now, signal);
         if (signal.zome_name != DELIVERY_ZOME_NAME) {
             return;
         }

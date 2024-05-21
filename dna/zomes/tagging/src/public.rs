@@ -34,6 +34,7 @@ fn get_all_public_tags(_: ()) -> ExternResult<Vec<(EntryHash, String)>> {
 
 /// Return eh to TypedPath
 #[hdk_extern]
+#[feature(zits_blocking)]
 fn create_public_tag(tag_value: String) -> ExternResult<EntryHash> {
     std::panic::set_hook(Box::new(zome_panic_hook));
     /// Make sure Tag does not already exists
@@ -76,18 +77,19 @@ pub fn get_public_entry(eh: EntryHash) -> ExternResult<Entry> {
 #[hdk_extern]
 fn tag_public_entry(input: TaggingInput) -> ExternResult<()> {
     std::panic::set_hook(Box::new(zome_panic_hook));
+    debug!("tag_public_entry() {:?}", input.clone());
     /// Dedup
     let mut tags = input.tags.clone();
     let set: HashSet<_> = tags.drain(..).collect();
     tags.extend(set.into_iter());
-    /// Make sure entry exist and is private
+    /// Make sure entry exist and is public
     let _entry = get_public_entry(input.target.clone())?;
-    /// Grab existing private tags
+    /// Grab existing public tags
     let public_tuples = get_all_public_tags(())?;
     let public_tags: Vec<String> = public_tuples.iter()
         .map(|(_, tag)| tag.to_owned())
         .collect();
-    /// Link to/from each tag (create PrivateTag entry if necessary)
+    /// Link to/from each tag (create PublicTag entry if necessary)
     for tag in tags {
         let maybe_index = public_tags.iter().position(|r| r == &tag);
 
@@ -100,8 +102,8 @@ fn tag_public_entry(input: TaggingInput) -> ExternResult<()> {
                 eh
             }
             ;
-        let _ = create_link(tag_eh.clone(), input.target.clone(), TaggingLinkTypes::PublicEntry, str2tag(&input.link_tag_to_entry.clone()))?;
-        let _ = create_link( input.target.clone(), tag_eh, TaggingLinkTypes::PublicTags, str2tag(&tag))?;
+        let _ = create_link_relaxed(tag_eh.clone(), input.target.clone(), TaggingLinkTypes::PublicEntry, str2tag(&input.link_tag_to_entry.clone()))?;
+        let _ = create_link_relaxed( input.target.clone(), tag_eh, TaggingLinkTypes::PublicTags, str2tag(&tag))?;
     }
     Ok(())
 }
@@ -111,10 +113,10 @@ fn tag_public_entry(input: TaggingInput) -> ExternResult<()> {
 #[hdk_extern]
 pub fn get_public_tags(eh: EntryHash) -> ExternResult<Vec<String>> {
     std::panic::set_hook(Box::new(zome_panic_hook));
-    /// Make sure entry exist and is private
+    /// Make sure entry exist and is public
     let _ = get_public_entry(eh.clone())?;
-    /// Grab private tags
-    let links = get_links(link_input(eh, TaggingLinkTypes::PrivateTags, None))?;
+    /// Grab public tags
+    let links = get_links(link_input(eh, TaggingLinkTypes::PublicTags, None))?;
     let res = links.into_iter()
         .map(|link| (tag2str(&link.tag).unwrap()))
         .collect();

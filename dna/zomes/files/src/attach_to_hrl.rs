@@ -12,6 +12,7 @@ pub struct AttachInput {
 
 /// Link a File From a We HRL
 #[hdk_extern]
+#[feature(zits_blocking)]
 pub fn attach_to_hrl(input: AttachInput) -> ExternResult<ActionHash> {
     std::panic::set_hook(Box::new(zome_panic_hook));
     /// Create Path

@@ -87,6 +87,7 @@ export class FilesZvm extends ZomeViewModel {
 
     /** */
     async publishFileManifest(file: File, dataHash: string, chunks: EntryHash[]): Promise<EntryHashB64> {
+        console.log("filesZvm.publishFileManifest()", file.name);
         const params = {
             filename: file.name,
             filetype: file.type,

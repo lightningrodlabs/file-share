@@ -230,6 +230,7 @@ export class TaggingZvm extends ZomeViewModel {
 
     /** */
     async tagPublicEntry(eh: EntryHashB64, tags: string[], targetInfo: string) {
+        //console.log("taggingZvm.tagPublicEntry()", targetInfo, tags, eh);
         const input = {
             target: decodeHashFromBase64(eh),
             tags,
