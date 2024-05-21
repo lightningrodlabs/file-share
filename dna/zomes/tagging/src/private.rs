@@ -106,6 +106,7 @@ fn tag_private_entry(input: TaggingInput) -> ExternResult<()> {
 
 ///
 #[hdk_extern]
+#[feature(zits_blocking)]
 fn untag_private_entry(input: UntagInput) -> ExternResult<()> {
     std::panic::set_hook(Box::new(zome_panic_hook));
     /// Make sure entry exist and is private

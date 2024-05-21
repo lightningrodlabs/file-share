@@ -75,7 +75,7 @@ pub fn get_public_entry(eh: EntryHash) -> ExternResult<Entry> {
 
 
 #[hdk_extern]
-fn tag_public_entry(input: TaggingInput) -> ExternResult<()> {
+fn tag_public_entry(input: TaggingInput) -> ExternResult<Vec<ActionHash>> {
     std::panic::set_hook(Box::new(zome_panic_hook));
     debug!("tag_public_entry() {:?}", input.clone());
     /// Dedup
@@ -90,6 +90,7 @@ fn tag_public_entry(input: TaggingInput) -> ExternResult<()> {
         .map(|(_, tag)| tag.to_owned())
         .collect();
     /// Link to/from each tag (create PublicTag entry if necessary)
+    let mut link_ahs = Vec::new();
     for tag in tags {
         let maybe_index = public_tags.iter().position(|r| r == &tag);
 
@@ -102,10 +103,11 @@ fn tag_public_entry(input: TaggingInput) -> ExternResult<()> {
                 eh
             }
             ;
-        let _ = create_link_relaxed(tag_eh.clone(), input.target.clone(), TaggingLinkTypes::PublicEntry, str2tag(&input.link_tag_to_entry.clone()))?;
+        let ah = create_link_relaxed(tag_eh.clone(), input.target.clone(), TaggingLinkTypes::PublicEntry, str2tag(&input.link_tag_to_entry.clone()))?;
         let _ = create_link_relaxed( input.target.clone(), tag_eh, TaggingLinkTypes::PublicTags, str2tag(&tag))?;
+        link_ahs.push(ah);
     }
-    Ok(())
+    Ok(link_ahs)
 }
 
 
@@ -125,9 +127,32 @@ pub fn get_public_tags(eh: EntryHash) -> ExternResult<Vec<String>> {
 }
 
 
+// ///
+// #[hdk_extern]
+// pub fn get_public_tags(eh: EntryHash) -> ExternResult<Vec<String>> {
+//     std::panic::set_hook(Box::new(zome_panic_hook));
+//     /// Make sure entry exist and is public
+//     let _ = get_public_entry(eh.clone())?;
+//     /// Grab public tags
+//     let links = get_link_details(eh, TaggingLinkTypes::PublicTags, None, GetOptions::network())?;
+//     let res = links.into_iter()
+//       .map(|(create_sah, maybe_deletes)| {
+//           if maybe_deletes.len() > 0 {
+//               return None;
+//           }
+//           let Action::CreateLink(create) = create_sah.hashed.content else { panic!("get_link_details() should return a CreateLink Action")};
+//           return Some(tag2str(&create.tag).unwrap());
+//       })
+//       .flatten()
+//       .collect();
+//     /// Done
+//     Ok(res)
+// }
+
+
 ///
 #[hdk_extern]
-pub fn get_public_entries_with_tag(tag: String) -> ExternResult<Vec<(EntryHash, String)>> {
+pub fn get_public_entries_with_tag(tag: String) -> ExternResult<Vec<(ActionHash, EntryHash, String)>> {
     std::panic::set_hook(Box::new(zome_panic_hook));
     /// Form path
     let mut tp = root_path()?;
@@ -136,8 +161,19 @@ pub fn get_public_entries_with_tag(tag: String) -> ExternResult<Vec<(EntryHash, 
     //let links = tp_children(&tp)?;
     let links = get_links(link_input(tp.path_entry_hash()?, TaggingLinkTypes::PublicEntry, None))?;
     let res = links.into_iter()
-        .map(|link| (link.target.into_entry_hash().unwrap(), tag2str(&link.tag).unwrap()))
+        .map(|link| (link.create_link_hash, link.target.into_entry_hash().unwrap(), tag2str(&link.tag).unwrap()))
         .collect();
     /// Done
     Ok(res)
+}
+
+
+///
+#[hdk_extern]
+#[feature(zits_blocking)]
+fn untag_public_entry(link_ah: ActionHash) -> ExternResult<ActionHash> {
+    std::panic::set_hook(Box::new(zome_panic_hook));
+    debug!("untag_public_entry() {}", link_ah);
+    /// TODO: Make sure its a valid link
+    return delete_link(link_ah);
 }

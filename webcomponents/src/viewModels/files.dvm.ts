@@ -9,7 +9,7 @@ import {
 } from "@ddd-qc/delivery";
 import {
     AgentPubKeyB64,
-    AppSignalCb,
+    AppSignalCb, decodeHashFromBase64,
     encodeHashToBase64,
     EntryHashB64,
 } from "@holochain/client";
@@ -416,6 +416,27 @@ export class FilesDvm extends DnaViewModel {
             .map(([ppEh, _tuple]) => ppEh);
 
         return pps.concat(pms);
+    }
+
+
+    /** */
+    async removePublicParcel(eh: EntryHashB64) {
+        const pprm = this.deliveryZvm.perspective.publicParcels[eh];
+        if (!pprm) {
+            return Promise.reject("No Public File found at address");
+        }
+        /** Remove PublicParcel */
+        await this.deliveryZvm.zomeProxy.removePublicParcel(decodeHashFromBase64(pprm.prEh));
+        /** Remove tags */
+        const tags = this.taggingZvm.getTargetPublicTags(eh);
+        console.log("removePublicParcel()", tags);
+        await this.taggingZvm.untagPublicEntryAll(eh);
+
+        /** Notify  peer */
+        const pr = {eh: decodeHashFromBase64(pprm.ppEh), description: pprm.description};
+        const peers = this.profilesZvm.getAgents().map((peer) => decodeHashFromBase64(peer));
+        this.deliveryZvm.zomeProxy.notifyPublicParcel({peers, timestamp: pprm.creationTs /* fixme */, pr, removed: true});
+        await this.deliveryZvm.probeDht();
     }
 
 

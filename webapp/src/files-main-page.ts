@@ -524,6 +524,15 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** */
+    async deletePublicFile() {
+        console.log("deletePublicFile()", this._deletableFile)
+        await this._dvm.removePublicParcel(this._deletableFile);
+        this._deletableFile = undefined;
+        this.deleteDialogElem.open = false;
+    }
+
+
+    /** */
     onCardClick(type: FileType) {
         console.log("onCardClick()", this.menuElem, type);
         this.menuElem.setSelected(SelectedType.AllFiles);
@@ -999,7 +1008,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             if (this._selectedMenuItem.type == SelectedType.PrivateTag) {
                 const taggedItems = Object.entries(this.deliveryPerspective.privateManifests).map(([ppEh, [pm, timestamp]]) => {
                     //const timestamp = this.deliveryPerspective.privateManifests[ppEh][1];
-                    return {ppEh, description: pm.description, timestamp} as FileTableItem;
+                    return {ppEh, description: pm.description, timestamp, isLocal: false, isPrivate: true} as FileTableItem;
                 })
                 .filter((item) => {
                     const tags = this._dvm.taggingZvm.perspective.privateTagsByTarget[item.ppEh];
@@ -1132,16 +1141,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 ${msg("Cancel")}
             </sl-button>
             <sl-button slot="footer" variant="danger"
-                       @click=${async (e) => {
-                         const pprm = this._dvm.deliveryZvm.perspective.publicParcels[this._deletableFile];
-                         await this._dvm.deliveryZvm.zomeProxy.removePublicParcel(decodeHashFromBase64(pprm.prEh));
-                         const pr = {eh: decodeHashFromBase64(pprm.ppEh), description: pprm.description};
-                         const peers = this._dvm.profilesZvm.getAgents().map((peer) => decodeHashFromBase64(peer));
-                         this._dvm.deliveryZvm.zomeProxy.notifyPublicParcel({peers, timestamp: pprm.creationTs /* fixme */, pr, removed: true});
-                         await this._dvm.deliveryZvm.probeDht();
-                         this._deletableFile = undefined;
-                         this.deleteDialogElem.open = false;
-                       }}>
+                       @click=${async (e) => this.deletePublicFile()}>
                 ${msg("Delete")}
             </sl-button>
         </sl-dialog>
@@ -1194,7 +1194,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
               #view-file-dialog::part(body) {
                 padding-top: 0px;
               }
-                
+
               #bottom-stack {
                 position: fixed;
                 right: 15px;
@@ -1204,7 +1204,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 flex-direction: row-reverse;
                 gap: 10px;
               }
-              
+
               #fab-publish {
               }
 
@@ -1214,7 +1214,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px;
                 /*--sl-input-height-medium: 48px;*/
               }
-              
+
               #main {
                 background: #F7FBFE;
                 display: flex;

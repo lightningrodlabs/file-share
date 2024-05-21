@@ -113,7 +113,6 @@ export class FilesMenu extends DnaElement<FilesDvmPerspective, FilesDvm> {
         console.log("<files-menu> attrs", isPrivate, isTag);
 
 
-
         const event = isTag
             ? {
                 type: isPrivate == "true" ? SelectedType.PrivateTag : SelectedType.PublicTag,
@@ -136,6 +135,8 @@ export class FilesMenu extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 <sl-skeleton effect="sheen"></sl-skeleton>
             `;
         }
+
+        console.log("renderTags()", this.taggingPerspective.publicTags);
 
         const tags = isPrivate
             ? this.taggingPerspective.privateTags

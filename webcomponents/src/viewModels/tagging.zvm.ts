@@ -12,10 +12,10 @@ import {TaggingInput, UntagInput} from "../bindings/tagging.types";
 
 /** */
 export interface TaggingPerspective {
+    /** tag string -> [link_ah, target eh, target link tag][] */
+    publicTags: Dictionary<[ActionHashB64, EntryHashB64, string][]>,
     /** tag string -> [target eh, target link tag][] */
-    publicTags: Dictionary<[EntryHashB64, string][]>,
-    /** tag string -> [target eh, target link tag][] */
-    privateTags: Dictionary<[EntryHashB64, string][]>,
+    privateTags: Dictionary<[ActionHashB64, EntryHashB64, string][]>,
     /** Any EntryHash -> tags */
     publicTagsByTarget: Dictionary<string[]>,
     /** Any EntryHash -> tags */
@@ -93,11 +93,11 @@ export class TaggingZvm extends ZomeViewModel {
 
 
     /** */
-    async getPrivateEntriesWithTag(tag: string): Promise<[EntryHashB64, string][]> {
-        const targets: [EntryHashB64, string][] = (await this.zomeProxy.getPrivateEntriesWithTag(tag))
-            .map(([eh, lt]) => [encodeHashToBase64(eh), lt]);
+    async getPrivateEntriesWithTag(tag: string): Promise<[ActionHashB64, EntryHashB64, string][]> {
+        const targets: [ActionHashB64, EntryHashB64, string][] = (await this.zomeProxy.getPrivateEntriesWithTag(tag))
+            .map(([eh, lt]) => ["", encodeHashToBase64(eh), lt]);
         this._perspective.privateTags[tag] = targets;
-        for (const[target, _lt] of targets) {
+        for (const[_ah, target, _lt] of targets) {
             if (!this._perspective.privateTagsByTarget[target]) {
                 this._perspective.privateTagsByTarget[target] = []
             }
@@ -109,11 +109,12 @@ export class TaggingZvm extends ZomeViewModel {
 
 
     /** */
-    async probePublicEntriesWithTag(tag: string): Promise<[EntryHashB64, string][]> {
-        const targets: [EntryHashB64, string][] = (await this.zomeProxy.getPublicEntriesWithTag(tag))
-            .map(([eh, lt]) => [encodeHashToBase64(eh), lt]);
+    async probePublicEntriesWithTag(tag: string): Promise<[ActionHashB64, EntryHashB64, string][]> {
+        const targets: [ActionHashB64, EntryHashB64, string][] = (await this.zomeProxy.getPublicEntriesWithTag(tag))
+            .map(([ah, eh, lt]) => [encodeHashToBase64(ah), encodeHashToBase64(eh), lt]);
+        console.log("probePublicEntriesWithTag()", tag, targets);
         this._perspective.publicTags[tag] = targets;
-        for (const[target, _lt] of targets) {
+        for (const[linkAh, target, _lt] of targets) {
             if (!this._perspective.publicTagsByTarget[target]) {
                 this._perspective.publicTagsByTarget[target] = []
             }
@@ -205,6 +206,27 @@ export class TaggingZvm extends ZomeViewModel {
 
 
     /** */
+    async untagPublicEntryAll(eh: EntryHashB64) {
+        const tags = this._perspective.publicTagsByTarget[eh];
+        console.log("untagPublicEntryAll()", eh)
+        if (!tags) {
+            return Promise.reject("Target PublicEntry not found");
+        }
+        for (const tag of tags) {
+            const index = this._perspective.publicTags[tag].findIndex((tuple) => tuple[1] == eh);
+            console.log("untagPublicEntryAll() tag ", tag, index);
+            const tuple = this._perspective.publicTags[tag][index];
+            await this.zomeProxy.untagPublicEntry(decodeHashFromBase64(tuple[0]));
+            this._perspective.publicTags[tag].splice(index, 1);
+        }
+        /** update perspective */
+        delete this._perspective.publicTagsByTarget[eh];
+        /** Done */
+        this.notifySubscribers();
+    }
+
+
+    /** */
     async tagPrivateEntry(eh: EntryHashB64, tags: string[], targetInfo: string) {
         console.log("tagPrivateEntry", eh, tags)
         const input = {
@@ -218,7 +240,7 @@ export class TaggingZvm extends ZomeViewModel {
             if (!this._perspective.privateTags[tag]) {
                 this._perspective.privateTags[tag] = [];
             }
-            this._perspective.privateTags[tag].push([eh, targetInfo])
+            this._perspective.privateTags[tag].push(["", eh, targetInfo])
             if (!this._perspective.privateTagsByTarget[eh]) {
                 this._perspective.privateTagsByTarget[eh] = [];
             }
@@ -236,17 +258,19 @@ export class TaggingZvm extends ZomeViewModel {
             tags,
             link_tag_to_entry: targetInfo,
         } as TaggingInput;
-        await this.zomeProxy.tagPublicEntry(input);
+        const link_ahs = await this.zomeProxy.tagPublicEntry(input);
+        let i = 0;
         /** update perspective */
         for (const tag of tags) {
             if (!this._perspective.publicTags[tag]) {
                 this._perspective.publicTags[tag] = [];
             }
-            this._perspective.publicTags[tag].push([eh, targetInfo])
+            this._perspective.publicTags[tag].push([encodeHashToBase64(link_ahs[i]), eh, targetInfo])
             if (!this._perspective.publicTagsByTarget[eh]) {
                 this._perspective.publicTagsByTarget[eh] = [];
             }
             this._perspective.publicTagsByTarget[eh].push(tag);
+            i += 1;
         }
         this.notifySubscribers();
     }
