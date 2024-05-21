@@ -30,7 +30,7 @@ pub struct UntagInput {
 }
 
 
-/// Zome Callback
+///// Zome Callback
 //#[hdk_extern(infallible)]
 //fn post_commit(signedActionList: Vec<SignedActionHashed>) {
 //    debug!("TAGGING post_commit() called for {} actions", signedActionList.len());
