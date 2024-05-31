@@ -37,7 +37,7 @@ import {
 } from "./files.perspective";
 import {TaggingZvm} from "./tagging.zvm";
 import {FILES_DEFAULT_ROLE_NAME} from "../bindings/files.types";
-import {NotificationsZvm} from "@ddd-qc/notifications-dvm/dist/viewModels/notifications.zvm";
+//import {NotificationsZvm} from "@ddd-qc/notifications-dvm/dist/viewModels/notifications.zvm";
 import {ProfilesAltZvm, ProfilesZvm} from "@ddd-qc/profiles-dvm";
 
 

@@ -1,12 +1,12 @@
 import {setup, wrapPathInSvg} from "@ddd-qc/we-utils";
 import {createFilesApplet} from "./createFilesApplet";
-import {AppletServices} from "@lightningrodlabs/we-applet";
+import {AppletServices, RecordInfo} from "@lightningrodlabs/we-applet";
 import {getAssetInfo} from "./appletServices/getAssetInfo";
 import {blockTypes} from "./appletServices/blockTypes";
 import {DeliveryEntryType} from "@ddd-qc/delivery";
 import {devtestNames, setupFilesEntryView} from "./devtest";
 import {search} from "./appletServices/search";
-import {AppAgentClient, RoleName, ZomeName} from "@holochain/client";
+import {AppClient, RoleName, ZomeName} from "@holochain/client";
 import {WAL} from "@lightningrodlabs/we-applet/dist/types";
 import {mdiFileOutline} from "@mdi/js";
 
@@ -57,12 +57,10 @@ async function setupFilesMainView() {
 
 /** */
 export async function bindAsset(
-  appletClient: AppAgentClient,
+  appletClient: AppClient,
   srcWal: WAL,
   dstWal: WAL,
-  dstRoleName: RoleName,
-  dstIntegrityZomeName: ZomeName,
-  dstEntryType: string,
+  dstRecordInfo?: RecordInfo,
 ): Promise<void> {
     /* FIXME */
 }

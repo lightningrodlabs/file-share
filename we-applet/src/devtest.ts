@@ -54,9 +54,11 @@ export async function setupFilesEntryView() {
 /** */
 function createManifestEntryRenderInfo(eh: EntryHash, context: ViewFileContext): AssetViewInfo {
     const entryInfo = emptyEntryAppletView as AssetViewInfo;
-    entryInfo.roleName = FILES_DEFAULT_ROLE_NAME;
-    entryInfo.integrityZomeName = DELIVERY_INTERGRITY_ZOME_NAME;
-    entryInfo.entryType = snake(DeliveryEntryType.PublicManifest);
+    entryInfo.recordInfo = {
+        roleName: FILES_DEFAULT_ROLE_NAME,
+        integrityZomeName: DELIVERY_INTERGRITY_ZOME_NAME,
+        entryType: snake(DeliveryEntryType.PublicManifest),
+    };
     entryInfo.wal.hrl[1] = eh;
     entryInfo.wal.context = context;
 
