@@ -1,13 +1,13 @@
 import {
     AgentPubKey, AgentPubKeyB64,
-    AppAgentClient,
+    AppClient,
     decodeHashFromBase64,
     encodeHashToBase64,
     EntryHash,
     Timestamp
 } from "@holochain/client";
 import {AppletHash, WAL} from "@lightningrodlabs/we-applet/dist/types";
-import {WeServices} from "@lightningrodlabs/we-applet/dist/api";
+import {WeaveServices} from "@lightningrodlabs/we-applet/dist/api";
 import {asCellProxy} from "@ddd-qc/we-utils";
 import {FILES_DEFAULT_ROLE_NAME, FilesProxy} from "@ddd-qc/files";
 import {ParcelDescription, ParcelManifest, ParcelReference} from "@ddd-qc/delivery";
@@ -21,7 +21,7 @@ import {ParcelDescription, ParcelManifest, ParcelReference} from "@ddd-qc/delive
 
 
 /** Return EntryHashs of Manifests whose name match the search filter */
-export async function search(appletClient: AppAgentClient, appletHash: AppletHash, weServices: WeServices, searchFilter: string): Promise<Array<WAL>> {
+export async function search(appletClient: AppClient, appletHash: AppletHash, weServices: WeaveServices, searchFilter: string): Promise<Array<WAL>> {
     console.log("Files/we-applet/search():", searchFilter);
     const searchLC = searchFilter.toLowerCase();
 

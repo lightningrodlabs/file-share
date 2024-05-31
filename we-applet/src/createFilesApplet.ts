@@ -1,10 +1,10 @@
 import {
-  AppAgentWebsocket, encodeHashToBase64,
+  AppWebsocket, encodeHashToBase64,
 } from "@holochain/client";
 //import { msg } from "@lit/localize";
 import {
   RenderInfo,
-  WeServices,
+  WeaveServices,
 } from "@lightningrodlabs/we-applet";
 import {FilesApp} from "@files/app";
 import {AppletViewInfo, ProfilesApi} from "@ddd-qc/we-utils";
@@ -20,7 +20,7 @@ export interface ViewFileContext {
 /** */
 export async function createFilesApplet(
   renderInfo: RenderInfo,
-  weServices: WeServices,
+  weServices: WeaveServices,
 ): Promise<FilesApp> {
 
   if (renderInfo.type =="cross-applet-view") {
@@ -40,8 +40,8 @@ export async function createFilesApplet(
   //const showFileOnly = false; // FIXME
 
   /** Determine profilesAppInfo */
-  const mainAppAgentWs = appletViewInfo.appletClient as AppAgentWebsocket;
-  const mainAppWs = mainAppAgentWs.appWebsocket;
+  const mainAppWs = appletViewInfo.appletClient as AppWebsocket;
+  //const mainAppWs = mainAppAgentWs.appWebsocket;
   let profilesAppInfo = await profilesClient.client.appInfo();
   console.log("createFilesApplet() profilesAppInfo", profilesAppInfo, encodeHashToBase64(mainAppInfo.agent_pub_key));
   /** Check if roleName is actually a cloneId */

@@ -20,7 +20,7 @@ import {
   FILES_DEFAULT_ROLE_NAME, ProfileInfo,
 } from "@ddd-qc/files";
 import {HC_ADMIN_PORT, HC_APP_PORT} from "./globals";
-import {AppletId, AppletView, CreatableName, GroupProfile, WAL, WeServices} from "@lightningrodlabs/we-applet";
+import {AppletId, AppletView, CreatableName, GroupProfile, WAL, WeaveServices} from "@lightningrodlabs/we-applet";
 import {ProfilesDvm} from "@ddd-qc/profiles-dvm";
 import {AssetViewInfo} from "@ddd-qc/we-utils";
 import {DELIVERY_INTERGRITY_ZOME_NAME, DELIVERY_ZOME_NAME, DeliveryEntryType} from "@ddd-qc/delivery";
@@ -33,7 +33,7 @@ import "./files-main-page"
 import "@ddd-qc/files";
 import {createContext} from "@lit/context";
 
-const weClientContext = createContext<WeServices>('we_client');
+const weClientContext = createContext<WeaveServices>('weave_client');
 
 
 /**
@@ -59,7 +59,7 @@ export class FilesApp extends HappElement {
 
   /** All arguments should be provided when constructed explicity */
   constructor(appWs?: AppWebsocket, private _adminWs?: AdminWebsocket, private _canAuthorizeZfns?: boolean, readonly appId?: InstalledAppId, public appletView?: AppletView) {
-    super(appWs ? appWs : HC_APP_PORT, appId);
+    super(appWs ? appWs : HC_APP_PORT, appId, _adminWs? undefined : new URL(`ws://localhost:${HC_ADMIN_PORT}`));
     console.log("FilesApp.HVM_DEF", FilesApp.HVM_DEF);
     if (_canAuthorizeZfns == undefined) {
       this._canAuthorizeZfns = true;
@@ -89,7 +89,7 @@ export class FilesApp extends HappElement {
       profilesCloneId: CloneId | undefined,
       profilesZomeName: ZomeName,
       profilesProxy: AppProxy,
-      weServices: WeServices,
+      weServices: WeaveServices,
       thisAppletHash: EntryHash,
       //showEntryOnly?: boolean,
       appletView: AppletView,
@@ -113,7 +113,7 @@ export class FilesApp extends HappElement {
   async createWeProfilesDvm(profilesProxy: AppProxy, profilesAppId: InstalledAppId, profilesBaseRoleName: BaseRoleName,
                             profilesCloneId: CloneId | undefined,
                             _profilesZomeName: ZomeName): Promise<void> {
-    const profilesAppInfo = await profilesProxy.appInfo({installed_app_id: profilesAppId});
+    const profilesAppInfo = await profilesProxy.appInfo();
     const profilesDef: DvmDef = {ctor: ProfilesDvm, baseRoleName: profilesBaseRoleName, isClonable: false};
     const cell_infos = Object.values(profilesAppInfo.cell_info);
     console.log("createProfilesDvm() cell_infos:", cell_infos);
@@ -249,13 +249,16 @@ export class FilesApp extends HappElement {
           break;
         case "asset":
           const assetViewInfo = this.appletView as AssetViewInfo;
-          if (assetViewInfo.roleName != FILES_DEFAULT_ROLE_NAME) {
-            throw new Error(`Files/we-applet: Unknown role name '${assetViewInfo.roleName}'.`);
+          if (!assetViewInfo.recordInfo) {
+            throw new Error(`Files/we-applet: Missing AssetViewInfo.recordInfo.`);
           }
-          if (assetViewInfo.integrityZomeName != DELIVERY_INTERGRITY_ZOME_NAME) {
-            throw new Error(`Files/we-applet: Unknown zome '${assetViewInfo.integrityZomeName}'.`);
+          if (assetViewInfo.recordInfo.roleName != FILES_DEFAULT_ROLE_NAME) {
+            throw new Error(`Files/we-applet: Unknown role name '${assetViewInfo.recordInfo.roleName}'.`);
           }
-          const entryType = pascal(assetViewInfo.entryType);
+          if (assetViewInfo.recordInfo.integrityZomeName != DELIVERY_INTERGRITY_ZOME_NAME) {
+            throw new Error(`Files/we-applet: Unknown zome '${assetViewInfo.recordInfo.integrityZomeName}'.`);
+          }
+          const entryType = pascal(assetViewInfo.recordInfo.entryType);
           console.log("pascal entryType", entryType);
           switch (entryType) {
             case DeliveryEntryType.PrivateManifest:

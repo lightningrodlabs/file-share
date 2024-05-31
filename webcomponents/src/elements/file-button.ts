@@ -15,14 +15,14 @@ import {kind2Icon} from "../fileTypeUtils";
 import {SelectedType} from "./files-menu";
 import {prettyFileSize} from "../utils";
 import {ParcelDescription} from "@ddd-qc/delivery";
-import {Hrl, weaveUrlFromWal, WeServices} from "@lightningrodlabs/we-applet";
+import {Hrl, weaveUrlFromWal, WeaveServices} from "@lightningrodlabs/we-applet";
 //import {weClientContext} from "@lightningrodlabs/we-applet/context";
 import {createContext} from "@lit/context";
 import {WAL} from "@lightningrodlabs/we-applet/dist/types";
 import {msg} from "@lit/localize";
 import {SlTooltip} from "@shoelace-style/shoelace";
 
-export const weClientContext = createContext<WeServices>('we_client');
+export const weClientContext = createContext<WeaveServices>('weave_client');
 
 /**
  * @element
@@ -40,7 +40,7 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
     @property() description?: ParcelDescription;
 
     @consume({ context: weClientContext, subscribe: true })
-    weServices: WeServices;
+    weServices: WeaveServices;
 
 
     /** -- Methods -- */

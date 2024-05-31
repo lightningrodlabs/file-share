@@ -3,7 +3,7 @@ import {customElement, property, state} from "lit/decorators.js";
 import {DnaElement, HAPP_ENV, HappEnvType} from "@ddd-qc/lit-happ";
 import {Dictionary} from "@ddd-qc/cell-proxy";
 import {decodeHashFromBase64, encodeHashToBase64, EntryHashB64, Timestamp,} from "@holochain/client";
-import {AppletInfo, GroupProfile, weaveUrlFromAppletHash, FrameNotification, WeServices} from "@lightningrodlabs/we-applet";
+import {AppletInfo, GroupProfile, weaveUrlFromAppletHash, FrameNotification, WeaveServices} from "@lightningrodlabs/we-applet";
 import {consume} from "@lit/context";
 import {createContext} from "@lit/context";
 
@@ -83,7 +83,7 @@ import {mdiAlertOctagonOutline, mdiAlertOutline, mdiCheckCircleOutline, mdiInfor
 
 
 export const REPORT_BUG_URL = `https://github.com/lightningrodlabs/files/issues/new`;
-const weClientContext = createContext<WeServices>('we_client');
+const weClientContext = createContext<WeaveServices>('weave_client');
 
 
 /**
@@ -113,7 +113,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
     deliveryPerspective!: DeliveryPerspective;
 
     @consume({ context: weClientContext, subscribe: true })
-    weServices: WeServices;
+    weServices: WeaveServices;
 
 
     /** AppletId -> AppletInfo */
