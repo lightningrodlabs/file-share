@@ -9,7 +9,7 @@ import {
   ZomeName
 } from "@holochain/client";
 import {
-  HvmDef, HappElement, HCL, Cell,
+  HvmDef, HappElement, HCL,
   BaseRoleName,
   CloneId,
   AppProxy,
@@ -161,22 +161,23 @@ export class FilesApp extends HappElement {
 
   /** */
   async hvmConstructed() {
-    console.log("hvmConstructed()", this._adminWs, this._canAuthorizeZfns)
-    /** Authorize all zome calls */
-    if (!this._adminWs && this._canAuthorizeZfns) {
-      this._adminWs = await AdminWebsocket.connect({url: new URL(`ws://localhost:${HC_ADMIN_PORT}`)});
-      console.log("hvmConstructed() connect() called", this._adminWs);
-    }
-    if (this._adminWs && this._canAuthorizeZfns) {
-      await this.hvm.authorizeAllZomeCalls(this._adminWs);
-      console.log("*** Zome call authorization complete");
-    } else {
-      if (!this._canAuthorizeZfns) {
-        console.warn("No adminWebsocket provided (Zome call authorization done)")
-      } else {
-        console.log("Zome call authorization done externally")
-      }
-    }
+    console.log("hvmConstructed()", this._adminWs, this._canAuthorizeZfns);
+
+    // /** Authorize all zome calls */
+    // if (!this._adminWs && this._canAuthorizeZfns) {
+    //   this._adminWs = await AdminWebsocket.connect({url: new URL(`ws://localhost:${HC_ADMIN_PORT}`)});
+    //   console.log("hvmConstructed() connect() called", this._adminWs);
+    // }
+    // if (this._adminWs && this._canAuthorizeZfns) {
+    //   await this.hvm.authorizeAllZomeCalls(this._adminWs);
+    //   console.log("*** Zome call authorization complete");
+    // } else {
+    //   if (!this._canAuthorizeZfns) {
+    //     console.warn("No adminWebsocket provided (Zome call authorization done)")
+    //   } else {
+    //     console.log("Zome call authorization done externally")
+    //   }
+    // }
 
     /** Attempt Probe EntryDefs */
     let attempts = 5;
