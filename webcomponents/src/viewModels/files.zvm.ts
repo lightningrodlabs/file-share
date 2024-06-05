@@ -8,6 +8,7 @@ import {
 import {ZomeViewModel} from "@ddd-qc/lit-happ";
 import {FilesProxy} from "../bindings/files.proxy";
 import {SendFileInput} from "../bindings/files.types";
+import {DistributionStrategy} from "@ddd-qc/delivery/dist/bindings/delivery.types";
 
 //import WebWorker from 'web-worker:./commitPrivateFile.ts';
 
@@ -160,7 +161,7 @@ export class FilesZvm extends ZomeViewModel {
         const recipients = recipientB64s.map((b64) => decodeHashFromBase64(b64));
         const input: SendFileInput = {
             manifest_eh: decodeHashFromBase64(manifestEh),
-            strategy: { NORMAL: null },
+            strategy: DistributionStrategy.Normal,
             recipients,
         };
         console.log('sending file:', input);

@@ -192,9 +192,7 @@ export type FilesEntryVariantPrivEncKey = {PrivEncKey: PrivEncKey}
 export type FilesEntry = 
  | FilesEntryVariantFileShare | FilesEntryVariantPrivEncKey;
 
-export type FilesLinkTypes =
-  | {Attachment: null};
-export enum FilesLinkTypesType {
+export enum FilesLinkTypes {
 	Attachment = 'Attachment',
 }
 

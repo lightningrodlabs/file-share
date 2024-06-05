@@ -163,7 +163,7 @@ export class StoreDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
                                    }
                                }  else {
                                    let maybeSplitObj;
-                                   let str = msg("File already shared to group or stored locally")
+                                   let str = msg("File already published to group or stored locally")
                                    try {
                                        maybeSplitObj = await this._dvm.startPublishFile(this._file, this._selectedTags, (manifestEh: EntryHashB64) => {
                                            console.log("<store-dialog>.onUploadDone()", manifestEh, this);

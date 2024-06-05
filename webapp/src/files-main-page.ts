@@ -25,9 +25,9 @@ import {
     type2Icon,
     FileTableItem,
     kind2Type,
-    DistributionTableItem, filesSharedStyles, kind2Icon, ProfileInfo, FileView
+    DistributionTableItem, filesSharedStyles, kind2Icon, ProfileInfo,
 } from "@ddd-qc/files";
-import {DeliveryPerspective, DeliveryStateType, ParcelReference} from "@ddd-qc/delivery";
+import {DeliveryPerspective, DeliveryState, ParcelReference} from "@ddd-qc/delivery";
 import {
     FilesDvmPerspective,
     FilesNotification,
@@ -41,7 +41,7 @@ import {
     FilesNotificationVariantReplyReceived
 } from "@ddd-qc/files";
 
-import {DistributionStateType} from "@ddd-qc/delivery/dist/bindings/delivery.types";
+import {DistributionState} from "@ddd-qc/delivery/dist/bindings/delivery.types";
 import {columnBodyRenderer} from "@vaadin/grid/lit";
 import {Profile as ProfileMat} from "@ddd-qc/profiles-dvm";
 
@@ -297,7 +297,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
     async refresh() {
         await this._dvm.probeAll();
         await this._dvm.filesZvm.zomeProxy.getPrivateFiles();
-        await this._dvm.deliveryZvm.queryAll();
+        await this._dvm.deliveryZvm.zomeProxy.queryAll();
         this.requestUpdate();
     }
 
@@ -385,11 +385,11 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             const timestamp = notifLog[0];
             const peers = this._dvm.profilesZvm.getAgents().map((peer) => decodeHashFromBase64(peer));
             console.log("PublicSharingComplete. notifying...", peers.map((p) => encodeHashToBase64(p)));
-            this._dvm.deliveryZvm.zomeProxy.notifyPublicParcel({peers, timestamp, pr, removed:false});
+            this._dvm.deliveryZvm.zomeProxy.broadcastPublicParcelGossip({peers, timestamp, pr, removed:false});
             /** Ext. Notification */
-            const subject = "" + myProfile.nickname + " " + msg("shared a file");
+            const subject = "" + myProfile.nickname + " " + msg("published a file");
             const notifMsg = `
-            ${myProfile.nickname} ${msg("has shared the file")} "${publicManifest.description.name}" (${prettyFileSize(publicManifest.description.size)}) ${msg("with the group")} ${this._groupName}.
+            ${myProfile.nickname} ${msg("has published the file")} "${publicManifest.description.name}" (${prettyFileSize(publicManifest.description.size)}) ${msg("with the group")} ${this._groupName}.
             ${msg("You can download this file by going to the Files app.")}
             `;
             const recipients = peers
@@ -757,13 +757,13 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                         <vaadin-grid-column path="state" header=${msg("State")}
                             ${columnBodyRenderer(
                             ({ state }) => {
-                                if (DeliveryStateType.Unsent in state) {
+                                if (DeliveryState.Unsent in state) {
                                     return html`<span>${msg("Delivery notice unsent")}</span>`
                                 }
-                                if (DeliveryStateType.PendingNotice in state) {
+                                if (DeliveryState.PendingNotice in state) {
                                     return html`<span>${msg("Delivery notice pending reception")}</span>`
                                 }
-                                if (DeliveryStateType.NoticeDelivered in state) {
+                                if (DeliveryState.NoticeDelivered in state) {
                                     return html`<span>${msg("Waiting for reply")}</span>`
                                 }
                                 return html`<span>${msg("Unknown")}</span>`
@@ -939,7 +939,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             }
             if (this._selectedMenuItem.type == SelectedType.Sent) {
                 let distributionItems = Object.entries(this.deliveryPerspective.distributions)
-                    .filter(([_distribAh, tuple]) => DistributionStateType.AllAcceptedParcelsReceived in tuple[2])
+                    .filter(([_distribAh, tuple]) => DistributionState.AllAcceptedParcelsReceived == tuple[2])
                     .map(([distribAh, [distribution, sentTs, _fullState, _stateMap]]) => {
                         const description = distribution.delivery_summary.parcel_reference.description;
                         const ppEh = encodeHashToBase64(distribution.delivery_summary.parcel_reference.eh);
@@ -947,12 +947,12 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                         for (const recipientHash of distribution.recipients) {
                             const recipient = encodeHashToBase64(recipientHash);
                             let receptionTs = 0;
-                            let deliveryState = DeliveryStateType.ParcelRefused;
+                            let deliveryState = DeliveryState.ParcelRefused;
                             /** If recipient refused, no receptionAck should be found */
                             if (this.deliveryPerspective.receptionAcks[distribAh] && this.deliveryPerspective.receptionAcks[distribAh][recipient]) {
                                 const [_receptionAck, receptionTs2] = this.deliveryPerspective.receptionAcks[distribAh][recipient];
                                 receptionTs = receptionTs2;
-                                deliveryState = DeliveryStateType.ParcelDelivered;
+                                deliveryState = DeliveryState.ParcelDelivered;
                             }
                             items.push({
                                 distribAh,

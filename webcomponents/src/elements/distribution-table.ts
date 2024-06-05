@@ -7,7 +7,7 @@ import {
 } from "@holochain/client";
 import {prettyFileSize, prettyTimestamp} from "../utils";
 import {columnBodyRenderer, columnFooterRenderer} from "@vaadin/grid/lit";
-import {DeliveryStateType, ParcelDescription} from "@ddd-qc/delivery/dist/bindings/delivery.types";
+import {DeliveryState, ParcelDescription} from "@ddd-qc/delivery/dist/bindings/delivery.types";
 import {filesSharedStyles} from "../sharedStyles";
 import {kind2Type} from "../fileTypeUtils";
 import {Profile as ProfileMat} from "@ddd-qc/profiles-dvm";
@@ -17,7 +17,7 @@ import {msg} from "@lit/localize";
 export interface DistributionTableItem {
     distribAh: ActionHashB64,
     recipient: AgentPubKeyB64,
-    deliveryState: DeliveryStateType,
+    deliveryState: DeliveryState,
     ppEh: EntryHashB64,
     description: ParcelDescription,
     sentTs: number,

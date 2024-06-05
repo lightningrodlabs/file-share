@@ -182,13 +182,13 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
             case ActivityLogType.NewGroupFile: {
                 const variant = log.value as ActivityLogTypeVariantNewGroupFile;
                 manifestEh = variant.manifestEh;
-                message = msg(`has been shared by`);
+                message = msg(`has been published by`);
                 peer = variant.peer;
                 break;}
             case ActivityLogType.RemovedGroupFile: {
                 const variant = log.value as ActivityLogTypeVariantRemovedGroupFile;
                 manifestEh = variant.manifestEh;
-                message = msg(`has been removed by`);
+                message = msg(`has been unpublished by`);
                 peer = variant.peer;
                 break;}
             case ActivityLogType.NewPersonalFile: {

@@ -4,8 +4,8 @@ import {
     DeliveryProperties,
     DeliveryZvm, ParcelChunk, ParcelKindVariantManifest,
     ParcelManifest, ParcelReference,
-    SignalProtocol,
-    SignalProtocolType
+    DeliverySignalProtocol,
+    DeliverySignalProtocolType, DeliverySignal,
 } from "@ddd-qc/delivery";
 import {
     AgentPubKeyB64,
@@ -137,7 +137,7 @@ export class FilesDvm extends DnaViewModel {
     /** */
     async downloadFile(manifestEh: EntryHashB64): Promise<void> {
         console.log("FilesDvm.downloadFile()", manifestEh);
-        const [manifest, _ts] = await this.deliveryZvm.getManifest(manifestEh);
+        const [manifest, _ts] = await this.deliveryZvm.fetchManifest(manifestEh);
         const maybeCachedData = this.getFileFromCache(manifest.data_hash);
         let file;
         if (maybeCachedData == null) {
@@ -215,16 +215,28 @@ export class FilesDvm extends DnaViewModel {
         } while (maybeParcel && !maybeParcel.deleteInfo)
     }
 
+
     /** */
     mySignalHandler(signal: AppSignal): void {
-        const now = Date.now();
         if (signal.zome_name != DELIVERY_ZOME_NAME) {
             return;
         }
         console.log("FilesDvm received signal", signal);
-        const deliverySignal = signal.payload as SignalProtocol;
-        /** */
-        if (SignalProtocolType.NewLocalManifest in deliverySignal) {
+        if (!("signal" in (signal.payload as Object))) {
+            return;
+        }
+
+        const sig = signal.payload as DeliverySignal;
+        for (const signal of sig.signal) {
+            /*await*/ this.handleDeliverySignal(signal, encodeHashToBase64(sig.from));
+        }
+    }
+
+
+    /** */
+    async handleDeliverySignal(deliverySignal: DeliverySignalProtocol, from: AgentPubKeyB64): Promise<void> {
+        const now = Date.now();
+        if (DeliverySignalProtocolType.NewLocalManifest in deliverySignal) {
             const manifest = deliverySignal.NewLocalManifest[2];
             const manifestEh = encodeHashToBase64(deliverySignal.NewLocalManifest[0])
             /** Follow-up send if requested */
@@ -246,7 +258,7 @@ export class FilesDvm extends DnaViewModel {
             this._perspective.uploadState = undefined;
             this.notifySubscribers();
         }
-        if (SignalProtocolType.NewLocalChunk in deliverySignal) {
+        if (DeliverySignalProtocolType.NewLocalChunk in deliverySignal) {
             console.log("signal NewLocalChunk", deliverySignal.NewLocalChunk);
             //this._perspective.notificationLogs.push([now, SignalProtocolType.NewChunk, deliverySignal]);
             const chunk = deliverySignal.NewLocalChunk[1];
@@ -274,7 +286,7 @@ export class FilesDvm extends DnaViewModel {
                 this.notifySubscribers();
             }
         }
-        if (SignalProtocolType.NewReceptionProof in deliverySignal) {
+        if (DeliverySignalProtocolType.NewReceptionProof in deliverySignal) {
             console.log("signal NewReceptionProof", deliverySignal.NewReceptionProof);
             this.filesZvm.zomeProxy.getPrivateFiles().then(() => {
                 /** Into Notification */
@@ -286,7 +298,7 @@ export class FilesDvm extends DnaViewModel {
                 this.notifySubscribers();
             })
         }
-        if (SignalProtocolType.RemovedPublicParcel in deliverySignal) {
+        if (DeliverySignalProtocolType.RemovedPublicParcel in deliverySignal) {
             console.log("signal RemovedPublicParcel dvm", deliverySignal.RemovedPublicParcel);
             const author = encodeHashToBase64(deliverySignal.RemovedPublicParcel[3]);
             const pr = deliverySignal.RemovedPublicParcel[2];
@@ -297,7 +309,7 @@ export class FilesDvm extends DnaViewModel {
             }
         }
 
-        if (SignalProtocolType.NewPublicParcel in deliverySignal) {
+        if (DeliverySignalProtocolType.NewPublicParcel in deliverySignal) {
             console.log("signal NewPublicParcel dvm", deliverySignal.NewPublicParcel);
             const author = encodeHashToBase64(deliverySignal.NewPublicParcel[3]);
             const pr = deliverySignal.NewPublicParcel[2];
@@ -312,20 +324,20 @@ export class FilesDvm extends DnaViewModel {
                 this.loopUntilFound(pr);
             } else {
                 /** Notify UI that we finished publishing something */
-                const notif = {
-                    manifestEh: ppEh,
-                } as FilesNotificationVariantPublicSharingComplete;
-                this._perspective.notificationLogs.push([now, FilesNotificationType.PublicSharingComplete, notif]);
-                this._perspective.uploadState = undefined;
-
-                this.notifySubscribers();
-
+                if (this._perspective.uploadState) {
+                    const notif = {
+                        manifestEh: ppEh,
+                    } as FilesNotificationVariantPublicSharingComplete;
+                    this._perspective.notificationLogs.push([now, FilesNotificationType.PublicSharingComplete, notif]);
+                    this._perspective.uploadState = undefined;
+                    this.notifySubscribers();
+                }
                 /** Notify peers that we published something */
                 //const peers = this._profilesZvm.getAgents().map((peer) => decodeHashFromBase64(peer));
                 //this._dvm.deliveryZvm.zomeProxy.notifyNewPublicParcel({peers, timestamp, pr});
             }
         }
-        if (SignalProtocolType.NewReplyAck in deliverySignal) {
+        if (DeliverySignalProtocolType.NewReplyAck in deliverySignal) {
             console.log("signal NewReplyAck", deliverySignal.NewReplyAck);
             /** Into Notification */
             const notif = {
@@ -336,7 +348,7 @@ export class FilesDvm extends DnaViewModel {
             this._perspective.notificationLogs.push([now, FilesNotificationType.ReplyReceived, notif]);
             this.notifySubscribers();
         }
-        if (SignalProtocolType.NewNotice in deliverySignal) {
+        if (DeliverySignalProtocolType.NewNotice in deliverySignal) {
             console.log("signal NewNotice", deliverySignal.NewNotice);
             /** Into Notification */
             const notif = {
@@ -348,7 +360,7 @@ export class FilesDvm extends DnaViewModel {
             this._perspective.notificationLogs.push([now, FilesNotificationType.NewNoticeReceived, notif]);
             this.notifySubscribers();
         }
-        if (SignalProtocolType.NewReceptionAck in deliverySignal) {
+        if (DeliverySignalProtocolType.NewReceptionAck in deliverySignal) {
             console.log("signal NewReceptionAck", deliverySignal.NewReceptionAck);
             /** Into Notification */
             const notif = {
@@ -430,12 +442,14 @@ export class FilesDvm extends DnaViewModel {
         /** Remove tags */
         const tags = this.taggingZvm.getTargetPublicTags(eh);
         console.log("removePublicParcel()", tags);
-        await this.taggingZvm.untagPublicEntryAll(eh);
+        if (tags.length > 0) {
+            await this.taggingZvm.untagPublicEntryAll(eh);
+        }
 
         /** Notify  peer */
         const pr = {eh: decodeHashFromBase64(pprm.ppEh), description: pprm.description};
         const peers = this.profilesZvm.getAgents().map((peer) => decodeHashFromBase64(peer));
-        this.deliveryZvm.zomeProxy.notifyPublicParcel({peers, timestamp: pprm.creationTs /* fixme */, pr, removed: true});
+        this.deliveryZvm.zomeProxy.broadcastPublicParcelGossip({peers, timestamp: pprm.creationTs /* fixme */, pr, removed: true});
         await this.deliveryZvm.probeDht();
     }
 
@@ -578,8 +592,8 @@ export class FilesDvm extends DnaViewModel {
 
 
     /** */
-    async getFile(ppEh: EntryHashB64): Promise<[ParcelManifest, string]> {
-        const [manifest, ts] = await this.deliveryZvm.getManifest(ppEh);
+    async fetchFile(ppEh: EntryHashB64): Promise<[ParcelManifest, string]> {
+        const [manifest, ts] = await this.deliveryZvm.fetchManifest(ppEh);
         //this.deliveryZvm.perspective.chunkCounts[manifest.data_hash] = 0;
         const dataB64 = await this.deliveryZvm.getParcelData(ppEh);
         return [manifest, dataB64];
@@ -588,7 +602,7 @@ export class FilesDvm extends DnaViewModel {
 
     /** */
     async parcel2FileData(manifestEh: EntryHashB64): Promise<string> {
-        const [_manifest, data] = await this.getFile(manifestEh);
+        const [_manifest, data] = await this.fetchFile(manifestEh);
         return data;
     }
 
@@ -611,7 +625,7 @@ export class FilesDvm extends DnaViewModel {
 
     /** */
     async parcel2File(manifestEh: EntryHashB64): Promise<File> {
-        const [manifest, data] = await this.getFile(manifestEh);
+        const [manifest, data] = await this.fetchFile(manifestEh);
         /** DEBUG - check if content is valid base64 */
         // if (!base64regex.test(data)) {
         //   const invalid_hash = sha256(data);
@@ -628,7 +642,7 @@ export class FilesDvm extends DnaViewModel {
         //console.log("Dvm.exportPerspective()", name)
         const dvmExport = {};
 
-        await this.deliveryZvm.getAllPublicManifest();
+        //await this.deliveryZvm.probeDht();
         const dJson = this.deliveryZvm.exportPerspective();
         dvmExport[DeliveryZvm.DEFAULT_ZOME_NAME] = JSON.parse(dJson);
 

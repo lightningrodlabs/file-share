@@ -176,9 +176,7 @@ export interface PrivateTag {
   value: string
 }
 
-export type TaggingLinkTypes =
-  | {PublicEntry: null} | {PrivateEntry: null} | {PublicTags: null} | {PrivateTags: null};
-export enum TaggingLinkTypesType {
+export enum TaggingLinkTypes {
 	PublicEntry = 'PublicEntry',
 	PrivateEntry = 'PrivateEntry',
 	PublicTags = 'PublicTags',
