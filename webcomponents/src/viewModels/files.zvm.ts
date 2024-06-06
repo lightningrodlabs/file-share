@@ -18,7 +18,7 @@ export class FilesZvm extends ZomeViewModel {
 
     static readonly ZOME_PROXY = FilesProxy;
 
-    private _allAppletIds: EntryHashB64[] = [];
+    //private _allAppletIds: EntryHashB64[] = [];
 
     //private _worker = new Worker("./commitPrivateFile.ts");
 

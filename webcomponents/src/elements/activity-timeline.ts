@@ -81,7 +81,7 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
 
         /** Remove Received files from private files */
         const receivedManifestEhs: EntryHashB64[] = Object.values(this.deliveryPerspective.receptions)
-            .map(([rp,_ts]) => encodeHashToBase64(this.deliveryPerspective.notices[encodeHashToBase64(rp.notice_eh)][0].summary.parcel_reference.eh));
+            .map(([rp,_ts]) => encodeHashToBase64(this.deliveryPerspective.notices[encodeHashToBase64(rp.notice_eh)][0].summary.parcel_reference.parcel_eh));
 
 
         const ReceivedFiles: ActivityLog[] = Object.entries(this.deliveryPerspective.receptions)
@@ -163,13 +163,13 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
         switch (log.type) {
             case ActivityLogType.DeliveryDeclined: {
                 const variant = log.value as ActivityLogTypeVariantDeliveryDeclined;
-                manifestEh = encodeHashToBase64(this.deliveryPerspective.distributions[variant.distributionAh][0].delivery_summary.parcel_reference.eh);
+                manifestEh = encodeHashToBase64(this.deliveryPerspective.distributions[variant.distributionAh][0].delivery_summary.parcel_reference.parcel_eh);
                 message = msg(`was declined by`);
                 peer = variant.peer;
                 break;}
             case ActivityLogType.DeliveryReceived: {
                 const variant = log.value as ActivityLogTypeVariantDeliveryReceived;
-                manifestEh = encodeHashToBase64(this.deliveryPerspective.distributions[variant.distributionAh][0].delivery_summary.parcel_reference.eh);
+                manifestEh = encodeHashToBase64(this.deliveryPerspective.distributions[variant.distributionAh][0].delivery_summary.parcel_reference.parcel_eh);
                 message = msg(`was received by`);
                 peer = variant.peer;
                 break;}

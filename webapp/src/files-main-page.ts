@@ -364,7 +364,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         if (FilesNotificationType.DistributionToRecipientComplete == type) {
             const distribAh = (notifLog[2] as FilesNotificationVariantDistributionToRecipientComplete).distribAh;
             const recipient = (notifLog[2] as FilesNotificationVariantDistributionToRecipientComplete).recipient;
-            const manifestEh = encodeHashToBase64(this.deliveryPerspective.distributions[distribAh][0].delivery_summary.parcel_reference.eh);
+            const manifestEh = encodeHashToBase64(this.deliveryPerspective.distributions[distribAh][0].delivery_summary.parcel_reference.parcel_eh);
             const privateManifest = this.deliveryPerspective.privateManifests[manifestEh][0];
             const maybeProfile = this._dvm.profilesZvm.getProfile(recipient);
             const recipientName = maybeProfile? maybeProfile.nickname : msg("Unknown");
@@ -381,7 +381,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             title = msg("File successfully published");
             message = `"${publicManifest.description.name}" (${prettyFileSize(publicManifest.description.size)})`;
             /** Notify peers that we published something */
-            const pr = {description: publicManifest.description, eh: decodeHashFromBase64(manifestEh)} as ParcelReference;
+            const pr: ParcelReference = {description: publicManifest.description, parcel_eh: decodeHashFromBase64(manifestEh)};
             const timestamp = notifLog[0];
             const peers = this._dvm.profilesZvm.getAgents().map((peer) => decodeHashFromBase64(peer));
             console.log("PublicSharingComplete. notifying...", peers.map((p) => encodeHashToBase64(p)));
@@ -942,7 +942,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     .filter(([_distribAh, tuple]) => DistributionState.AllAcceptedParcelsReceived == tuple[2])
                     .map(([distribAh, [distribution, sentTs, _fullState, _stateMap]]) => {
                         const description = distribution.delivery_summary.parcel_reference.description;
-                        const ppEh = encodeHashToBase64(distribution.delivery_summary.parcel_reference.eh);
+                        const parcelEh = encodeHashToBase64(distribution.delivery_summary.parcel_reference.parcel_eh);
                         let items: DistributionTableItem[] = []
                         for (const recipientHash of distribution.recipients) {
                             const recipient = encodeHashToBase64(recipientHash);
@@ -958,7 +958,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                                 distribAh,
                                 recipient,
                                 deliveryState,
-                                ppEh,
+                                parcelEh,
                                 description,
                                 sentTs,
                                 receptionTs,

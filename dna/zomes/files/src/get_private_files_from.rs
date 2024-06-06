@@ -18,7 +18,7 @@ pub fn get_private_files_from(sender: AgentPubKey) -> ExternResult<Vec<EntryHash
         DeliveryNoticeQueryField::Sender(sender),
     )?;
     let notices: Vec<DeliveryNotice> = decode_response(response)?;
-    let parcels: Vec<EntryHash> = notices.iter().map(|x| x.summary.parcel_reference.eh.clone()).collect();
+    let parcels: Vec<EntryHash> = notices.iter().map(|x| x.summary.parcel_reference.parcel_eh.clone()).collect();
     debug!("get_files_from() END - secret parcels found: {}", parcels.len());
     Ok(parcels)
 }

@@ -185,12 +185,10 @@ export const ATTACHMENTS_ROOT = "public_attachments";
 
 export enum FilesEntryType {
 	FileShare = 'FileShare',
-	PrivEncKey = 'PrivEncKey',
 }
 export type FilesEntryVariantFileShare = {FileShare: FileShare}
-export type FilesEntryVariantPrivEncKey = {PrivEncKey: PrivEncKey}
 export type FilesEntry = 
- | FilesEntryVariantFileShare | FilesEntryVariantPrivEncKey;
+ | FilesEntryVariantFileShare;
 
 export enum FilesLinkTypes {
 	Attachment = 'Attachment',
@@ -199,9 +197,4 @@ export enum FilesLinkTypes {
 /** Bogus Entry */
 export interface FileShare {
   value: string
-}
-
-/** Entry representing the Private Encryption Key of an Agent */
-export interface PrivEncKey {
-  value: unknown
 }

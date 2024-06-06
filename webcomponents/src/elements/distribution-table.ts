@@ -18,7 +18,7 @@ export interface DistributionTableItem {
     distribAh: ActionHashB64,
     recipient: AgentPubKeyB64,
     deliveryState: DeliveryState,
-    ppEh: EntryHashB64,
+    parcelEh: EntryHashB64,
     description: ParcelDescription,
     sentTs: number,
     receptionTs: number,

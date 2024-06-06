@@ -117,7 +117,7 @@ export async function splitData(full_data_string: string, chunkMaxSize: number):
 
 
 export function getCompletionPct(deliveryZvm: DeliveryZvm, notice: DeliveryNotice, missingChunks: Set<EntryHashB64>): number {
-    const manifest = deliveryZvm.perspective.privateManifests[encodeHashToBase64(notice.summary.parcel_reference.eh)]
+    const manifest = deliveryZvm.perspective.privateManifests[encodeHashToBase64(notice.summary.parcel_reference.parcel_eh)]
     if (!manifest) {
         return 0;
     }

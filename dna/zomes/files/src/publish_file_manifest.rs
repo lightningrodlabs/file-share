@@ -25,7 +25,7 @@ pub fn publish_file_manifest(input: WriteManifestInput) -> ExternResult<(EntryHa
         chunks: input.chunks,
         description: description.clone(),
     };
-    let response = call_delivery_zome("publish_manifest", manifest)?;
+    let response = call_delivery_zome("publish_public_parcel", manifest)?;
     let eh: EntryHash = decode_response(response)?;
     /// Done
     return Ok((eh, description));

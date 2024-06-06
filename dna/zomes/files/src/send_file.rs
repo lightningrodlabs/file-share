@@ -29,7 +29,7 @@ pub fn send_file(input: SendFileInput) -> ExternResult<ActionHash> {
 
     /// Form Parcel Reference
     let parcel_reference = ParcelReference {
-        eh: input.manifest_eh,
+        parcel_eh: input.manifest_eh,
         description: manifest.description,
     };
     /// Form distribute input
