@@ -2,10 +2,18 @@ import {AppProxy, delay, DnaViewModel, HCL, ZvmDef} from "@ddd-qc/lit-happ";
 import {
     DELIVERY_ZOME_NAME,
     DeliveryProperties,
-    DeliveryZvm, ParcelChunk, ParcelKindVariantManifest,
-    ParcelManifest, ParcelReference,
+    DeliveryZvm,
+    ParcelChunk,
+    ParcelKindVariantManifest,
+    ParcelManifest,
+    ParcelReference,
     DeliverySignalProtocol,
-    DeliverySignalProtocolType, DeliverySignal, DeliveryGossipProtocolType,
+    DeliverySignalProtocolType,
+    DeliverySignal,
+    DeliveryGossipProtocolType,
+    DeliveryEntryKindType,
+    EntryStateChange,
+    PublicParcelRecordMat,
 } from "@ddd-qc/delivery";
 import {
     AgentPubKeyB64,
@@ -32,7 +40,7 @@ import {
     FilesNotificationType,
     FilesNotificationVariantDistributionToRecipientComplete,
     FilesNotificationVariantNewNoticeReceived,
-    FilesNotificationVariantPublicSharingComplete,
+    FilesNotificationVariantPublicSharingComplete, FilesNotificationVariantPublicSharingRemoved,
     FilesNotificationVariantReceptionComplete, FilesNotificationVariantReplyReceived
 } from "./files.perspective";
 import {TaggingZvm} from "./tagging.zvm";
@@ -47,9 +55,11 @@ import {ProfilesAltZvm, ProfilesZvm} from "@ddd-qc/profiles-dvm";
 export class FilesDvm extends DnaViewModel {
 
     /** For commit & send follow-up */
-    private _mustSendTo?: AgentPubKeyB64[];
-    /** For publish / send follow-up */
-    private _mustAddTags?;
+    /** dataHash -> recipients[] */
+    private _mustSendTo: Record<EntryHashB64, AgentPubKeyB64[]> = {};
+    /** For publish or send follow-up */
+    /** dataHash -> {isPrivate, tags} */
+    private _mustAddTags: Record<EntryHashB64, Object> = {};
 
     /** -- DnaViewModel Interface -- */
 
@@ -77,7 +87,7 @@ export class FilesDvm extends DnaViewModel {
 
     /** -- ViewModel Interface -- */
 
-    private _perspective: FilesDvmPerspective = {notificationLogs: []};
+    private _perspective: FilesDvmPerspective = {uploadStates: {}, notificationLogs: []};
 
 
     /** */
@@ -115,23 +125,25 @@ export class FilesDvm extends DnaViewModel {
 
     /** -- Methods -- */
 
+    /** */
     private _sendFile(manifestEh: EntryHashB64, manifest: ParcelManifest) {
-        const recipients = this._mustSendTo.map((agent) => (' ' + agent).slice(1)); // deep copy string for promise
-        console.log("sendFile follow up", manifestEh, this._mustSendTo);
-        this.filesZvm.sendFile(manifestEh, this._mustSendTo).then((distribAh) => {
+        const sendTo = this._mustSendTo[manifest.data_hash];
+        const recipients = sendTo.map((agent) => (' ' + agent).slice(1)); // deep copy string for promise
+        console.log("sendFile follow up", manifestEh, sendTo);
+        this.filesZvm.sendFile(manifestEh, sendTo).then((distribAh) => {
             /** Into Notification */
             const now = Date.now();
-            console.log("File delivery request sent", recipients, this._mustAddTags);
+            const addTags = this._mustAddTags[manifest.data_hash] as any;
+            console.log("File delivery request sent", recipients, addTags);
             this._perspective.notificationLogs.push([now, FilesNotificationType.DeliveryRequestSent, {distribAh, manifestEh, recipients}]);
-            if (this._mustAddTags && this._mustAddTags.isPrivate) {
-                /*await*/ this.taggingZvm.tagPrivateEntry(manifestEh, this._mustAddTags.tags, manifest.description.name);
-                this._mustAddTags = undefined;
+            if (addTags && addTags.isPrivate) {
+                /*await*/ this.taggingZvm.tagPrivateEntry(manifestEh, addTags.tags, manifest.description.name);
+                delete this._mustAddTags[manifest.data_hash];
             }
             this.notifySubscribers();
         });
-        this._mustSendTo = undefined;
+        delete this._mustSendTo[manifest.data_hash];
     }
-
 
 
     /** */
@@ -195,24 +207,32 @@ export class FilesDvm extends DnaViewModel {
 
     /** */
     private async loopUntilFound(pr: ParcelReference){
-        let maybeParcel;
+        let maybeParcel: PublicParcelRecordMat;
         do  {
             await delay(3000)
             await this.probeAll();
             maybeParcel = this.deliveryZvm.perspective.publicParcels[encodeHashToBase64(pr.parcel_eh)];
             //console.log("loopUntilFound()", maybeParcel);
-        } while (maybeParcel === undefined)
+        } while (maybeParcel === undefined);
+        /* Into Notification */
+        const notif = {manifestEh: maybeParcel.parcelEh} as FilesNotificationVariantPublicSharingComplete;
+        this._perspective.notificationLogs.push([maybeParcel.creationTs, FilesNotificationType.PublicSharingComplete, notif]);
+        this.notifySubscribers();
     }
 
     /** */
     private async loopUntilRemoved(pr: ParcelReference){
-        let maybeParcel;
+        let maybeParcel: PublicParcelRecordMat;
         do  {
             await delay(3000)
             await this.probeAll();
             maybeParcel = this.deliveryZvm.perspective.publicParcels[encodeHashToBase64(pr.parcel_eh)];
             //console.log("loopUntilRemoved()", maybeParcel);
-        } while (maybeParcel && !maybeParcel.deleteInfo)
+        } while (maybeParcel && !maybeParcel.deleteInfo);
+        /* Into Notification */
+        const notif = {manifestEh: maybeParcel.parcelEh} as FilesNotificationVariantPublicSharingRemoved;
+        this._perspective.notificationLogs.push([maybeParcel.deleteInfo[0], FilesNotificationType.PublicSharingRemoved, notif]);
+        this.notifySubscribers();
     }
 
 
@@ -236,83 +256,140 @@ export class FilesDvm extends DnaViewModel {
     /** */
     async handleDeliverySignal(deliverySignal: DeliverySignalProtocol, from: AgentPubKeyB64): Promise<void> {
         const now = Date.now();
-        if (DeliverySignalProtocolType.NewLocalManifest in deliverySignal) {
-            console.log("signal NewLocalManifest dvm", deliverySignal.NewLocalManifest);
-            const manifest = deliverySignal.NewLocalManifest[2];
-            const manifestEh = encodeHashToBase64(deliverySignal.NewLocalManifest[0])
-            /** Follow-up send if requested */
-            if (this._mustSendTo && this._mustSendTo.length > 0) {
-                this._sendFile(manifestEh, manifest);
-            }
-            /** Add Public tags if any */
-            if (this._mustAddTags) {
-                if (this._mustAddTags.isPrivate) {
-                    /*await*/ this.taggingZvm.tagPrivateEntry(manifestEh, this._mustAddTags.tags, manifest.description.name);
-                } else {
-                    /*await*/ this.taggingZvm.tagPublicEntry(manifestEh, this._mustAddTags.tags, manifest.description.name);
+        if (DeliverySignalProtocolType.Entry in deliverySignal) {
+            const [entryInfo, entryKind] = deliverySignal.Entry;
+            const hash = encodeHashToBase64(entryInfo.hash);
+            const author = encodeHashToBase64(entryInfo.author);
+            if (DeliveryEntryKindType.ParcelManifest in entryKind) {
+                console.log("signal ParcelManifest dvm", entryKind.ParcelManifest);
+                const manifest: ParcelManifest = entryKind.ParcelManifest;
+                /** Follow-up send if requested */
+                if (this._mustSendTo[manifest.data_hash] && this._mustSendTo[manifest.data_hash].length > 0) {
+                    this._sendFile(hash, manifest);
                 }
-                this._mustAddTags = undefined;
-            }
-            /** FIXME: Check wheter this makes sense */
-            if (this._perspective.uploadState) {
-                if (this._perspective.uploadState.callback) this._perspective.uploadState.callback(manifestEh);
-                /*await*/
-                this.cacheFile(this._perspective.uploadState.file);
-                this._perspective.uploadState = undefined;
-            }
-            /** Done */
-            this.notifySubscribers();
-        }
-        if (DeliverySignalProtocolType.NewLocalChunk in deliverySignal) {
-            console.log("signal NewLocalChunk dvm", deliverySignal.NewLocalChunk);
-            //this._perspective.notificationLogs.push([now, SignalProtocolType.NewChunk, deliverySignal]);
-            const chunk = deliverySignal.NewLocalChunk[1];
-            const manifestPair = this.deliveryZvm.perspective.localManifestByData[chunk.data_hash];
-            if (!manifestPair && this._perspective.uploadState) {
-                /** We are the original creator of this file */
-                if (!this._perspective.uploadState.chunks) {
-                    this._perspective.uploadState.chunks = [];
-                }
-                this._perspective.uploadState.chunks.push(deliverySignal.NewLocalChunk[0]);
-                const index = this._perspective.uploadState.chunks.length;
-                /** Commit manifest if it was the last chunk */
-                if (this._perspective.uploadState.chunks.length == this._perspective.uploadState.splitObj.numChunks) {
-                    if (this._perspective.uploadState.isPrivate) {
-                        this.filesZvm.commitPrivateManifest(this._perspective.uploadState.file, this._perspective.uploadState.splitObj.dataHash, this._perspective.uploadState.chunks)
+                /** Add Public tags if any */
+                if (this._mustAddTags[manifest.data_hash]) {
+                    const addTags = this._mustAddTags[manifest.data_hash] as any;
+                    if (addTags.isPrivate) {
+                        /*await*/
+                        this.taggingZvm.tagPrivateEntry(hash, addTags.tags, manifest.description.name);
                     } else {
-                        this.filesZvm.publishFileManifest(this._perspective.uploadState.file, this._perspective.uploadState.splitObj.dataHash, this._perspective.uploadState.chunks);
+                        /*await*/
+                        this.taggingZvm.tagPublicEntry(hash, addTags.tags, manifest.description.name);
                     }
-                } else {
-                    /** Otherwise commit next batch */
-                    if (this._perspective.uploadState.chunks.length == this._perspective.uploadState.written_chunks) {
-                        this.writeChunks();
-                    }
+                    delete this._mustAddTags[manifest.data_hash];
                 }
+                /** cleanup uploadState if any */
+                if (this._perspective.uploadStates[manifest.data_hash]) {
+                    if (this._perspective.uploadStates[manifest.data_hash].callback) {
+                        this._perspective.uploadStates[manifest.data_hash].callback(hash);
+                    }
+                    /*await*/
+                    this.cacheFile(this._perspective.uploadStates[manifest.data_hash].file);
+                    delete this._perspective.uploadStates[manifest.data_hash];
+                }
+                /** Done */
                 this.notifySubscribers();
             }
-        }
-        if (DeliverySignalProtocolType.NewReceptionProof in deliverySignal) {
-            console.log("signal NewReceptionProof dvm", deliverySignal.NewReceptionProof);
-            this.filesZvm.zomeProxy.getPrivateFiles().then(() => {
+            if (DeliveryEntryKindType.ParcelChunk in entryKind) {
+                console.log("signal ParcelChunk dvm", entryKind.ParcelChunk);
+                //this._perspective.notificationLogs.push([now, SignalProtocolType.NewChunk, deliverySignal]);
+                const chunk = entryKind.ParcelChunk;
+                const manifestPair = this.deliveryZvm.perspective.localManifestByData[chunk.data_hash];
+                const uploadState = this._perspective.uploadStates[chunk.data_hash];
+                if (!manifestPair && uploadState) {
+                    /** We are the original creator of this file */
+                    if (!uploadState.chunks) {
+                        uploadState.chunks = [];
+                    }
+                    uploadState.chunks.push(entryInfo.hash);
+                    //const index = uploadState.chunks.length;
+                    /** Commit manifest if it was the last chunk */
+                    if (uploadState.chunks.length == uploadState.splitObj.numChunks) {
+                        if (uploadState.isPrivate) {
+                            this.filesZvm.commitPrivateManifest(uploadState.file, uploadState.splitObj.dataHash, uploadState.chunks)
+                        } else {
+                            this.filesZvm.publishFileManifest(uploadState.file, uploadState.splitObj.dataHash, uploadState.chunks);
+                        }
+                    } else {
+                        /** Otherwise commit next batch */
+                        if (uploadState.chunks.length == uploadState.written_chunks) {
+                            this.writeChunks(chunk.data_hash);
+                        }
+                    }
+                    this._perspective.uploadStates[chunk.data_hash] = uploadState;
+                    this.notifySubscribers();
+                }
+            }
+            if (DeliveryEntryKindType.ReceptionProof in entryKind) {
+                console.log("signal ReceptionProof dvm", entryKind.ReceptionProof);
                 /** Into Notification */
-                const notif = {
-                    noticeEh: encodeHashToBase64(deliverySignal.NewReceptionProof[2].notice_eh),
-                    manifestEh: encodeHashToBase64(deliverySignal.NewReceptionProof[2].parcel_eh),
-                } as FilesNotificationVariantReceptionComplete;
-                this._perspective.notificationLogs.push([now, FilesNotificationType.ReceptionComplete, notif]);
-                this.notifySubscribers();
-            })
-        }
-        if (DeliverySignalProtocolType.DeletedPublicParcel in deliverySignal) {
-            console.log("signal RemovedPublicParcel dvm", deliverySignal.DeletedPublicParcel);
-            //const author = encodeHashToBase64(deliverySignal.DeletedPublicParcel[3]);
-            //const pr = deliverySignal.DeletedPublicParcel[2];
-            //const timestamp = deliverySignal.RemovedPublicParcel[1];
-            //const ppEh = encodeHashToBase64(pr.eh);
+                if (entryInfo.state == EntryStateChange.Created) {
+                    this.filesZvm.zomeProxy.getPrivateFiles().then(() => {
+                        const notif = {
+                            noticeEh: encodeHashToBase64(entryKind.ReceptionProof.notice_eh),
+                            manifestEh: encodeHashToBase64(entryKind.ReceptionProof.parcel_eh),
+                        } as FilesNotificationVariantReceptionComplete;
+                        this._perspective.notificationLogs.push([now, FilesNotificationType.ReceptionComplete, notif]);
+                        this.notifySubscribers();
+                    })
+                }
+            }
+            // if (DeliveryEntryKindType.DeletedPublicParcel in deliverySignal) {
+            //     console.log("signal RemovedPublicParcel dvm", deliverySignal.DeletedPublicParcel);
+            //     const author = encodeHashToBase64(deliverySignal.DeletedPublicParcel[3]);
+            //     const pr = deliverySignal.DeletedPublicParcel[2];
+            //     const timestamp = deliverySignal.DeletedPublicParcel[1];
+            //     const ppEh = encodeHashToBase64(pr.parcel_eh);
+            // }
+            // if (DeliveryEntryKindType.PublicParcel in entryKind) {
+            //     console.log("signal PublicParcel dvm", entryKind.PublicParcel);
+            //     const pr = entryKind.PublicParcel;
+            // }
+            if (DeliveryEntryKindType.ReplyAck in entryKind) {
+                console.log("signal ReplyAck", entryKind.ReplyAck);
+                /** Into Notification */
+                if (entryInfo.state == EntryStateChange.Created) {
+                    const notif = {
+                        distribAh: encodeHashToBase64(entryKind.ReplyAck.distribution_ah),
+                        recipient: encodeHashToBase64(entryKind.ReplyAck.recipient),
+                        hasAccepted: entryKind.ReplyAck.has_accepted,
+                    } as FilesNotificationVariantReplyReceived;
+                    this._perspective.notificationLogs.push([now, FilesNotificationType.ReplyReceived, notif]);
+                    this.notifySubscribers();
+                }
+            }
+            if (DeliveryEntryKindType.DeliveryNotice in entryKind) {
+                console.log("signal DeliveryNotice", entryKind.DeliveryNotice);
+                /** Into Notification */
+                if (entryInfo.state == EntryStateChange.Created) {
+                    const notif = {
+                        noticeEh: hash,
+                        manifestEh: encodeHashToBase64(entryKind.DeliveryNotice.summary.parcel_reference.parcel_eh),
+                        description: entryKind.DeliveryNotice.summary.parcel_reference.description,
+                        sender: encodeHashToBase64(entryKind.DeliveryNotice.sender),
+                    } as FilesNotificationVariantNewNoticeReceived;
+                    this._perspective.notificationLogs.push([now, FilesNotificationType.NewNoticeReceived, notif]);
+                    this.notifySubscribers();
+                }
+            }
+            if (DeliveryEntryKindType.ReceptionAck in entryKind) {
+                console.log("signal ReceptionAck", entryKind.ReceptionAck);
+                /** Into Notification */
+                if (entryInfo.state == EntryStateChange.Created) {
+                    const notif = {
+                        distribAh: encodeHashToBase64(entryKind.ReceptionAck.distribution_ah),
+                        recipient: encodeHashToBase64(entryKind.ReceptionAck.recipient),
+                    } as FilesNotificationVariantDistributionToRecipientComplete;
+                    this._perspective.notificationLogs.push([now, FilesNotificationType.DistributionToRecipientComplete, notif]);
+                    this.notifySubscribers();
+                }
+            }
         }
         if (DeliverySignalProtocolType.Gossip in deliverySignal) {
             console.log("signal Gossip dvm", deliverySignal.Gossip);
             const gossip = deliverySignal.Gossip;
+
             if (DeliveryGossipProtocolType.PublicParcelPublished in gossip) {
                 console.log("Gossip signal PublicParcelPublished dvm", gossip.PublicParcelPublished);
                 const pr = gossip.PublicParcelPublished[2];
@@ -327,70 +404,29 @@ export class FilesDvm extends DnaViewModel {
                     /** Have DeliveryZvm perform probePublicParcels */
                     this.loopUntilFound(pr);
                 } else {
-                    /** Notify UI that we finished publishing something */
-                      //if (this._perspective.uploadState) {
-                    const notif = {
-                          manifestEh: parcelEh,
-                      } as FilesNotificationVariantPublicSharingComplete;
+                    /** Alert self that we finished publishing something */
+                    const manifestPair = this.deliveryZvm.perspective.localPublicManifests[parcelEh];
+                    const notif = {manifestEh: parcelEh} as FilesNotificationVariantPublicSharingComplete;
                     this._perspective.notificationLogs.push([now, FilesNotificationType.PublicSharingComplete, notif]);
-                    this._perspective.uploadState = undefined;
+                    delete this._perspective.uploadStates[manifestPair[0].data_hash];
                     this.notifySubscribers();
-                    //}
                     /** Notify peers that we published something */
-                    //const peers = this._profilesZvm.getAgents().map((peer) => decodeHashFromBase64(peer));
-                    //this._dvm.deliveryZvm.zomeProxy.notifyNewPublicParcel({peers, timestamp, pr});
+                    const peers = this.profilesZvm.getAgents().map((peer) => decodeHashFromBase64(peer));
+                    console.log("PublicSharingComplete. broadcasting", peers.map((p) => encodeHashToBase64(p)));
+                    this.deliveryZvm.zomeProxy.broadcastPublicParcelGossip({peers, timestamp: now, pr, removed: false});
                 }
             }
             if (DeliveryGossipProtocolType.PublicParcelUnpublished in gossip) {
                 console.log("Gossip signal PublicParcelUnpublished dvm", gossip.PublicParcelUnpublished);
                 const pr = gossip.PublicParcelUnpublished[2];
-                //const del_ts = gossip.PublicParcelUnpublished[1];
-                //const pr_eh = gossip.PublicParcelUnpublished[0];
-                //const parcelEh = encodeHashToBase64(pr.parcel_eh);
                 if (from != this.cell.agentPubKey) {
                     this.loopUntilRemoved(pr);
+                } else {
+                    /* Alert self */
+                    const notif = {manifestEh: encodeHashToBase64(pr.parcel_eh)} as FilesNotificationVariantPublicSharingRemoved;
+                    this._perspective.notificationLogs.push([now, FilesNotificationType.PublicSharingRemoved, notif]);
                 }
             }
-        }
-        if (DeliverySignalProtocolType.NewPublicParcel in deliverySignal) {
-            console.log("signal NewPublicParcel dvm", deliverySignal.NewPublicParcel);
-            const author = encodeHashToBase64(deliverySignal.NewPublicParcel[3]);
-            const pr = deliverySignal.NewPublicParcel[2];
-            //const timestamp = deliverySignal.NewPublicParcel[1];
-            //const prEh = encodeHashToBase64(deliverySignal.NewPublicParcel[0]);
-        }
-        if (DeliverySignalProtocolType.NewReplyAck in deliverySignal) {
-            console.log("signal NewReplyAck", deliverySignal.NewReplyAck);
-            /** Into Notification */
-            const notif = {
-                distribAh: encodeHashToBase64(deliverySignal.NewReplyAck[2].distribution_ah),
-                recipient: encodeHashToBase64(deliverySignal.NewReplyAck[2].recipient),
-                hasAccepted: deliverySignal.NewReplyAck[2].has_accepted,
-            } as FilesNotificationVariantReplyReceived;
-            this._perspective.notificationLogs.push([now, FilesNotificationType.ReplyReceived, notif]);
-            this.notifySubscribers();
-        }
-        if (DeliverySignalProtocolType.NewNotice in deliverySignal) {
-            console.log("signal NewNotice", deliverySignal.NewNotice);
-            /** Into Notification */
-            const notif = {
-                noticeEh: encodeHashToBase64(deliverySignal.NewNotice[0]),
-                manifestEh: encodeHashToBase64(deliverySignal.NewNotice[2].summary.parcel_reference.parcel_eh),
-                description: deliverySignal.NewNotice[2].summary.parcel_reference.description,
-                sender: encodeHashToBase64(deliverySignal.NewNotice[2].sender),
-            } as FilesNotificationVariantNewNoticeReceived;
-            this._perspective.notificationLogs.push([now, FilesNotificationType.NewNoticeReceived, notif]);
-            this.notifySubscribers();
-        }
-        if (DeliverySignalProtocolType.NewReceptionAck in deliverySignal) {
-            console.log("signal NewReceptionAck", deliverySignal.NewReceptionAck);
-            /** Into Notification */
-            const notif = {
-                distribAh: encodeHashToBase64(deliverySignal.NewReceptionAck[2].distribution_ah),
-                recipient: encodeHashToBase64(deliverySignal.NewReceptionAck[2].recipient),
-            } as FilesNotificationVariantDistributionToRecipientComplete;
-            this._perspective.notificationLogs.push([now, FilesNotificationType.DistributionToRecipientComplete, notif]);
-            this.notifySubscribers();
         }
     }
 
@@ -477,36 +513,37 @@ export class FilesDvm extends DnaViewModel {
 
     /** Can't send to self */
     async startCommitPrivateAndSendFile(file: File, recipients: AgentPubKeyB64[], tags: string[]): Promise<SplitObject | undefined> {
-        const mustSentTo = recipients
+        const agents = recipients
             .filter((agent) => agent != this.cell.agentPubKey);
-        console.log("startCommitPrivateAndSendFile()", recipients, mustSentTo);
-        if (mustSentTo.length == 0) {
+        console.log("startCommitPrivateAndSendFile()", recipients, agents);
+        if (agents.length == 0) {
             return undefined;
         }
-        this._mustSendTo = mustSentTo;
-        return this.startCommitPrivateFile(file, tags);
+        return this.startCommitPrivateFile(file, tags, agents);
     }
 
 
     /** */
-    async startCommitPrivateFile(file: File, tags: string[]): Promise<SplitObject> {
+    async startCommitPrivateFile(file: File, tags: string[], recipients?: AgentPubKeyB64[]): Promise<SplitObject> {
         console.log('dvm.startCommitPrivateFile: ', file, tags);
-        if (this._perspective.uploadState) {
+        const splitObj = await splitFile(file, this.dnaProperties.maxChunkSize);
+        if (this._perspective.uploadStates[splitObj.dataHash]) {
             return Promise.reject("File commit already in progress");
         }
-        const splitObj = await splitFile(file, this.dnaProperties.maxChunkSize);
-
+        if (recipients) {
+            this._mustSendTo[splitObj.dataHash] = recipients;
+        }
         /** Check if file already present */
         const maybeManifest = this.deliveryZvm.perspective.localManifestByData[splitObj.dataHash]
         if (maybeManifest) {
             console.warn("File already stored locally");
             const manifestEh = maybeManifest[0];
-            if (this._mustSendTo) {
+            if (this._mustSendTo[splitObj.dataHash]) {
                 this._sendFile(manifestEh, this.deliveryZvm.perspective.privateManifests[manifestEh][0]);
             }
             return;
         }
-        this._perspective.uploadState = {
+        this._perspective.uploadStates[splitObj.dataHash] = {
             splitObj,
             file,
             isPrivate: true,
@@ -517,8 +554,8 @@ export class FilesDvm extends DnaViewModel {
         this.notifySubscribers();
 
         /** Initiate write chunk loop */
-        /* await */ this.writeChunks();
-        this._mustAddTags = {isPrivate: true, tags};
+        /* await */ this.writeChunks(splitObj.dataHash);
+        this._mustAddTags[splitObj.dataHash] = {isPrivate: true, tags};
         /* Done */
         return splitObj;
     }
@@ -528,10 +565,10 @@ export class FilesDvm extends DnaViewModel {
     /** */
     async startPublishFile(file: File, tags: string[], callback?: FilesCb): Promise<SplitObject> {
         console.log('dvm.startPublishFile: ', file, tags);
-        if (this._perspective.uploadState) {
+        const splitObj = await splitFile(file, this.dnaProperties.maxChunkSize);
+        if (this._perspective.uploadStates[splitObj.dataHash]) {
             return Promise.reject("File commit already in progress");
         }
-        const splitObj = await splitFile(file, this.dnaProperties.maxChunkSize);
         /** Check if file already present */
         const maybeExist = this.deliveryZvm.perspective.localManifestByData[splitObj.dataHash];
         if (maybeExist) {
@@ -545,7 +582,7 @@ export class FilesDvm extends DnaViewModel {
             }
             return;
         }
-        this._perspective.uploadState = {
+        this._perspective.uploadStates[splitObj.dataHash] = {
             splitObj,
             file,
             isPrivate: false,
@@ -557,30 +594,30 @@ export class FilesDvm extends DnaViewModel {
         this.notifySubscribers();
 
         /** Initial write chunk loop */
-        /*await */ this.writeChunks();
+        /*await */ this.writeChunks(splitObj.dataHash);
         // this.filesZvm.zomeProxy.writePublicFileChunks([{data_hash: splitObj.dataHash, data: splitObj.chunks[0]}]);
-        this._mustAddTags = {isPrivate: false, tags};
+        this._mustAddTags[splitObj.dataHash] = {isPrivate: false, tags};
         /** Done */
         return splitObj;
     }
 
 
     /** */
-    async writeChunks(): Promise<void> {
+    async writeChunks(dataHash: string): Promise<void> {
         const MAX_WEBSOCKET_PAYLOAD = 8 * 1024 * 1024;
         const num_chunks = Math.floor(MAX_WEBSOCKET_PAYLOAD / this.dnaProperties.maxChunkSize);
-        const splitObj = this._perspective.uploadState.splitObj;
-        const index = this._perspective.uploadState.index;
+        const splitObj = this._perspective.uploadStates[dataHash].splitObj;
+        const index = this._perspective.uploadStates[dataHash].index;
         /** Form chunks from splitObj */
         const chunks = [];
         for (let i = index; i < index + num_chunks && i < splitObj.numChunks; i += 1) {
             chunks.push({data_hash: splitObj.dataHash, data: splitObj.chunks[i]} as ParcelChunk)
         }
-        this._perspective.uploadState.written_chunks += chunks.length;
-        this._perspective.uploadState.index += chunks.length;
-        console.log("writeChunks()", chunks.length, this._perspective.uploadState.written_chunks)
+        this._perspective.uploadStates[dataHash].written_chunks += chunks.length;
+        this._perspective.uploadStates[dataHash].index += chunks.length;
+        console.log("writeChunks()", chunks.length, this._perspective.uploadStates[dataHash].written_chunks)
         /** Write */
-        if (this._perspective.uploadState.isPrivate) {
+        if (this._perspective.uploadStates[dataHash].isPrivate) {
             await this.filesZvm.zomeProxy.writePrivateFileChunks(chunks);
         } else {
             await this.filesZvm.zomeProxy.writePublicFileChunks(chunks);

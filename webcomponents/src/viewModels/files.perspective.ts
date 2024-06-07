@@ -18,8 +18,8 @@ interface UploadState {
 
 /** */
 export interface FilesDvmPerspective {
-    /** */
-    uploadState?: UploadState;
+    /** dataHash -> UploadState */
+    uploadStates: Record<string, UploadState>;
     /** Notifications */
     notificationLogs: [Timestamp, FilesNotificationType, FilesNotification][];
 }
@@ -32,6 +32,7 @@ export enum FilesNotificationType {
     ReceptionComplete = 'ReceptionComplete',
     DistributionToRecipientComplete = 'DistributionToRecipientComplete',
     PublicSharingComplete = 'PublicSharingComplete',
+    PublicSharingRemoved = 'PublicSharingRemoved',
     PrivateCommitComplete = 'PrivateCommitComplete',
     NewNoticeReceived = 'NewNoticeReceived',
     ReplyReceived = 'ReplyReceived',
@@ -42,6 +43,7 @@ export type FilesNotificationVariantDeliveryRequestSent = {distribAh: ActionHash
 export type FilesNotificationVariantReceptionComplete = {noticeEh: EntryHashB64, manifestEh: EntryHashB64 }
 export type FilesNotificationVariantDistributionToRecipientComplete = {distribAh: ActionHashB64, recipient: AgentPubKeyB64 }
 export type FilesNotificationVariantPublicSharingComplete = {manifestEh: EntryHashB64 }
+export type FilesNotificationVariantPublicSharingRemoved = {manifestEh: EntryHashB64 }
 export type FilesNotificationVariantPrivateCommitComplete = {manifestEh: EntryHashB64 }
 export type FilesNotificationVariantNewNoticeReceived = {noticeEh: EntryHashB64, manifestEh: EntryHashB64, description: ParcelDescription, sender: AgentPubKeyB64 }
 export type FilesNotificationVariantReplyReceived = {distribAh: ActionHashB64, recipient: AgentPubKeyB64, hasAccepted: boolean }
@@ -53,6 +55,7 @@ export type FilesNotification =
     | FilesNotificationVariantReceptionComplete
     | FilesNotificationVariantDistributionToRecipientComplete
     | FilesNotificationVariantPublicSharingComplete
+    | FilesNotificationVariantPublicSharingRemoved
     | FilesNotificationVariantPrivateCommitComplete
     | FilesNotificationVariantNewNoticeReceived
     | FilesNotificationVariantReplyReceived

@@ -25,7 +25,7 @@ import {
     type2Icon,
     FileTableItem,
     kind2Type,
-    DistributionTableItem, filesSharedStyles, kind2Icon, ProfileInfo,
+    DistributionTableItem, filesSharedStyles, kind2Icon, ProfileInfo, FilesNotificationVariantPublicSharingRemoved,
 } from "@ddd-qc/files";
 import {DeliveryPerspective, DeliveryState, ParcelReference} from "@ddd-qc/delivery";
 import {
@@ -343,14 +343,6 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             icon = "check2-circle";
             title = msg("File delivery request sent");
             message = "" + privateManifest.description.name + " " + msg("to") + " " + recipientName;
-            /** Ext. Notification */
-            const subject = "" + myProfile.nickname + " " + msg("wants to send you a file");
-            const notifMsg = `
-            ${myProfile.nickname}${this.groupProfiles? msg("from") + " " + this.groupProfiles[0].name : "" } ${msg("would like to send you the file")}: "${privateManifest.description.name}" (${prettyFileSize(privateManifest.description.size)}).
-            ${msg("Please go to the Files app to Accept or Decline the request")}${this.appletId? `: ${weaveUrlFromAppletHash(decodeHashFromBase64(this.appletId))}` : "." }
-            `;
-            //this._dvm.notificationsZvm.sendNotification(notifMsg, subject, recipients);
-
         }
         if (FilesNotificationType.ReceptionComplete == type) {
             const manifestEh = (notifLog[2] as FilesNotificationVariantReceptionComplete).manifestEh;
@@ -375,29 +367,19 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         }
         if (FilesNotificationType.PublicSharingComplete == type) {
             const manifestEh = (notifLog[2] as FilesNotificationVariantPublicSharingComplete).manifestEh;
-            const publicManifest = this.deliveryPerspective.localPublicManifests[manifestEh][0];
+            const publicParcel = this.deliveryPerspective.publicParcels[manifestEh];
             variant = 'success';
             icon = "check2-circle";
-            title = msg("File successfully published");
-            message = `"${publicManifest.description.name}" (${prettyFileSize(publicManifest.description.size)})`;
-            /** Notify peers that we published something */
-            const pr: ParcelReference = {description: publicManifest.description, parcel_eh: decodeHashFromBase64(manifestEh)};
-            const timestamp = notifLog[0];
-            const peers = this._dvm.profilesZvm.getAgents().map((peer) => decodeHashFromBase64(peer));
-            console.log("PublicSharingComplete. notifying...", peers.map((p) => encodeHashToBase64(p)));
-            this._dvm.deliveryZvm.zomeProxy.broadcastPublicParcelGossip({peers, timestamp, pr, removed:false});
-            /** Ext. Notification */
-            const subject = "" + myProfile.nickname + " " + msg("published a file");
-            const notifMsg = `
-            ${myProfile.nickname} ${msg("has published the file")} "${publicManifest.description.name}" (${prettyFileSize(publicManifest.description.size)}) ${msg("with the group")} ${this._groupName}.
-            ${msg("You can download this file by going to the Files app.")}
-            `;
-            const recipients = peers
-                .map((agent) => encodeHashToBase64(agent))
-                .filter((agent) => agent != this.cell.agentPubKey); // exclude self
-            console.log("sendNotification() recipients", recipients.map((agent) => this._dvm.profilesZvm.getProfile(agent).nickname));
-            //console.log("Publish. Config keys:", this._dvm.notificationsZvm.config? Object.keys(this._dvm.notificationsZvm.config) : "none");
-            //this._dvm.notificationsZvm.sendNotification(notifMsg, subject, recipients);
+            title = msg("New file published");
+            message = `"${publicParcel.description.name}" (${prettyFileSize(publicParcel.description.size)})`;
+        }
+        if (FilesNotificationType.PublicSharingRemoved == type) {
+            const manifestEh = (notifLog[2] as FilesNotificationVariantPublicSharingRemoved).manifestEh;
+            const publicManifest = this.deliveryPerspective.publicParcels[manifestEh];
+            variant = 'warning';
+            icon = "x-octagon";
+            title = msg("File unpublished");
+            message = `"${publicManifest.description.name}"`;
         }
         if (FilesNotificationType.PrivateCommitComplete == type) {
             const manifestEh = (notifLog[2] as FilesNotificationVariantPrivateCommitComplete).manifestEh;
@@ -1025,6 +1007,9 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             }
         }
 
+        const uploadings = Object.keys(this.perspective.uploadStates);
+        const maybeUploading = uploadings.length > 0 ? uploadings[0] : undefined;
+
         /** Render all */
         return html`
         <div id="main">
@@ -1056,7 +1041,9 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     </sl-tooltip>
                     ${isInDev? html`
                         <button type="button" @click=${async () => {
-                            this._dvm.dumpLogs(); 
+                            this._dvm.dumpCallLogs();
+                            this._dvm.dumpSignalLogs();
+                            //this._dvm.dumpSignalLogs("zDelivery");
                             // await this._dvm.notificationsZvm.probeAll();
                             // await this._dvm.notificationsZvm.probeContacts(this._dvm.profilesZvm.getAgents());
                             // console.log("notificationsZvm.perspective", this._dvm.notificationsZvm.perspective);
@@ -1148,16 +1135,16 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         <!-- stack -->
         <div id="bottom-stack">
             <!-- commit button & panel -->
-            ${this.perspective.uploadState? html`
+            ${maybeUploading? html`
                         <div id="uploadingView">
                             <div style="display:flex; flex-direction:row; gap:35px;">
                                 <sl-progress-bar style="flex-grow:1;--indicator-color:#3dd23d;"
-                                                 .value=${Math.ceil(this.perspective.uploadState.chunks.length / this.perspective.uploadState.splitObj.numChunks * 100)}></sl-progress-bar>
+                                                 .value=${Math.ceil(this.perspective.uploadStates[maybeUploading].chunks.length / this.perspective.uploadStates[maybeUploading].splitObj.numChunks * 100)}></sl-progress-bar>
                             </div>
                             <div style="display:flex; flex-direction:row; gap:5px;color:white;">
                                 <sl-icon class="prefixIcon"
-                                         name=${kind2Icon({Manifest: this.perspective.uploadState.file.type})}></sl-icon>
-                                <files-filename filename=${this.perspective.uploadState.file.name} 
+                                         name=${kind2Icon({Manifest: this.perspective.uploadStates[maybeUploading].file.type})}></sl-icon>
+                                <files-filename filename=${this.perspective.uploadStates[maybeUploading].file.name} 
                                                  style="font-weight: bold; max-width: 175px; width:inherit; margin-right:3px;"></files-filename>
                                 <sl-icon style="margin-right:3px;" name="arrow-right"></sl-icon>
                                 <sl-icon name="hdd"></sl-icon>
@@ -1167,7 +1154,6 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 : html`
                 <sl-tooltip placement="left" content="Send/Share file" style="--show-delay: 200;">
                     <sl-button id="fab-publish" size="large" variant="primary" circle
-                               ?disabled=${this.perspective.uploadState}  
                                @click=${(_e) => {this.actionOverlayElem.open(); this.fabElem.style.display = "none"}}>
                         <sl-icon name="plus-lg" label="Add"></sl-icon>
                     </sl-button>

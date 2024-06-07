@@ -86,12 +86,12 @@ export class StoreDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
     /** */
     render() {
-        console.log("<store-dialog>.render()", this.wait, this._file, this.perspective.uploadState);
+        console.log("<store-dialog>.render()", this.wait, this._file, this.perspective.uploadStates);
 
         let content = html`<sl-spinner></sl-spinner>`;
 
-        if (this.wait && this.perspective.uploadState) {
-            let pct = Math.ceil(this.perspective.uploadState.written_chunks / this.perspective.uploadState.splitObj.numChunks * 100);
+        if (this.wait && this._splitObj && this.perspective.uploadStates[this._splitObj.dataHash]) {
+            let pct = Math.ceil(this.perspective.uploadStates[this._splitObj.dataHash].written_chunks / this.perspective.uploadStates[this._splitObj.dataHash].splitObj.numChunks * 100);
             content = html`<sl-progress-bar .value=${pct}>${pct}%</sl-progress-bar>`;
         }
 
