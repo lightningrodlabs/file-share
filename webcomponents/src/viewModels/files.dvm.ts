@@ -411,7 +411,7 @@ export class FilesDvm extends DnaViewModel {
                     delete this._perspective.uploadStates[manifestPair[0].data_hash];
                     this.notifySubscribers();
                     /** Notify peers that we published something */
-                    const peers = this.profilesZvm.getAgents().map((peer) => decodeHashFromBase64(peer));
+                    const peers = this._peersToSignal.map((peer) => decodeHashFromBase64(peer));
                     console.log("PublicSharingComplete. broadcasting", peers.map((p) => encodeHashToBase64(p)));
                     this.deliveryZvm.zomeProxy.broadcastPublicParcelGossip({peers, timestamp: now, pr, removed: false});
                 }
@@ -490,7 +490,7 @@ export class FilesDvm extends DnaViewModel {
 
 
     /** */
-    async removePublicParcel(eh: EntryHashB64) {
+    async removePublicParcel(eh: EntryHashB64, peersToSignal: AgentPubKeyB64[]) {
         const pprm = this.deliveryZvm.perspective.publicParcels[eh];
         if (!pprm) {
             return Promise.reject("No Public File found at address");
@@ -505,7 +505,7 @@ export class FilesDvm extends DnaViewModel {
         }
         /** Signal peers */
         const pr: ParcelReference = {parcel_eh: decodeHashFromBase64(pprm.parcelEh), description: pprm.description};
-        const peers = this.profilesZvm.getAgents().map((peer) => decodeHashFromBase64(peer));
+        const peers = peersToSignal.map((peer) => decodeHashFromBase64(peer));
         this.deliveryZvm.zomeProxy.broadcastPublicParcelGossip({peers, timestamp: pprm.creationTs /* fixme */, pr, removed: true});
         await this.deliveryZvm.probeDht();
     }
@@ -562,8 +562,9 @@ export class FilesDvm extends DnaViewModel {
 
 
 
+    private _peersToSignal: AgentPubKeyB64[] = [];
     /** */
-    async startPublishFile(file: File, tags: string[], callback?: FilesCb): Promise<SplitObject> {
+    async startPublishFile(file: File, tags: string[], peersToSignal: AgentPubKeyB64[], callback?: FilesCb): Promise<SplitObject> {
         console.log('dvm.startPublishFile: ', file, tags);
         const splitObj = await splitFile(file, this.dnaProperties.maxChunkSize);
         if (this._perspective.uploadStates[splitObj.dataHash]) {
@@ -582,6 +583,7 @@ export class FilesDvm extends DnaViewModel {
             }
             return;
         }
+        this._peersToSignal = peersToSignal;
         this._perspective.uploadStates[splitObj.dataHash] = {
             splitObj,
             file,

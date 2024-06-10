@@ -508,7 +508,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
     /** */
     async deletePublicFile() {
         console.log("deletePublicFile()", this._deletableFile)
-        await this._dvm.removePublicParcel(this._deletableFile);
+        await this._dvm.removePublicParcel(this._deletableFile, this._dvm.profilesZvm.getAgents());
         this._deletableFile = undefined;
         this.deleteDialogElem.open = false;
     }
