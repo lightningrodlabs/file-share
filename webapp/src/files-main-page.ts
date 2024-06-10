@@ -296,7 +296,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
     /** */
     async refresh() {
         await this._dvm.probeAll();
-        await this._dvm.filesZvm.zomeProxy.getPrivateFiles();
+        //await this._dvm.filesZvm.zomeProxy.getPrivateFiles();
         await this._dvm.deliveryZvm.zomeProxy.queryAll();
         this.requestUpdate();
     }

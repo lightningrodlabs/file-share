@@ -181,24 +181,8 @@ export class FilesProxy extends ZomeProxy {
     return this.call('get_file_info', eh);
   }
 
-  async getPrivateFiles(): Promise<[EntryHash, ParcelManifest][]> {
-    return this.call('get_private_files', null);
-  }
-
-  async getLocalPublicFiles(): Promise<[EntryHash, ParcelManifest][]> {
-    return this.call('get_local_public_files', null);
-  }
-
   async getPrivateFilesFrom(sender: AgentPubKey): Promise<EntryHash[]> {
     return this.call('get_private_files_from', sender);
-  }
-
-  async getUnrepliedNotices(): Promise<[AgentPubKey, EntryHash, number][]> {
-    return this.call('get_unreplied_notices', null);
-  }
-
-  async probePublicFiles(): Promise<[ParcelReference, Timestamp, AgentPubKey][]> {
-    return this.call('probe_public_files', null);
   }
 
   async processInbox(): Promise<void> {

@@ -325,14 +325,14 @@ export class FilesDvm extends DnaViewModel {
                 console.log("signal ReceptionProof dvm", entryKind.ReceptionProof);
                 /** Into Notification */
                 if (entryInfo.state == EntryStateChange.Created) {
-                    this.filesZvm.zomeProxy.getPrivateFiles().then(() => {
+                    //this.deliveryZvm.zomeProxy.queryAllPrivateManifests().then(() => {
                         const notif = {
                             noticeEh: encodeHashToBase64(entryKind.ReceptionProof.notice_eh),
                             manifestEh: encodeHashToBase64(entryKind.ReceptionProof.parcel_eh),
                         } as FilesNotificationVariantReceptionComplete;
                         this._perspective.notificationLogs.push([now, FilesNotificationType.ReceptionComplete, notif]);
                         this.notifySubscribers();
-                    })
+                   // })
                 }
             }
             // if (DeliveryEntryKindType.DeletedPublicParcel in deliverySignal) {
