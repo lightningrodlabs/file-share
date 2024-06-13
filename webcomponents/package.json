@@ -1,6 +1,6 @@
 {
   "name": "@ddd-qc/files",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "lit-happ elements for the Files DNA",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

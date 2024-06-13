@@ -220,6 +220,7 @@ export class FilesDvm extends DnaViewModel {
         this.notifySubscribers();
     }
 
+
     /** */
     private async loopUntilRemoved(pr: ParcelReference){
         let maybeParcel: PublicParcelRecordMat;
@@ -242,13 +243,13 @@ export class FilesDvm extends DnaViewModel {
             return;
         }
         console.log("FilesDvm received signal", signal);
-        if (!("signal" in (signal.payload as Object))) {
+        if (!("pulses" in (signal.payload as Object))) {
             return;
         }
 
         const sig = signal.payload as DeliverySignal;
-        for (const signal of sig.signal) {
-            /*await*/ this.handleDeliverySignal(signal, encodeHashToBase64(sig.from));
+        for (const pulse of sig.pulses) {
+            /*await*/ this.handleDeliverySignal(pulse, encodeHashToBase64(sig.from));
         }
     }
 
