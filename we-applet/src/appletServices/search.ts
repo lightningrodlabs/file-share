@@ -37,7 +37,7 @@ export async function search(appletClient: AppClient, appletHash: AppletHash, we
     const dnaHash = decodeHashFromBase64(proxy.cell.dnaHash);
 
     /** Search Private Files */
-    const privateFiles: [EntryHash, ParcelManifest][] = await proxy.getPrivateFiles();
+    const privateFiles: [EntryHash, ParcelManifest][] = []; // FIXME: await proxy.getPrivateFiles();
     const matchingPrivate: [Uint8Array, ParcelDescription, AgentPubKeyB64, boolean][] = privateFiles
         .filter(([_eh, manifest]) => manifest.description.name.toLowerCase().includes(searchLC))
         .map(([eh, manifest]) => [eh, manifest.description, proxy.cell.agentPubKey, true]);
@@ -46,10 +46,10 @@ export async function search(appletClient: AppClient, appletHash: AppletHash, we
 
 
     /** Search Public Files */
-    const publicFiles: [ParcelReference, Timestamp, AgentPubKey][] = await proxy.probePublicFiles();
+    const publicFiles: [ParcelReference, Timestamp, AgentPubKey][] = []; // FIXME: await proxy.pullPublicFiles();
     const matchingPublic: [Uint8Array, ParcelDescription, AgentPubKeyB64, boolean][] = publicFiles
         .filter(([ref, _, author]) => ref.description.name.toLowerCase().includes(searchLC))
-        .map(([ref, _, author]) => [ref.eh, ref.description, encodeHashToBase64(author), false]);
+        .map(([ref, _, author]) => [ref.parcel_eh, ref.description, encodeHashToBase64(author), false]);
 
     //console.log("Files/we-applet/search(): publicFiles", matchingPublic.length, publicFiles.length);
 

@@ -28,6 +28,16 @@ hdk = { version = "=0.3.1", default-features = false }
 zome_utils = { git = "https://github.com/ddd-mtl/zome-utils", branch = "hdk-3.1" }
 path_explorer_types = {git = "https://github.com/lightningrodlabs/path-explorer", package = "path_explorer_types", branch = "hdk-3.1"}
 
+delivery = {git = "https://github.com/ddd-mtl/delivery-zome", branch = "hdk-3.1" }
+zome_delivery_integrity = {git = "https://github.com/ddd-mtl/delivery-zome", branch = "hdk-3.1" }
+zome_delivery_types = {git = "https://github.com/ddd-mtl/delivery-zome", package = "zome_delivery_types", branch = "hdk-3.1" }
+zome_delivery_api = {git = "https://github.com/ddd-mtl/delivery-zome", package = "zome_delivery_api", branch = "hdk-3.1" }
+path_explorer = {git = "https://github.com/lightningrodlabs/path-explorer", package = "path_explorer", branch = "hdk-3.1"}
+
+hc_zome_profiles_coordinator = {git = "https://github.com/ddd-mtl/profiles_alt_zome", branch = "hdk-3.1", package="profiles_alt_coordinator" }
+hc_zome_profiles_integrity = {git = "https://github.com/ddd-mtl/profiles_alt_zome", branch = "hdk-3.1" }
+
+
 [profile.dev]
 lto = false
 opt-level = 0

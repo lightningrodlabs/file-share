@@ -243,14 +243,24 @@ export class FilesDvm extends DnaViewModel {
             return;
         }
         console.log("FilesDvm received signal", signal);
-        if (!("pulses" in (signal.payload as Object))) {
+        const deliverySignal = signal.payload as DeliverySignal;
+        if (!("pulses" in deliverySignal)) {
             return;
         }
+        /*await*/ this.handleSignal(deliverySignal);
+    }
 
-        const sig = signal.payload as DeliverySignal;
-        for (const pulse of sig.pulses) {
-            /*await*/ this.handleDeliverySignal(pulse, encodeHashToBase64(sig.from));
+
+    /** */
+    async handleSignal(signal: DeliverySignal): Promise<void> {
+        const from = encodeHashToBase64(signal.from);
+        let all = [];
+        for (const pulse of signal.pulses) {
+            all.push(this.handleDeliverySignal(pulse, from));
         }
+        await Promise.all(all);
+        console.log("filesDvm.handleSignal() notifySubscribers");
+        this.notifySubscribers();
     }
 
 
@@ -289,8 +299,6 @@ export class FilesDvm extends DnaViewModel {
                     this.cacheFile(this._perspective.uploadStates[manifest.data_hash].file);
                     delete this._perspective.uploadStates[manifest.data_hash];
                 }
-                /** Done */
-                this.notifySubscribers();
             }
             if (DeliveryEntryKindType.ParcelChunk in entryKind) {
                 console.log("signal ParcelChunk dvm", entryKind.ParcelChunk);
@@ -319,7 +327,6 @@ export class FilesDvm extends DnaViewModel {
                         }
                     }
                     this._perspective.uploadStates[chunk.data_hash] = uploadState;
-                    this.notifySubscribers();
                 }
             }
             if (DeliveryEntryKindType.ReceptionProof in entryKind) {
@@ -332,7 +339,6 @@ export class FilesDvm extends DnaViewModel {
                             manifestEh: encodeHashToBase64(entryKind.ReceptionProof.parcel_eh),
                         } as FilesNotificationVariantReceptionComplete;
                         this._perspective.notificationLogs.push([now, FilesNotificationType.ReceptionComplete, notif]);
-                        this.notifySubscribers();
                    // })
                 }
             }
@@ -357,7 +363,6 @@ export class FilesDvm extends DnaViewModel {
                         hasAccepted: entryKind.ReplyAck.has_accepted,
                     } as FilesNotificationVariantReplyReceived;
                     this._perspective.notificationLogs.push([now, FilesNotificationType.ReplyReceived, notif]);
-                    this.notifySubscribers();
                 }
             }
             if (DeliveryEntryKindType.DeliveryNotice in entryKind) {
@@ -371,7 +376,6 @@ export class FilesDvm extends DnaViewModel {
                         sender: encodeHashToBase64(entryKind.DeliveryNotice.sender),
                     } as FilesNotificationVariantNewNoticeReceived;
                     this._perspective.notificationLogs.push([now, FilesNotificationType.NewNoticeReceived, notif]);
-                    this.notifySubscribers();
                 }
             }
             if (DeliveryEntryKindType.ReceptionAck in entryKind) {
@@ -383,7 +387,6 @@ export class FilesDvm extends DnaViewModel {
                         recipient: encodeHashToBase64(entryKind.ReceptionAck.recipient),
                     } as FilesNotificationVariantDistributionToRecipientComplete;
                     this._perspective.notificationLogs.push([now, FilesNotificationType.DistributionToRecipientComplete, notif]);
-                    this.notifySubscribers();
                 }
             }
         }

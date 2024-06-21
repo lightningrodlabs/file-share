@@ -11,5 +11,4 @@ crate-type = [ "cdylib", "rlib" ]
 serde.workspace = true
 hdi.workspace = true
 zome_utils.workspace = true
-
-zome_delivery_types = {git = "https://github.com/ddd-mtl/delivery-zome", package = "zome_delivery_types", branch = "hdk-3.1" }
+zome_delivery_types.workspace = true

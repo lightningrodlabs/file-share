@@ -12,7 +12,7 @@ serde.workspace = true
 hdk.workspace = true
 zome_utils.workspace = true
 
-zome_delivery_types = {git = "https://github.com/ddd-mtl/delivery-zome", package = "zome_delivery_types", branch = "hdk-3.1" }
-zome_delivery_api = {git = "https://github.com/ddd-mtl/delivery-zome", package = "zome_delivery_api", branch = "hdk-3.1" }
+zome_delivery_types.workspace = true
+zome_delivery_api.workspace = true
 
 zome_files_integrity = {path = "../files_integrity" }
