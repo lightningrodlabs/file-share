@@ -173,8 +173,8 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                     } else {
                                         // TODO: Optimize. Should have a better way to get the item here instead of doing a search for each item.
                                         const item = this.items.filter((item) => item.ppEh == ppEh);
-                                        const isPublic = !item[0].isPrivate;
-                                        console.log("isPublic", isPublic, item, ppEh)
+                                        const isPublic = item.length > 0 && !item[0].isPrivate;
+                                        //console.log("isPublic", isPublic, item, ppEh)
                                         return html`
                                             <sl-button size="small" variant="primary" style="margin-left:5px"
                                                        @click=${async (e) => {

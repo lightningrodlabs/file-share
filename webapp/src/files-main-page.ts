@@ -508,7 +508,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
     /** */
     async deletePublicFile() {
         console.log("deletePublicFile()", this._deletableFile)
-        await this._dvm.removePublicParcel(this._deletableFile, this._dvm.profilesZvm.getAgents());
+        await this._dvm.removePublicParcel(this._deletableFile);
         this._deletableFile = undefined;
         this.deleteDialogElem.open = false;
     }
@@ -739,13 +739,13 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                         <vaadin-grid-column path="state" header=${msg("State")}
                             ${columnBodyRenderer(
                             ({ state }) => {
-                                if (DeliveryState.Unsent in state) {
+                                if (DeliveryState.Unsent == state) {
                                     return html`<span>${msg("Delivery notice unsent")}</span>`
                                 }
-                                if (DeliveryState.PendingNotice in state) {
+                                if (DeliveryState.PendingNotice == state) {
                                     return html`<span>${msg("Delivery notice pending reception")}</span>`
                                 }
-                                if (DeliveryState.NoticeDelivered in state) {
+                                if (DeliveryState.NoticeDelivered == state) {
                                     return html`<span>${msg("Waiting for reply")}</span>`
                                 }
                                 return html`<span>${msg("Unknown")}</span>`

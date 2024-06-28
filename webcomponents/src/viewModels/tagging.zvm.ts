@@ -184,6 +184,7 @@ export class TaggingZvm extends ZomeViewModel {
 
     /** */
     async untagPrivateEntry(eh: EntryHashB64, tag: string) {
+        console.log("taggingZvm.untagPrivateEntry()", eh, tag);
         const input = {
             target: decodeHashFromBase64(eh),
             tag,
@@ -208,7 +209,7 @@ export class TaggingZvm extends ZomeViewModel {
     /** */
     async untagPublicEntryAll(eh: EntryHashB64) {
         const tags = this._perspective.publicTagsByTarget[eh];
-        console.log("untagPublicEntryAll()", eh)
+        console.log("taggingZvm.untagPublicEntryAll()", eh);
         if (!tags) {
             return Promise.reject("Target PublicEntry not found");
         }
@@ -228,7 +229,10 @@ export class TaggingZvm extends ZomeViewModel {
 
     /** */
     async tagPrivateEntry(eh: EntryHashB64, tags: string[], targetInfo: string) {
-        console.log("tagPrivateEntry", eh, tags)
+        console.log("taggingZvm.tagPrivateEntry()", eh, tags);
+        if (tags.length == 0) {
+            return;
+        }
         const input = {
             target: decodeHashFromBase64(eh),
             tags,
@@ -252,7 +256,10 @@ export class TaggingZvm extends ZomeViewModel {
 
     /** */
     async tagPublicEntry(eh: EntryHashB64, tags: string[], targetInfo: string) {
-        //console.log("taggingZvm.tagPublicEntry()", targetInfo, tags, eh);
+        console.log("taggingZvm.tagPublicEntry()", targetInfo, tags, eh);
+        if (tags.length == 0) {
+            return;
+        }
         const input = {
             target: decodeHashFromBase64(eh),
             tags,
