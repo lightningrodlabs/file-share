@@ -1,12 +1,8 @@
 import {css, html, LitElement} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
-import {
-    ActionHashB64,
-    AgentPubKeyB64,
-    EntryHashB64,
-} from "@holochain/client";
 import {prettyFileSize, prettyTimestamp} from "../utils";
 import {columnBodyRenderer, columnFooterRenderer} from "@vaadin/grid/lit";
+import {AgentId, ActionId, EntryId, AgentIdMap} from "@ddd-qc/lit-happ";
 import {DeliveryState, ParcelDescription} from "@ddd-qc/delivery/dist/bindings/delivery.types";
 import {filesSharedStyles} from "../sharedStyles";
 import {kind2Type} from "../fileTypeUtils";
@@ -15,10 +11,10 @@ import {msg} from "@lit/localize";
 
 
 export interface DistributionTableItem {
-    distribAh: ActionHashB64,
-    recipient: AgentPubKeyB64,
+    distribAh: ActionId,
+    recipient: AgentId,
     deliveryState: DeliveryState,
-    parcelEh: EntryHashB64,
+    parcelEh: EntryId,
     description: ParcelDescription,
     sentTs: number,
     receptionTs: number,
@@ -34,7 +30,7 @@ export class DistributionTable extends LitElement {
     /** -- State variables -- */
 
     @property() items: DistributionTableItem[] = [];
-    @property() profiles: Record<AgentPubKeyB64, ProfileMat> = {};
+    @property() profiles: AgentIdMap<ProfileMat> = new AgentIdMap();
 
     /** */
     render() {
@@ -77,7 +73,7 @@ export class DistributionTable extends LitElement {
                 <vaadin-grid-column path="recipient" header=${msg("Recipient")}
                                     ${columnBodyRenderer(
                                             ({ recipient }) => {
-                                                const maybeProfile = this.profiles[recipient];
+                                                const maybeProfile = this.profiles.get(recipient);
                                                 return maybeProfile
                                                         ? html`<span>${maybeProfile.nickname}</span>`
                                                         : html`<span>Unknown</span>`

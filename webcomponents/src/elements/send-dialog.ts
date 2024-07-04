@@ -1,13 +1,12 @@
 import {css, html, PropertyValues} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
-import {DnaElement} from "@ddd-qc/lit-happ";
+import {AgentId, DnaElement, EntryId} from "@ddd-qc/lit-happ";
 import {FilesDvm} from "../viewModels/files.dvm";
 import {filesSharedStyles} from "../sharedStyles";
 import {FilesDvmPerspective} from "../viewModels/files.perspective";
 import {SlDialog, SlInput,} from "@shoelace-style/shoelace";
 import {prettyFileSize, splitFile, SplitObject} from "../utils";
 import {toastError} from "../toast";
-import {AgentPubKeyB64, encodeHashToBase64, EntryHashB64} from "@holochain/client";
 import {ComboBoxFilterChangedEvent} from "@vaadin/combo-box";
 import {ComboBoxLitRenderer} from "@vaadin/combo-box/lit";
 import {TagList} from "./tag-list";
@@ -17,7 +16,7 @@ import {msg} from "@lit/localize";
 
 
 interface AgentItem {
-    key: AgentPubKeyB64,
+    key: AgentId,
     name: string,
 }
 
@@ -30,7 +29,7 @@ export class SendDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
     @state() private _allAgents: AgentItem[] = [];
     @state() private _filteredAgents: AgentItem[] = [];
     //@state() private _recipient?: AgentPubKeyB64;
-    @state() private _recipients: AgentPubKeyB64[] = [];
+    @state() private _recipients: AgentId[] = [];
 
 
     @state() private _file?: File;
@@ -55,7 +54,7 @@ export class SendDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** */
-    open(hash?: EntryHashB64) {
+    open(hash?: EntryId) {
         if (hash) {
             this._dvm.parcel2File(hash).then((file) => {
                 splitFile(file, this._dvm.dnaProperties.maxChunkSize).then((splitObj) => {
@@ -86,11 +85,12 @@ export class SendDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
     /** */
     protected async firstUpdated() {
-        const agentItems = Object.entries(await this._dvm.profilesZvm.probeAllProfiles()).map(
-            ([agentIdB64, profile]) => {return {key: agentIdB64, name: profile.nickname} as AgentItem});
-        this._allAgents = agentItems;
-        //console.log("_allAgents", this._allAgents);
-        this._filteredAgents = agentItems;
+        // FIXME
+        // const agentItems = Object.entries(await this._dvm.profilesZvm.probeAllProfiles()).map(
+        //     ([agentIdB64, profile]) => {return {key: agentIdB64, name: profile.nickname} as AgentItem});
+        // this._allAgents = agentItems;
+        // //console.log("_allAgents", this._allAgents);
+        // this._filteredAgents = agentItems;
     };
 
 
@@ -192,7 +192,7 @@ export class SendDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
                         @cleared=${(e) => {
                             console.log("profile cleared:", e.detail);
                             if (e.detail) {
-                                const index = this._recipients.indexOf(e.detail);
+                                const index = this._recipients.map(id => id.b64).indexOf(e.detail);
                                 if (index > -1) {
                                     this._recipients.splice(index, 1);
                                     this.requestUpdate();

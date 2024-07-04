@@ -1,12 +1,12 @@
 import {css, html, PropertyValues} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
-import {DnaElement} from "@ddd-qc/lit-happ";
+import {DnaElement, EntryId} from "@ddd-qc/lit-happ";
 import {FilesDvm} from "../viewModels/files.dvm";
 import {filesSharedStyles} from "../sharedStyles";
 import {FilesDvmPerspective} from "../viewModels/files.perspective";
 import {SlDialog, SlInput} from "@shoelace-style/shoelace";
-import {getCompletionPct, prettyFileSize, splitFile, SplitObject} from "../utils";
-import {toastError, toastWarning} from "../toast";
+import {prettyFileSize, splitFile, SplitObject} from "../utils";
+import {toastError} from "../toast";
 import {TagList} from "./tag-list";
 import {kind2Icon} from "../fileTypeUtils";
 import {msg} from "@lit/localize";
@@ -165,9 +165,9 @@ export class StoreDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
                                    let maybeSplitObj;
                                    let str = msg("File already published to group or stored locally")
                                    try {
-                                       maybeSplitObj = await this._dvm.startPublishFile(this._file, this._selectedTags, this._dvm.profilesZvm.getAgents(),(manifestEh: EntryHashB64) => {
+                                       maybeSplitObj = await this._dvm.startPublishFile(this._file, this._selectedTags, this._dvm.profilesZvm.getAgents(),(manifestEh: EntryId) => {
                                            console.log("<store-dialog>.onUploadDone()", manifestEh, this);
-                                           this.dispatchEvent(new CustomEvent('created', {detail: manifestEh, bubbles: true, composed: true}));
+                                           this.dispatchEvent(new CustomEvent<EntryId>('created', {detail: manifestEh, bubbles: true, composed: true}));
                                            if (this.dialogElem) this.dialogElem.open = false;
                                        }
                                    );

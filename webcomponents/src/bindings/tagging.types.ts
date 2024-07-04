@@ -176,13 +176,6 @@ export interface PrivateTag {
   value: string
 }
 
-export enum TaggingLinkTypes {
-	PublicEntry = 'PublicEntry',
-	PrivateEntry = 'PrivateEntry',
-	PublicTags = 'PublicTags',
-	PrivateTags = 'PrivateTags',
-}
-
 /** Dna properties */
 export interface TaggingProperties {
   minTagNameLength: number

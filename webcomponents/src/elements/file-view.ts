@@ -1,7 +1,6 @@
 import {css, html, PropertyValues} from "lit";
 import {customElement, property, state} from "lit/decorators.js";
-import {DnaElement} from "@ddd-qc/lit-happ";
-import {decodeHashFromBase64, EntryHashB64,} from "@holochain/client";
+import {DnaElement, EntryId} from "@ddd-qc/lit-happ";
 import {FilesDvm} from "../viewModels/files.dvm";
 import {ParcelManifest} from "@ddd-qc/delivery";
 import {filesSharedStyles} from "../sharedStyles";
@@ -20,7 +19,7 @@ export class FileView extends DnaElement<FilesDvmPerspective, FilesDvm> {
     /** -- Properties -- */
 
     /** Hash of ParcelManifest to display */
-    @property() hash: EntryHashB64 = ''
+    @property() hash?: EntryId;
 
     /** Enable action bar */
     @property() showActionBar: boolean = true
@@ -45,7 +44,7 @@ export class FileView extends DnaElement<FilesDvmPerspective, FilesDvm> {
         if (this._dvm && (changedProperties.has("hash") || (!this._manifest && this.hash))) {
             console.log("<file-view>.willUpdate()", this.hash);
             this._loading = true;
-            this._manifest = await this._dvm.filesZvm.zomeProxy.getFileInfo(decodeHashFromBase64(this.hash));
+            this._manifest = await this._dvm.filesZvm.zomeProxy.getFileInfo(this.hash.hash);
             this._loading = false;
         }
     }
@@ -54,13 +53,11 @@ export class FileView extends DnaElement<FilesDvmPerspective, FilesDvm> {
     /** */
     render() {
         console.log("<file-view>.render()", this.hash);
-        if (this.hash == "") {
-            return html`
-                <div style="color:#c10a0a">${msg("No file selected")}</div>`;
+        if (!this.hash) {
+            return html`<div style="color:#c10a0a">${msg("No file selected")}</div>`;
         }
         if (!this._manifest) {
-            return html`
-                <div style="color:#c10a0a">${msg("File not found")}</div>`;
+            return html`<div style="color:#c10a0a">${msg("File not found")}</div>`;
         }
         if (this._loading) {
             return html`<sl-spinner></sl-spinner>`;

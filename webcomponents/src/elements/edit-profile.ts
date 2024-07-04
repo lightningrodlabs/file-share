@@ -7,7 +7,6 @@ import '@holochain-open-dev/elements/dist/elements/select-avatar.js';
 import {Profile as ProfileMat} from "@ddd-qc/profiles-dvm";
 import {HAPP_BUILD_MODE, ZomeElement} from "@ddd-qc/lit-happ";
 import {FilesZvm} from "../viewModels/files.zvm";
-import {Base64} from "js-base64";
 
 
 const MIN_NICKNAME_LENGTH = 2
@@ -143,7 +142,7 @@ export class EditProfile extends ZomeElement<unknown, FilesZvm> {
             style="margin-left: 16px;"
           ></sl-input>
             <div style="flex-grow:1;"></div>
-            ${HAPP_BUILD_MODE == 'Debug'? html`<sl-tooltip .content=${this.cell.agentPubKey}><sl-icon name="hash" style="font-size: 24px;"></sl-icon></sl-tooltip>` : html``}
+            ${HAPP_BUILD_MODE == 'Debug'? html`<sl-tooltip .content=${this.cell.agentId.b64}><sl-icon name="hash" style="font-size: 24px;"></sl-icon></sl-tooltip>` : html``}
         </div>
         
         <div class="row" style="justify-content: center; margin-bottom: 8px; align-self: start;" >

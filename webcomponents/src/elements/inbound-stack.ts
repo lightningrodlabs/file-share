@@ -1,14 +1,9 @@
 import {css, html, PropertyValues} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
-import {ZomeElement} from "@ddd-qc/lit-happ";
-import {
-    AgentPubKeyB64,
-    encodeHashToBase64,
-} from "@holochain/client";
+import {AgentIdMap, ZomeElement, AgentId, ActionId, EntryId, ActionIdMap} from "@ddd-qc/lit-happ";
 import {DeliveryPerspective, DeliveryZvm} from "@ddd-qc/delivery";
 import {filesSharedStyles} from "../sharedStyles";
 import {kind2Icon} from "../fileTypeUtils";
-import {Dictionary} from "@ddd-qc/cell-proxy";
 import {getCompletionPct} from "../utils";
 import {Profile as ProfileMat} from "@ddd-qc/profiles-dvm/dist/bindings/profiles.types";
 
@@ -24,27 +19,28 @@ export class InboundStack extends ZomeElement<DeliveryPerspective, DeliveryZvm> 
         super(DeliveryZvm.DEFAULT_ZOME_NAME)
     }
 
+    @property() profiles: AgentIdMap<ProfileMat> = new AgentIdMap();
+
     /** distribAh -> bool */
-    @state() private _canDisplay: Dictionary<boolean> = {};
-    @property() profiles: Record<AgentPubKeyB64, ProfileMat> = {};
+    @state() private _canDisplay: ActionIdMap<boolean> = new ActionIdMap();
 
     /** */
     render() {
         const windowInnerWidth  = document.documentElement.clientWidth; // window.innerWidth;
         console.log("<inbound-stack>.render()", windowInnerWidth);
 
-        const incompletes = Object.values(this._zvm.inbounds()[1])
+        const incompletes = Array.from(this._zvm.inbounds()[1].values())
             .filter((tuple) => tuple[2].size >= 0);
 
         const items = incompletes
             .map(([notice, _ts, missingChunks]) => {
-                const maybeProfile = this.profiles[encodeHashToBase64(notice.sender)];
+                const maybeProfile = this.profiles.get(new AgentId(notice.sender));
                 const senderName = maybeProfile? maybeProfile.nickname : "unknown";
-                const distribAh = encodeHashToBase64(notice.distribution_ah);
-                if (this._canDisplay[distribAh] == undefined) {
-                    this._canDisplay[distribAh] = true;
+                const distribAh = new ActionId(notice.distribution_ah);
+                if (this._canDisplay.get(distribAh) == undefined) {
+                    this._canDisplay.set(distribAh, true);
                 }
-                const canDisplay = missingChunks.size > 0 && this._canDisplay[distribAh];
+                const canDisplay = missingChunks.size > 0 && this._canDisplay.get(distribAh);
                 if (!canDisplay) {
                     return html``;
                 }
@@ -54,7 +50,7 @@ export class InboundStack extends ZomeElement<DeliveryPerspective, DeliveryZvm> 
                         <div style="display:flex; flex-direction:row; gap:35px;">
                             <sl-progress-bar style="flex-grow:1;" .value=${pct}>${pct}%</sl-progress-bar>
                             <sl-icon-button name="x" label="close"
-                                            @click=${async (_e) => {this._canDisplay[distribAh] = false; this.requestUpdate()}}>
+                                            @click=${async (_e) => {this._canDisplay.set(distribAh, false); this.requestUpdate()}}>
                             </sl-icon-button>
                         </div>
                         <div style="display:flex; flex-direction:row; gap:5px;">

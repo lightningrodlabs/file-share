@@ -1,12 +1,12 @@
 import {css, html, PropertyValues, TemplateResult} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
-import {delay, DnaElement} from "@ddd-qc/lit-happ";
+import {delay, DnaElement, ActionId, EntryId, AgentId} from "@ddd-qc/lit-happ";
 import {msg} from '@lit/localize';
 import {FilesDvm} from "../viewModels/files.dvm";
 import {
     DeliveryPerspective,
 } from "@ddd-qc/delivery";
-import {ActionHashB64, AgentPubKeyB64, encodeHashToBase64, EntryHashB64, Timestamp} from "@holochain/client";
+import {EntryHashB64, Timestamp} from "@holochain/client";
 import {FileView} from "./file-view";
 import {filesSharedStyles} from "../sharedStyles";
 import {agent2avatar} from "@ddd-qc/profiles-dvm";
@@ -23,12 +23,12 @@ export enum ActivityLogType {
     RemovedGroupFile = 'RemovedGroupFile',
 }
 
-export type ActivityLogTypeVariantDeliveryReceived = {distributionAh: ActionHashB64, peer: AgentPubKeyB64}
-export type ActivityLogTypeVariantDeliveryDeclined = {distributionAh: ActionHashB64, peer: AgentPubKeyB64}
-export type ActivityLogTypeVariantNewPersonalFile = {manifestEh: EntryHashB64, peer: AgentPubKeyB64}
-export type ActivityLogTypeVariantNewGroupFile = {manifestEh: EntryHashB64, peer: AgentPubKeyB64}
-export type ActivityLogTypeVariantRemovedGroupFile = {manifestEh: EntryHashB64, peer: AgentPubKeyB64}
-export type ActivityLogTypeVariantReceivedFile = {manifestEh: EntryHashB64, peer: AgentPubKeyB64}
+export type ActivityLogTypeVariantDeliveryReceived = {distributionAh: ActionId, peer: AgentId}
+export type ActivityLogTypeVariantDeliveryDeclined = {distributionAh: ActionId, peer: AgentId}
+export type ActivityLogTypeVariantNewPersonalFile = {manifestEh: EntryId, peer: AgentId}
+export type ActivityLogTypeVariantNewGroupFile = {manifestEh: EntryId, peer: AgentId}
+export type ActivityLogTypeVariantRemovedGroupFile = {manifestEh: EntryId, peer: AgentId}
+export type ActivityLogTypeVariantReceivedFile = {manifestEh: EntryId, peer: AgentId}
 
 export type ActivityLogVariant =
     | ActivityLogTypeVariantDeliveryReceived
@@ -80,24 +80,24 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
     determineActivityHistory(): ActivityLog[] {
 
         /** Remove Received files from private files */
-        const receivedManifestEhs: EntryHashB64[] = Object.values(this.deliveryPerspective.receptions)
-            .map(([rp,_ts]) => encodeHashToBase64(this.deliveryPerspective.notices[encodeHashToBase64(rp.notice_eh)][0].summary.parcel_reference.parcel_eh));
+        const receivedManifestEhs: EntryHashB64[] = Array.from(this.deliveryPerspective.receptions.values())
+            .map(([rp,_ts]) => new EntryId(this.deliveryPerspective.notices.get(new EntryId(rp.notice_eh))[0].summary.parcel_reference.parcel_eh).b64);
 
 
-        const ReceivedFiles: ActivityLog[] = Object.entries(this.deliveryPerspective.receptions)
+        const ReceivedFiles: ActivityLog[] = Array.from(this.deliveryPerspective.receptions.entries())
             .map(([noticeEh, [rp, timestamp]]) => {
-                const notice = this.deliveryPerspective.notices[noticeEh][0];
+                const notice = this.deliveryPerspective.notices.get(noticeEh)[0];
                 return {
                         timestamp,
                         type: ActivityLogType.ReceivedFile,
-                        value: {manifestEh: encodeHashToBase64(rp.parcel_eh), peer: encodeHashToBase64(notice.sender)} as ActivityLogTypeVariantReceivedFile,
+                        value: {manifestEh: new EntryId(rp.parcel_eh), peer: new AgentId(notice.sender)} as ActivityLogTypeVariantReceivedFile,
                     } as ActivityLog;
             })
         //console.log("sortedReceptions", sortedReceptions);
 
-        const declinedDeliveries: ActivityLog[] = Object.entries(this.deliveryPerspective.replyAcks)
+        const declinedDeliveries: ActivityLog[] = Array.from(this.deliveryPerspective.replyAcks.entries())
             .map(([distributionAh, acks]) => {
-                const res: ActivityLog[] =  Object.entries(acks)
+                const res: ActivityLog[] =  Array.from(acks.entries())
                     .filter(([_peer, [ack, _ts]]) => !ack.has_accepted)
                     .map(([peer, [_ack, timestamp]]) => {
                         return {
@@ -109,9 +109,9 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
                 return res;
             }).flat();
 
-        const receivedDeliveries: ActivityLog[] = Object.entries(this.deliveryPerspective.receptionAcks)
+        const receivedDeliveries: ActivityLog[] = Array.from(this.deliveryPerspective.receptionAcks.entries())
             .map(([distributionAh, acks]) => {
-                const res: ActivityLog[] =  Object.entries(acks)
+                const res: ActivityLog[] =  Array.from(acks.entries())
                     .map(([peer, [_ack, timestamp]]) => {
                         return {timestamp, type: ActivityLogType.DeliveryReceived, value: {distributionAh, peer}};
                     });
@@ -120,18 +120,18 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
 
         //console.log("sortedReceptionAcks", sortedReceptionAcks);
 
-        const newPersonalFiles: ActivityLog[] = Object.entries(this.deliveryPerspective.privateManifests)
-            .filter(([eh, [_rp, _ts]]) => !receivedManifestEhs.includes(eh))
+        const newPersonalFiles: ActivityLog[] = Array.from(this.deliveryPerspective.privateManifests.entries())
+            .filter(([eh, [_rp, _ts]]) => !receivedManifestEhs.includes(eh.b64))
             .map(([eh, [rp, timestamp]]) => {
                 return {timestamp, type: ActivityLogType.NewPersonalFile, value: {manifestEh: eh} as ActivityLogTypeVariantNewPersonalFile};
             });
         //console.log("sortedPrivateParcels", sortedPrivateParcels);
 
-        const addGroupFiles: ActivityLog[] = Object.entries(this.deliveryPerspective.publicParcels)
+        const addGroupFiles: ActivityLog[] = Array.from(this.deliveryPerspective.publicParcels.entries())
             .map(([eh, pprm]) => {
                 return {timestamp: pprm.creationTs, type: ActivityLogType.NewGroupFile, value: {manifestEh: eh, peer: pprm.author}}
             });
-        const removeGroupFiles: ActivityLog[] = Object.entries(this.deliveryPerspective.publicParcels)
+        const removeGroupFiles: ActivityLog[] = Array.from(this.deliveryPerspective.publicParcels.entries())
           .filter(([_ppEh, pprm]) => pprm.deleteInfo)
           .map(([eh, pprm]) => {
               return {timestamp: pprm.deleteInfo[0] , type: ActivityLogType.RemovedGroupFile, value: {manifestEh: eh, peer: pprm.deleteInfo[1]}};
@@ -158,18 +158,18 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
 
         /**  */
         let message: string;
-        let manifestEh: EntryHashB64;
-        let peer: AgentPubKeyB64;
+        let manifestEh: EntryId;
+        let peer: AgentId;
         switch (log.type) {
             case ActivityLogType.DeliveryDeclined: {
                 const variant = log.value as ActivityLogTypeVariantDeliveryDeclined;
-                manifestEh = encodeHashToBase64(this.deliveryPerspective.distributions[variant.distributionAh][0].delivery_summary.parcel_reference.parcel_eh);
+                manifestEh = new EntryId(this.deliveryPerspective.distributions.get(variant.distributionAh)[0].delivery_summary.parcel_reference.parcel_eh);
                 message = msg(`was declined by`);
                 peer = variant.peer;
                 break;}
             case ActivityLogType.DeliveryReceived: {
                 const variant = log.value as ActivityLogTypeVariantDeliveryReceived;
-                manifestEh = encodeHashToBase64(this.deliveryPerspective.distributions[variant.distributionAh][0].delivery_summary.parcel_reference.parcel_eh);
+                manifestEh = new EntryId(this.deliveryPerspective.distributions.get(variant.distributionAh)[0].delivery_summary.parcel_reference.parcel_eh);
                 message = msg(`was received by`);
                 peer = variant.peer;
                 break;}
@@ -194,7 +194,7 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
             case ActivityLogType.NewPersonalFile: {
                 const variant = log.value as ActivityLogTypeVariantNewPersonalFile;
                 manifestEh = variant.manifestEh;
-                peer = this.cell.agentPubKey;
+                peer = this.cell.agentId;
                 message = msg(`was added privately by`);
                 break;}
         }
@@ -206,7 +206,7 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
         //const id = "activity-item__" + manifestEh;
 
         const [profile, _avatar] = agent2avatar(peer, this._dvm.profilesZvm.perspective);
-        const authorSpan = peer == this.cell.agentPubKey
+        const authorSpan = peer.b64 == this.cell.agentId.b64
             ? html`<span style="font-weight: bold;">${msg("yourself")}</span>`
             : html`<span class="nickname">${profile.nickname}</span>`;
 

@@ -10,8 +10,6 @@ export const filesFunctionNames: FunctionName[] = [
 	"get_dna_info",
 	"attach_to_hrl",
 	"get_files_from_hrl",
-
-
 	"commit_private_file",
 	"get_ah",
 	"get_file_info",
@@ -22,7 +20,8 @@ export const filesFunctionNames: FunctionName[] = [
 	"accept_file_share",
 	"send_file",
 	"write_private_file_chunks",
-	"write_public_file_chunks",];
+	"write_public_file_chunks",
+];
 
 
 /** Generate tuple array of function names with given zomeName */

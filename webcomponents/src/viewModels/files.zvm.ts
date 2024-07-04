@@ -1,11 +1,4 @@
-import {
-    ActionHashB64,
-    AgentPubKeyB64,
-    decodeHashFromBase64,
-    encodeHashToBase64,
-    EntryHash, EntryHashB64
-} from '@holochain/client';
-import {ZomeViewModel} from "@ddd-qc/lit-happ";
+import {ZomeViewModel, EntryId, AgentId, ActionId} from "@ddd-qc/lit-happ";
 import {FilesProxy} from "../bindings/files.proxy";
 import {SendFileInput} from "../bindings/files.types";
 import {DistributionStrategy} from "@ddd-qc/delivery/dist/bindings/delivery.types";
@@ -70,38 +63,35 @@ export class FilesZvm extends ZomeViewModel {
 
 
     /** */
-    async commitPrivateManifest(file: File, dataHash: string, chunks: EntryHash[]): Promise<EntryHashB64> {
+    async commitPrivateManifest(file: File, dataHash: string, chunks: EntryId[]): Promise<EntryId> {
         const params = {
             filename: file.name,
             filetype: file.type,
             data_hash: dataHash,
             orig_filesize: file.size,
-            chunks,
+            chunks: chunks.map(id => id.hash),
         }
         const [manifest_eh, _description] =  await this.zomeProxy.commitPrivateFile(params);
-        const ehb64 = encodeHashToBase64(manifest_eh);
         /** Done */
         this.notifySubscribers();
-        return ehb64;
+        return new EntryId(manifest_eh);
     }
 
 
     /** */
-    async publishFileManifest(file: File, dataHash: string, chunks: EntryHash[]): Promise<EntryHashB64> {
+    async publishFileManifest(file: File, dataHash: string, chunks: EntryId[]): Promise<EntryId> {
         console.log("filesZvm.publishFileManifest()", file.name);
         const params = {
             filename: file.name,
             filetype: file.type,
             data_hash: dataHash,
             orig_filesize: file.size,
-            chunks,
+            chunks: chunks.map(id => id.hash),
         }
         const [manifest_eh, _description] =  await this.zomeProxy.publishFileManifest(params);
-        const ehb64 = encodeHashToBase64(manifest_eh);
-        /** Store new manifest */
         /** Done */
         this.notifySubscribers();
-        return ehb64;
+        return new EntryId(manifest_eh);
     }
 
 
@@ -157,16 +147,16 @@ export class FilesZvm extends ZomeViewModel {
 
 
     /** */
-    async sendFile(manifestEh: EntryHashB64, recipientB64s: AgentPubKeyB64[]): Promise<ActionHashB64> {
-        const recipients = recipientB64s.map((b64) => decodeHashFromBase64(b64));
+    async sendFile(manifestEh: EntryId, recipientIds: AgentId[]): Promise<ActionId> {
+        const recipients = recipientIds.map(id => id.hash);
         const input: SendFileInput = {
-            manifest_eh: decodeHashFromBase64(manifestEh),
+            manifest_eh: manifestEh.hash,
             strategy: DistributionStrategy.Normal,
             recipients,
         };
         console.log('sending file:', input);
         /* Send File */
         const ah = await this.zomeProxy.sendFile(input);
-        return encodeHashToBase64(ah);
+        return new ActionId(ah);
     }
 }

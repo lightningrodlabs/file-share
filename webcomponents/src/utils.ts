@@ -1,32 +1,7 @@
-import {DeliveryNotice, DeliveryZvm, StateChange, StateChangeType} from "@ddd-qc/delivery";
-import {encodeHashToBase64, EntryHashB64} from "@holochain/client";
+import {DeliveryNotice, DeliveryZvm} from "@ddd-qc/delivery";
 import _sodium from 'libsodium-wrappers-sumo';
-
-
-/** */
-export function getVariantByIndex(enumType: any, index: number): string {
-    const keys = Object.keys(enumType);
-    if (index >= 0 && index < keys.length) {
-        const key = keys[index];
-        return enumType[key];
-    }
-    throw Error("Out of bounds index");
-}
-
-
-/** */
-export function prettyState(state: StateChange): string {
-    if (StateChangeType.Create in state) {
-        return state.Create? "Create NEW" : "Create";
-    }
-    if (StateChangeType.Update in state) {
-        return state.Update? "Update NEW" : "Update";
-    }
-    if (StateChangeType.Delete in state) {
-        return state.Delete? "Delete NEW" : "Delete";
-    }
-    throw Error("Unknown stateChange type");
-}
+import {EntryId} from "@ddd-qc/lit-happ";
+import {encodeHashToBase64, EntryHashB64} from "@holochain/client";
 
 
 /** */
@@ -144,7 +119,7 @@ export async function splitData(full_data_string: string, chunkMaxSize: number):
 
 
 export function getCompletionPct(deliveryZvm: DeliveryZvm, notice: DeliveryNotice, missingChunks: Set<EntryHashB64>): number {
-    const manifest = deliveryZvm.perspective.privateManifests[encodeHashToBase64(notice.summary.parcel_reference.parcel_eh)]
+    const manifest = deliveryZvm.perspective.privateManifests.get(new EntryId(notice.summary.parcel_reference.parcel_eh))
     if (!manifest) {
         return 0;
     }

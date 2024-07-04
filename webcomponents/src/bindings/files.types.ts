@@ -190,10 +190,6 @@ export type FilesEntryVariantFileShare = {FileShare: FileShare}
 export type FilesEntry = 
  | FilesEntryVariantFileShare;
 
-export enum FilesLinkTypes {
-	Attachment = 'Attachment',
-}
-
 /** Bogus Entry */
 export interface FileShare {
   value: string

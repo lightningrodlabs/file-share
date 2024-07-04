@@ -19,7 +19,8 @@ export const taggingFunctionNames: FunctionName[] = [
 	"tag_public_entry",
 	"get_public_tags",
 	"get_public_entries_with_tag",
-	"untag_public_entry",];
+	"untag_public_entry",
+];
 
 
 /** Generate tuple array of function names with given zomeName */

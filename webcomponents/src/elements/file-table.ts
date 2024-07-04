@@ -1,14 +1,10 @@
 import {css, html, LitElement} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
-import {
-    AgentPubKeyB64,
-    EntryHashB64,
-} from "@holochain/client";
 import {prettyFileSize, prettyTimestamp} from "../utils";
 import {columnBodyRenderer, columnFooterRenderer} from "@vaadin/grid/lit";
 import {ParcelDescription} from "@ddd-qc/delivery/dist/bindings/delivery.types";
 import {filesSharedStyles} from "../sharedStyles";
-import {ZomeElement} from "@ddd-qc/lit-happ";
+import {AgentId, AgentIdMap, EntryId, ZomeElement} from "@ddd-qc/lit-happ";
 import {TaggingPerspective, TaggingZvm} from "../viewModels/tagging.zvm";
 import {TagList} from "./tag-list";
 import {kind2Type} from "../fileTypeUtils";
@@ -17,10 +13,10 @@ import {msg} from "@lit/localize";
 
 
 export interface FileTableItem {
-    ppEh: EntryHashB64,
+    ppEh: EntryId,
     description: ParcelDescription,
     timestamp: number,
-    author: AgentPubKeyB64,
+    author: AgentId,
     isPrivate: boolean,
     isLocal: boolean,
 }
@@ -40,7 +36,7 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
     /** -- State variables -- */
 
     @property() items: FileTableItem[] = [];
-    @property() profiles: Record<AgentPubKeyB64, ProfileMat> = {};
+    @property() profiles: AgentIdMap<ProfileMat> = new AgentIdMap();
 
     @property() type: string = ""
 
@@ -125,7 +121,7 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                 <vaadin-grid-column path="author" header=${msg("Author")} .hidden=${!this.items[0].author}
                                     ${columnBodyRenderer(
                                             ({ author }) => {
-                                                const maybeProfile = this.profiles[author];
+                                                const maybeProfile = this.profiles.get(author);
                                                 return maybeProfile
                                                         ? html`<span>${maybeProfile.nickname}</span>`
                                                         : html`<span>${msg("Unknown")}</span>`
@@ -172,7 +168,7 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                         `;
                                     } else {
                                         // TODO: Optimize. Should have a better way to get the item here instead of doing a search for each item.
-                                        const item = this.items.filter((item) => item.ppEh == ppEh);
+                                        const item = this.items.filter((item) => item.ppEh.b64 == ppEh.b64);
                                         const isPublic = item.length > 0 && !item[0].isPrivate;
                                         //console.log("isPublic", isPublic, item, ppEh)
                                         return html`

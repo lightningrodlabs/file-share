@@ -3,8 +3,7 @@ import {property, state, customElement} from "lit/decorators.js";
 import {ContextProvider} from "@lit/context";
 import {
   AdminWebsocket,
-  AppWebsocket, decodeHashFromBase64,
-  encodeHashToBase64, EntryHash, EntryHashB64,
+  AppWebsocket,
   InstalledAppId,
   ZomeName
 } from "@holochain/client";
@@ -12,8 +11,8 @@ import {
   HvmDef, HappElement, HCL,
   BaseRoleName,
   CloneId,
-  AppProxy,
-  DvmDef, DnaViewModel, pascal, delay
+  AppProxy, EntryId,
+  DvmDef, DnaViewModel, pascal, delay,
 } from "@ddd-qc/lit-happ";
 import {
   FilesDvm,
@@ -95,7 +94,7 @@ export class FilesApp extends HappElement {
       profilesZomeName: ZomeName,
       profilesProxy: AppProxy,
       weServices: WeaveServices,
-      thisAppletHash: EntryHash,
+      thisAppletHash: EntryId,
       //showEntryOnly?: boolean,
       appletView: AppletView,
       groupProfiles: GroupProfile[],
@@ -105,7 +104,7 @@ export class FilesApp extends HappElement {
     console.log(`\t\tProviding context "${weClientContext}" | in host `, app);
     //app.weServices = weServices;
     app._weProvider = new ContextProvider(app, weClientContext, weServices);
-    app.appletId = encodeHashToBase64(thisAppletHash);
+    app.appletId = thisAppletHash.b64;
     app.groupProfiles = groupProfiles;
     /** Create Profiles Dvm from provided AppProxy */
     console.log("<files-app>.ctor()", profilesProxy);
@@ -138,7 +137,7 @@ export class FilesApp extends HappElement {
     //const maybeProfiles = await this._weProfilesDvm.profilesZvm.zomeProxy.getAgentsWithProfile();
     //const maybeAgents = maybeProfiles.map((eh) => encodeHashToBase64(eh));
     //console.log("maybeAgents", maybeAgents);
-    const maybeMyProfile = await this._weProfilesDvm.profilesZvm.probeProfile(dvm.profilesZvm.cell.agentPubKey);
+    const maybeMyProfile = await this._weProfilesDvm.profilesZvm.probeProfile(dvm.profilesZvm.cell.agentId.b64);
     console.log("setupWeProfilesDvm() maybeMyProfile", maybeMyProfile);
     if (maybeMyProfile) {
       const maybeLang = maybeMyProfile.fields['lang'];
@@ -191,7 +190,8 @@ export class FilesApp extends HappElement {
       const allAppEntryTypes = await this.filesDvm.fetchAllEntryDefs();
       console.log("happInitialized(), allAppEntryTypes", allAppEntryTypes);
       console.log(`${DELIVERY_ZOME_NAME} entries`, allAppEntryTypes[DELIVERY_ZOME_NAME]);
-      if (allAppEntryTypes[DELIVERY_ZOME_NAME].length == 0) {
+      const deliveryEntryTypes = allAppEntryTypes[DELIVERY_ZOME_NAME];
+      if (Object.keys(deliveryEntryTypes).length == 0) {
         console.warn(`No entries found for ${DELIVERY_ZOME_NAME}`);
         await delay(1000);
       } else {
@@ -208,8 +208,8 @@ export class FilesApp extends HappElement {
   /** */
   async perspectiveInitializedOffline(): Promise<void> {
     console.log("<files-app>.perspectiveInitializedOffline()");
-    const maybeProfile = await this.filesDvm.profilesZvm.probeProfile(this.filesDvm.cell.agentPubKey);
-    console.log("perspectiveInitializedOffline() maybeProfile", maybeProfile, this.filesDvm.cell.agentPubKey);
+    const maybeProfile = await this.filesDvm.profilesZvm.findProfile(this.filesDvm.cell.agentId);
+    console.log("perspectiveInitializedOffline() maybeProfile", maybeProfile, this.filesDvm.cell.agentId);
     /** Done */
     this._offlinePerspectiveloaded = true;
   }
@@ -227,7 +227,7 @@ export class FilesApp extends HappElement {
 
   /** */
   render() {
-    console.log("*** <files-app> render()", this._loaded, this._hasHolochainFailed);
+    console.log("<files-app> render()", this._loaded, this._hasHolochainFailed);
 
     if (!this._loaded || !this._offlinePerspectiveloaded || !this._onlinePerspectiveloaded) {
       return html`<sl-spinner></sl-spinner>`;
@@ -268,8 +268,9 @@ export class FilesApp extends HappElement {
           console.log("pascal entryType", entryType);
           switch (entryType) {
             case DeliveryEntryType.PrivateManifest:
-            case DeliveryEntryType.PublicManifest:
-              console.log("File entry:", encodeHashToBase64(assetViewInfo.wal.hrl[1]));
+            case DeliveryEntryType.PublicManifest: {
+              const dh = new EntryId(assetViewInfo.wal.hrl[1])
+              console.log("File entry:", dh);
 
               // // TODO: Figure out why cell-context doesn't propagate normally via FilesApp and has to be inserted again within the slot
               // view = html`
@@ -278,7 +279,8 @@ export class FilesApp extends HappElement {
               //   </cell-context>
               // `;
 
-              view = html`<file-view .hash=${encodeHashToBase64(assetViewInfo.wal.hrl[1])} style="height: 100vh;"></file-view>`;
+              view = html`<file-view .hash=${dh} style="height: 100vh;"></file-view>`;
+            }
             break;
             default:
               throw new Error(`Unknown entry type ${entryType}.`);
@@ -294,10 +296,10 @@ export class FilesApp extends HappElement {
           };
           if (creatableViewInfo.name == "File") {
             view = html`<store-dialog wait="true"
-              @created=${async (e: CustomEvent<EntryHashB64>) => {
+              @created=${async (e: CustomEvent<EntryId>) => {
                 try {
                   console.log("@created event", e.detail);
-                  const wal: WAL = {hrl: [decodeHashFromBase64(this.filesDvm.cell.dnaHash), decodeHashFromBase64(e.detail)], context: null}
+                  const wal: WAL = {hrl: [this.filesDvm.cell.dnaId.hash, e.detail.hash], context: null}
                   await creatableViewInfo.resolve(wal);
                 } catch(e) {
                   creatableViewInfo.reject(e)
@@ -352,7 +354,7 @@ export class FilesApp extends HappElement {
         /** Create Guest profile */
         const profile = { nickname: "guest_" + Math.floor(Math.random() * 100),
           fields: {lang: 'en', email: 'guest@ac.me', mailgun_domain: "mg.flowplace.org", mailgun_email: "whosin@mg.flowplace.org"}};
-        console.log("setupWeProfilesDvm() createMyProfile", this.filesDvm.profilesZvm.cell.agentPubKey);
+        console.log("<files-app> createMyProfile", this.filesDvm.profilesZvm.cell.agentId);
         this.filesDvm.profilesZvm.createMyProfile(profile).then(() => this.requestUpdate());
         guardedView = html`<sl-spinner></sl-spinner>`;
       }

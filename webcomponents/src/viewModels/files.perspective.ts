@@ -1,15 +1,16 @@
-import {ActionHashB64, AgentPubKeyB64, EntryHash, EntryHashB64, Timestamp} from "@holochain/client";
+import {Timestamp} from "@holochain/client";
+import {EntryId, AgentId, ActionId} from "@ddd-qc/lit-happ";
 import {ParcelDescription} from "@ddd-qc/delivery";
 import {SplitObject} from "../utils";
 
-export type FilesCb = (manifestEh: EntryHashB64) => void;
+export type FilesCb = (manifestEh: EntryId) => void;
 
 /** */
 interface UploadState {
     isPrivate: boolean,
     file: File,
     splitObj: SplitObject,
-    chunks: EntryHash[],
+    chunks: EntryId[],
     index: number,
     written_chunks: number,
     callback?: FilesCb,
@@ -39,14 +40,14 @@ export enum FilesNotificationType {
 }
 
 //export type FilesNotificationVariantNewPublicFile = { manifestEh: EntryHashB64, description: ParcelDescription }
-export type FilesNotificationVariantDeliveryRequestSent = {distribAh: ActionHashB64, manifestEh: EntryHashB64, recipients: AgentPubKeyB64[] }
-export type FilesNotificationVariantReceptionComplete = {noticeEh: EntryHashB64, manifestEh: EntryHashB64 }
-export type FilesNotificationVariantDistributionToRecipientComplete = {distribAh: ActionHashB64, recipient: AgentPubKeyB64 }
-export type FilesNotificationVariantPublicSharingComplete = {manifestEh: EntryHashB64 }
-export type FilesNotificationVariantPublicSharingRemoved = {manifestEh: EntryHashB64 }
-export type FilesNotificationVariantPrivateCommitComplete = {manifestEh: EntryHashB64 }
-export type FilesNotificationVariantNewNoticeReceived = {noticeEh: EntryHashB64, manifestEh: EntryHashB64, description: ParcelDescription, sender: AgentPubKeyB64 }
-export type FilesNotificationVariantReplyReceived = {distribAh: ActionHashB64, recipient: AgentPubKeyB64, hasAccepted: boolean }
+export type FilesNotificationVariantDeliveryRequestSent = {distribAh: ActionId, manifestEh: EntryId, recipients: AgentId[] }
+export type FilesNotificationVariantReceptionComplete = {noticeEh: EntryId, manifestEh: EntryId }
+export type FilesNotificationVariantDistributionToRecipientComplete = {distribAh: ActionId, recipient: AgentId }
+export type FilesNotificationVariantPublicSharingComplete = {manifestEh: EntryId }
+export type FilesNotificationVariantPublicSharingRemoved = {manifestEh: EntryId }
+export type FilesNotificationVariantPrivateCommitComplete = {manifestEh: EntryId }
+export type FilesNotificationVariantNewNoticeReceived = {noticeEh: EntryId, manifestEh: EntryId, description: ParcelDescription, sender: AgentId }
+export type FilesNotificationVariantReplyReceived = {distribAh: ActionId, recipient: AgentId, hasAccepted: boolean }
 
 /** */
 export type FilesNotification =

@@ -1,11 +1,10 @@
 import {css, html, PropertyValues, TemplateResult} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
-import {delay, DnaElement} from "@ddd-qc/lit-happ";
+import {AgentId, delay, DnaElement} from "@ddd-qc/lit-happ";
 import {FilesDvm} from "../viewModels/files.dvm";
 import {
     DeliveryPerspective,
 } from "@ddd-qc/delivery";
-import {encodeHashToBase64} from "@holochain/client";
 import {FileView} from "./file-view";
 import {filesSharedStyles} from "../sharedStyles";
 import {getCompletionPct} from "../utils";
@@ -132,14 +131,14 @@ export class Inbox extends DnaElement<unknown, FilesDvm> {
         if (this._initialized) {
             //let unrepliedInbounds: TemplateResult<1>[] = [];
             const [unreplieds, incompletes] = this._dvm.deliveryZvm.inbounds();
-            const unrepliedItems: [number, TemplateResult<1>][] = Object.entries(unreplieds).map(
+            const unrepliedItems: [number, TemplateResult<1>][] = Array.from(unreplieds.entries()).map(
                 ([noticeEh, [notice, ts]]) => {
-                    console.log("" + noticeEh, this.deliveryPerspective.notices[noticeEh]);
-                    const senderKey = encodeHashToBase64(notice.sender);
+                    console.log("" + noticeEh, this.deliveryPerspective.notices.get(noticeEh));
+                    const senderKey = new AgentId(notice.sender);
                     const senderProfile = this._dvm.profilesZvm.getProfile(senderKey);
-                    let sender = senderKey;
+                    let senderName = senderKey.b64;
                     if (senderProfile) {
-                        sender = senderProfile.nickname;
+                        senderName = senderProfile.nickname;
                     }
                     /** Format date */
                     const date = new Date(ts / 1000); // Holochain timestamp is in micro-seconds, Date wants milliseconds
@@ -149,7 +148,7 @@ export class Inbox extends DnaElement<unknown, FilesDvm> {
                     <div class="inboxLine unreplied">
                         <file-button .description=${notice.summary.parcel_reference.description} .author=${notice.sender}></file-button>
                         is being sent by
-                        <span class="nickname">${sender}</span>
+                        <span class="nickname">${senderName}</span>
                         <div class="gap"></div>
                         <sl-button id="decline-button" type="button" @click=${()=> {this._dvm.deliveryZvm.declineDelivery(noticeEh);}}>
                             ${msg("Decline")}
@@ -163,14 +162,14 @@ export class Inbox extends DnaElement<unknown, FilesDvm> {
                     return [ts, unrepliedLi];
             });
 
-            const incompleteItems: [number, TemplateResult<1>][] = Object.entries(incompletes).map(
+            const incompleteItems: [number, TemplateResult<1>][] = Array.from(incompletes.entries()).map(
                 ([noticeEh, [notice, ts, missingChunks]]) => {
-                    console.log("" + noticeEh, this.deliveryPerspective.notices[noticeEh]);
-                    const senderKey = encodeHashToBase64(notice.sender);
+                    console.log("" + noticeEh, this.deliveryPerspective.notices.get(noticeEh));
+                    const senderKey = new AgentId(notice.sender);
                     const senderProfile = this._dvm.profilesZvm.getProfile(senderKey);
-                    let sender = senderKey;
+                    let senderName = senderKey.b64;
                     if (senderProfile) {
-                        sender = senderProfile.nickname;
+                        senderName = senderProfile.nickname;
                     }
                     /** Format date */
                     const date = new Date(ts / 1000); // Holochain timestamp is in micro-seconds, Date wants milliseconds
@@ -181,7 +180,7 @@ export class Inbox extends DnaElement<unknown, FilesDvm> {
                         <div class="inboxLine">
                             <file-button .description=${notice.summary.parcel_reference.description} .author=${notice.sender}></file-button>
                             ${msg("from")}
-                            <span class="nickname">${sender}</span>
+                            <span class="nickname">${senderName}</span>
                             <div class="gap"></div>
                             <div style="display:flex; flex-direction:row; width:100px;">
                                 <sl-progress-bar .value=${pct}>${pct}%</sl-progress-bar>

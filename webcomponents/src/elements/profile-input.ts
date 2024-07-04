@@ -2,23 +2,22 @@ import {css, html, LitElement, PropertyValues} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
 import {filesSharedStyles} from "../sharedStyles";
 import {SlInput} from "@shoelace-style/shoelace";
-import {AgentPubKeyB64} from "@holochain/client";
-import {ZomeElement} from "@ddd-qc/lit-happ";
-import {ProfilesPerspective, ProfilesZvm} from "@ddd-qc/profiles-dvm";
+import {AgentId, ZomeElement} from "@ddd-qc/lit-happ";
+import {ProfilesAltPerspective, ProfilesAltZvm} from "@ddd-qc/profiles-dvm";
 
 
 /**
  * @element
  */
 @customElement('profile-input')
-export class ProfileInput extends ZomeElement<ProfilesPerspective, ProfilesZvm> {
+export class ProfileInput extends ZomeElement<ProfilesAltPerspective, ProfilesAltZvm> {
 
     /** */
     constructor() {
-        super(ProfilesZvm.DEFAULT_ZOME_NAME)
+        super(ProfilesAltZvm.DEFAULT_ZOME_NAME)
     }
 
-    @state() private _selectedAgents: AgentPubKeyB64[] = [];
+    @state() private _selectedAgents: AgentId[] = [];
 
     @state() private _canShowResults: boolean = true;  // FIXME
 
@@ -27,7 +26,7 @@ export class ProfileInput extends ZomeElement<ProfilesPerspective, ProfilesZvm> 
     }
 
     /** */
-    onAddAgent(key: AgentPubKeyB64) {
+    onAddAgent(key: AgentId) {
         console.log("<profile-input> onAddAgent", key);
         this._selectedAgents.push(key);
         this.inputElem.value = "";
@@ -39,11 +38,11 @@ export class ProfileInput extends ZomeElement<ProfilesPerspective, ProfilesZvm> 
     render() {
         console.log("<profile-input>.render()", this._selectedAgents);
 
-        const profiles = Object.entries(this.perspective.profiles);
+        const profiles = Array.from(this.perspective.profiles.entries());
 
         const agentItems = this._selectedAgents
             .map((key) => {
-                const profile = this.perspective.profiles[key];
+                const profile = this.perspective.profiles.get(key);
                 if (!profile) return html``;
                 //return html`<div>${profile.nickname}</div>`;
                 return html`<profile-item .key=${key} clearable @cleared=${(e) => {
@@ -62,9 +61,9 @@ export class ProfileInput extends ZomeElement<ProfilesPerspective, ProfilesZvm> 
         if (this.inputElem && this.inputElem.value) {
             const filter = this.inputElem.value.toLowerCase();
             agentResults = profiles
-                .filter(([key, _profile]) => key != this._zvm.cell.agentPubKey) // exclude self
+                .filter(([key, _profile]) => key.b64 != this._zvm.cell.agentId.b64) // exclude self
                 .filter(([key, _profile]) => this._selectedAgents.indexOf(key) < 0) // Don't show already selected agents
-                .filter(([_key, profile]) => profile.nickname.toLowerCase().includes(filter)) // Must match filter
+                .filter(([_key, [profile, _ts]]) => profile.nickname.toLowerCase().includes(filter)) // Must match filter
                 .map(([key, profile]) => {
                     console.log("<profile-input> map", key, profile);
                     return html`<profile-item class="selectable-profile" .key=${key} selectable @selected=${(_e) => {this.onAddAgent(key);}}></profile-item>`;

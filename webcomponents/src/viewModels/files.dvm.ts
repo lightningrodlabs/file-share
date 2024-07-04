@@ -1,35 +1,26 @@
-import {delay, DnaViewModel, prettyDate, ZvmDef} from "@ddd-qc/lit-happ";
+import {delay, DnaViewModel, prettyDate, ZvmDef, ActionId, EntryId, AgentId, EntryIdMap,
+    ZomeSignal, ZomeSignalProtocolType, TipProtocol, EntryPulse, LinkPulse, materializeEntryPulse, materializeLinkPulse,
+    ZomeSignalProtocol, ZomeSignalProtocolVariantEntry, TipProtocolVariantEntry, StateChangeType,
+} from "@ddd-qc/lit-happ";
 import {
     DELIVERY_ZOME_NAME,
     DeliveryEntryType, DeliveryNotice,
     DeliveryProperties,
     DeliveryZvm,
-    EntryPulse,
     ParcelChunk,
     ParcelKindVariantManifest,
     ParcelManifest,
     ParcelReference,
     PublicParcelRecordMat, ReceptionAck,
     ReceptionProof, ReplyAck,
-    StateChangeType,
-    TipProtocol, TipProtocolVariantEntry,
-    ZomeSignal,
-    ZomeSignalProtocol,
-    ZomeSignalProtocolType, ZomeSignalProtocolVariantEntry,
 } from "@ddd-qc/delivery";
-import {
-    AgentPubKeyB64,
-    AppSignalCb, decodeHashFromBase64,
-    encodeHashToBase64,
-    EntryHashB64, Timestamp,
-} from "@holochain/client";
+import {AppSignalCb} from "@holochain/client";
 import {AppSignal} from "@holochain/client/lib/api/app/types";
-
 import {FilesZvm} from "./files.zvm";
 import {
     arrayBufferToBase64,
     base64ToArrayBuffer,
-    FileHashB64, getVariantByIndex,
+    FileHashB64,
     prettyFileSize,
     sha256,
     splitFile,
@@ -51,13 +42,6 @@ import {FILES_DEFAULT_ROLE_NAME} from "../bindings/files.types";
 import {ProfilesAltZvm, ProfilesZvm} from "@ddd-qc/profiles-dvm";
 
 
-/** */
-export interface CastLog {
-    ts: Timestamp,
-    tip: TipProtocol,
-    peers: AgentPubKeyB64[],
-}
-
 
 /**
  *
@@ -66,10 +50,10 @@ export class FilesDvm extends DnaViewModel {
 
     /** For commit & send follow-up */
     /** dataHash -> recipients[] */
-    private _mustSendTo: Record<EntryHashB64, AgentPubKeyB64[]> = {};
+    private _mustSendTo: EntryIdMap<AgentId[]> = new EntryIdMap();
     /** For publish or send follow-up */
     /** dataHash -> {isPrivate, tags} */
-    private _mustAddTags: Record<EntryHashB64, Object> = {};
+    private _mustAddTags: EntryIdMap<Object> = new EntryIdMap();
 
     /** -- DnaViewModel Interface -- */
 
@@ -145,7 +129,7 @@ export class FilesDvm extends DnaViewModel {
     /** -- Methods -- */
 
     /** */
-    private _sendFile(manifestEh: EntryHashB64, manifest: ParcelManifest) {
+    private _sendFile(manifestEh: EntryId, manifest: ParcelManifest) {
         const sendTo = this._mustSendTo[manifest.data_hash];
         const recipients = sendTo.map((agent) => (' ' + agent).slice(1)); // deep copy string for promise
         console.log("sendFile follow up", manifestEh, sendTo);
@@ -166,7 +150,7 @@ export class FilesDvm extends DnaViewModel {
 
 
     /** */
-    async downloadFile(manifestEh: EntryHashB64): Promise<void> {
+    async downloadFile(manifestEh: EntryId): Promise<void> {
         console.log("FilesDvm.downloadFile()", manifestEh);
         const [manifest, _ts, _author] = await this.deliveryZvm.fetchPublicManifest(manifestEh);
 
@@ -232,7 +216,7 @@ export class FilesDvm extends DnaViewModel {
         do  {
             await delay(1000)
             await this.probeAll();
-            maybeParcel = this.deliveryZvm.perspective.publicParcels[encodeHashToBase64(pr.parcel_eh)];
+            maybeParcel = this.deliveryZvm.perspective.publicParcels.get(new EntryId(pr.parcel_eh));
             //console.log("loopUntilFound()", maybeParcel);
         } while (maybeParcel === undefined);
         /* Into Notification */
@@ -248,7 +232,7 @@ export class FilesDvm extends DnaViewModel {
         do  {
             await delay(1000)
             await this.probeAll();
-            maybeParcel = this.deliveryZvm.perspective.publicParcels[encodeHashToBase64(pr.parcel_eh)];
+            maybeParcel = this.deliveryZvm.perspective.publicParcels.get(new EntryId(pr.parcel_eh));
             //console.log("loopUntilRemoved()", maybeParcel);
         } while (maybeParcel && !maybeParcel.deleteInfo);
         /* Into Notification */
@@ -268,15 +252,9 @@ export class FilesDvm extends DnaViewModel {
         if (!("pulses" in deliverySignal)) {
             return;
         }
-        /*await*/ this.handleSignal(deliverySignal);
-    }
-
-
-    /** */
-    async handleSignal(signal: ZomeSignal): Promise<void> {
-        const from = encodeHashToBase64(signal.from);
+        const from = new AgentId(deliverySignal.from);
         let all = [];
-        for (let pulse of signal.pulses) {
+        for (let pulse of deliverySignal.pulses) {
             /** -- Handle Signal according to type -- */
             /** Change tip to Entry or Link signal */
             if (ZomeSignalProtocolType.Tip in pulse) {
@@ -286,52 +264,45 @@ export class FilesDvm extends DnaViewModel {
                 }
             }
             if (ZomeSignalProtocolType.Entry in pulse) {
-                all.push(this.handleEntrySignal(pulse.Entry as EntryPulse, from));
+                all.push(this.handleEntryPulse(pulse.Entry as EntryPulse, from));
                 continue;
             }
         }
-        await Promise.all(all);
-        console.log("FilesDvm.handleSignal() notifySubscribers");
+        /*await */ Promise.all(all);
+        console.log("FilesDvm.mySignalHandler() notifySubscribers");
         this.notifySubscribers();
     }
 
 
     /** */
-    async handleEntrySignal(pulse: EntryPulse, from: AgentPubKeyB64): Promise<void> {
-        const entryType = getVariantByIndex(DeliveryEntryType, pulse.def.entry_index);
-        console.log("filesDvm.handleEntrySignal()", entryType);
-        const author = encodeHashToBase64(pulse.author);
-        const ah = encodeHashToBase64(pulse.ah);
-        const eh = encodeHashToBase64(pulse.eh);
-        const state = Object.keys(pulse.state)[0];
-        const isNew = (pulse.state as any)[state];
-        //let tip: TipProtocol | undefined = undefined;
+    async handleEntryPulse(entryPulse: EntryPulse, from: AgentId): Promise<void> {
+        const pulse = materializeEntryPulse(entryPulse, Object.values(DeliveryEntryType));
         const now = Date.now();
-        switch(entryType) {
-            case "PrivateManifest":
-            case "PublicManifest": {
+        switch(pulse.entryType) {
+            case DeliveryEntryType.PrivateManifest:
+            case DeliveryEntryType.PublicManifest: {
                 const manifest = decode(pulse.bytes) as ParcelManifest;
-                console.log("filesDvm received PublicManifest", eh, manifest);
+                console.log("filesDvm received PublicManifest", pulse.eh, manifest);
                 /** Follow-up send if requested */
                 if (this._mustSendTo[manifest.data_hash] && this._mustSendTo[manifest.data_hash].length > 0) {
-                    this._sendFile(eh, manifest);
+                    this._sendFile(pulse.eh, manifest);
                 }
                 /** Add Public tags if any */
                 if (this._mustAddTags[manifest.data_hash]) {
                     const addTags = this._mustAddTags[manifest.data_hash] as any;
                     if (addTags.isPrivate) {
                         /*await*/
-                        this.taggingZvm.tagPrivateEntry(eh, addTags.tags, manifest.description.name);
+                        this.taggingZvm.tagPrivateEntry(pulse.eh, addTags.tags, manifest.description.name);
                     } else {
                         /*await*/
-                        this.taggingZvm.tagPublicEntry(eh, addTags.tags, manifest.description.name);
+                        this.taggingZvm.tagPublicEntry(pulse.eh, addTags.tags, manifest.description.name);
                     }
                     delete this._mustAddTags[manifest.data_hash];
                 }
                 /** cleanup uploadState if any */
                 if (this._perspective.uploadStates[manifest.data_hash]) {
                     if (this._perspective.uploadStates[manifest.data_hash].callback) {
-                        this._perspective.uploadStates[manifest.data_hash].callback(eh);
+                        this._perspective.uploadStates[manifest.data_hash].callback(pulse.eh);
                     }
                     /*await*/
                     this.cacheFile(this._perspective.uploadStates[manifest.data_hash].file);
@@ -339,8 +310,8 @@ export class FilesDvm extends DnaViewModel {
                 }
             }
             break;
-            case "PrivateChunk":
-            case "PublicChunk": {
+            case DeliveryEntryType.PrivateChunk:
+            case DeliveryEntryType.PublicChunk: {
                 const chunk = decode(pulse.bytes) as ParcelChunk;
                 const manifestPair = this.deliveryZvm.perspective.localManifestByData[chunk.data_hash];
                 const uploadState = this._perspective.uploadStates[chunk.data_hash];
@@ -369,54 +340,54 @@ export class FilesDvm extends DnaViewModel {
                 }
             }
             break;
-            case "ReceptionProof": {
+            case DeliveryEntryType.ReceptionProof: {
                 const receptionProof = decode(pulse.bytes) as ReceptionProof;
                 /** Into Notification */
-                if (state == StateChangeType.Create && isNew) {
+                if (pulse.state == StateChangeType.Create && pulse.isNew) {
                     //this.deliveryZvm.zomeProxy.queryAllPrivateManifests().then(() => {
                     const notif = {
-                        noticeEh: encodeHashToBase64(receptionProof.notice_eh),
-                        manifestEh: encodeHashToBase64(receptionProof.parcel_eh),
+                        noticeEh: new EntryId(receptionProof.notice_eh),
+                        manifestEh: new EntryId(receptionProof.parcel_eh),
                     } as FilesNotificationVariantReceptionComplete;
                     this._perspective.notificationLogs.push([now, FilesNotificationType.ReceptionComplete, notif]);
                     // })
                 }
             }
             break;
-            case "ReplyAck": {
+            case DeliveryEntryType.ReplyAck: {
                 const replyAck = decode(pulse.bytes) as ReplyAck;
                 /** Into Notification */
-                if (state == StateChangeType.Create && isNew) {
+                if (pulse.state == StateChangeType.Create && pulse.isNew) {
                     const notif = {
-                        distribAh: encodeHashToBase64(replyAck.distribution_ah),
-                        recipient: encodeHashToBase64(replyAck.recipient),
+                        distribAh: new ActionId(replyAck.distribution_ah),
+                        recipient: new AgentId(replyAck.recipient),
                         hasAccepted: replyAck.has_accepted,
                     } as FilesNotificationVariantReplyReceived;
                     this._perspective.notificationLogs.push([now, FilesNotificationType.ReplyReceived, notif]);
                 }
             }
             break;
-            case "DeliveryNotice": {
+            case DeliveryEntryType.DeliveryNotice: {
                 const notice = decode(pulse.bytes) as DeliveryNotice;
                 /** Into Notification */
-                if (state == StateChangeType.Create && isNew) {
+                if (pulse.state == StateChangeType.Create && pulse.isNew) {
                     const notif = {
-                        noticeEh: eh,
-                        manifestEh: encodeHashToBase64(notice.summary.parcel_reference.parcel_eh),
+                        noticeEh: pulse.eh,
+                        manifestEh: new EntryId(notice.summary.parcel_reference.parcel_eh),
                         description: notice.summary.parcel_reference.description,
-                        sender: encodeHashToBase64(notice.sender),
+                        sender: new AgentId(notice.sender),
                     } as FilesNotificationVariantNewNoticeReceived;
                     this._perspective.notificationLogs.push([now, FilesNotificationType.NewNoticeReceived, notif]);
                 }
             }
             break;
-            case "ReceptionAck": {
+            case DeliveryEntryType.ReceptionAck: {
                 const receptionAck = decode(pulse.bytes) as ReceptionAck;
                 /** Into Notification */
-                if (state == StateChangeType.Create && isNew) {
+                if (pulse.state == StateChangeType.Create && pulse.isNew) {
                     const notif = {
-                        distribAh: encodeHashToBase64(receptionAck.distribution_ah),
-                        recipient: encodeHashToBase64(receptionAck.recipient),
+                        distribAh: new ActionId(receptionAck.distribution_ah),
+                        recipient: new AgentId(receptionAck.recipient),
                     } as FilesNotificationVariantDistributionToRecipientComplete;
                     this._perspective.notificationLogs.push([now, FilesNotificationType.DistributionToRecipientComplete, notif]);
                 }
@@ -431,7 +402,7 @@ export class FilesDvm extends DnaViewModel {
 
 
     /** */
-    handleTip(tip: TipProtocol, from: AgentPubKeyB64): ZomeSignalProtocol | undefined {
+    handleTip(tip: TipProtocol, from: AgentId): ZomeSignalProtocol | undefined {
         const type = Object.keys(tip)[0];
         console.log("handleTip()", type, from, tip);
         /* Handle tip according to its type */
@@ -491,52 +462,18 @@ export class FilesDvm extends DnaViewModel {
     //     }
 
 
-    private _castLogs: CastLog[] = [];
-
-    /** */
-    async broadcastTip(tip: TipProtocol, agents?: Array<AgentPubKeyB64>): Promise<void> {
-        agents = agents? agents : this.livePeers;
-        /** Skip if no recipients or sending to self only */
-        const filtered = agents.filter((key) => key != this.cell.agentPubKey);
-        const tipType = Object.keys(tip)[0];
-        console.log(`broadcastTip() Sending Tip "${tipType}" to`, filtered, this.cell.agentPubKey);
-        if (!filtered || filtered.length == 0) {
-            console.log("broadcastTip() aborted: No recipients")
-            return;
-        }
-        /** Broadcast */
-        const peers = agents.map((key) => decodeHashFromBase64(key));
-        await this.deliveryZvm.zomeProxy.castTip({tip, peers});
-        /** Log */
-        this._castLogs.push({ts: Date.now(), tip, peers: agents});
-    }
-
-
-    /** */
-    dumpCastLogs() {
-        console.warn(`Tips sent from FilesDvm`);
-        let appSignals: any[] = [];
-        this._castLogs.map((log) => {
-            const type = Object.keys(log.tip)[0];
-            const payload = (log.tip as any)[type];
-            appSignals.push({timestamp: prettyDate(new Date(log.ts)), type, payload, count: log.peers.length, first: log.peers[0]});
-        });
-        console.table(appSignals);
-    }
-
-
     /** Return list of ParcelEh that holds a file with a name that matches filter */
-    searchParcel(filter: string): EntryHashB64[] {
+    searchParcel(filter: string): EntryId[] {
         if (filter.length < 2) {
             return [];
         }
-        const pps = Object.entries(this.deliveryZvm.perspective.publicParcels)
+        const pps = Array.from(this.deliveryZvm.perspective.publicParcels.entries())
             .filter(([_ppEh, pprm]) => !pprm.deleteInfo)
             .filter(([_ppEh, pprm]) => pprm.description.name.toLowerCase().includes(filter))
             .map(([ppEh, _tuple]) => ppEh);
 
 
-        const pms = Object.entries(this.deliveryZvm.perspective.privateManifests)
+        const pms = Array.from(this.deliveryZvm.perspective.privateManifests.entries())
             .filter(([ppEh, [manifest, _ts]]) => manifest.description.name.toLowerCase().includes(filter))
             .map(([ppEh, _tuple]) => ppEh);
 
@@ -545,13 +482,13 @@ export class FilesDvm extends DnaViewModel {
 
 
     /** */
-    async removePublicParcel(eh: EntryHashB64) {
-        const pprm = this.deliveryZvm.perspective.publicParcels[eh];
+    async removePublicParcel(eh: EntryId) {
+        const pprm = this.deliveryZvm.perspective.publicParcels.get(eh);
         if (!pprm) {
             return Promise.reject("No Public File found at address");
         }
         /** Remove PublicParcel */
-        await this.deliveryZvm.zomeProxy.unpublishPublicParcel(decodeHashFromBase64(pprm.prEh));
+        await this.deliveryZvm.zomeProxy.unpublishPublicParcel(pprm.prEh.hash);
         /** Remove tags */
         const tags = this.taggingZvm.getTargetPublicTags(eh);
         console.log("removePublicParcel()", tags);
@@ -564,9 +501,9 @@ export class FilesDvm extends DnaViewModel {
 
 
     /** Can't send to self */
-    async startCommitPrivateAndSendFile(file: File, recipients: AgentPubKeyB64[], tags: string[]): Promise<SplitObject | undefined> {
+    async startCommitPrivateAndSendFile(file: File, recipients: AgentId[], tags: string[]): Promise<SplitObject | undefined> {
         const agents = recipients
-            .filter((agent) => agent != this.cell.agentPubKey);
+            .filter((agent) => agent.b64 != this.cell.agentId.b64)
         console.log("startCommitPrivateAndSendFile()", recipients, agents);
         if (agents.length == 0) {
             return undefined;
@@ -576,7 +513,7 @@ export class FilesDvm extends DnaViewModel {
 
 
     /** */
-    async startCommitPrivateFile(file: File, tags: string[], recipients?: AgentPubKeyB64[]): Promise<SplitObject> {
+    async startCommitPrivateFile(file: File, tags: string[], recipients?: AgentId[]): Promise<SplitObject> {
         console.log('dvm.startCommitPrivateFile: ', file, tags);
         const splitObj = await splitFile(file, this.dnaProperties.maxChunkSize);
         if (this._perspective.uploadStates[splitObj.dataHash]) {
@@ -591,7 +528,7 @@ export class FilesDvm extends DnaViewModel {
             console.warn("File already stored locally");
             const manifestEh = maybeManifest[0];
             if (this._mustSendTo[splitObj.dataHash]) {
-                this._sendFile(manifestEh, this.deliveryZvm.perspective.privateManifests[manifestEh][0]);
+                this._sendFile(manifestEh, this.deliveryZvm.perspective.privateManifests.get(manifestEh)[0]);
             }
             return;
         }
@@ -614,9 +551,9 @@ export class FilesDvm extends DnaViewModel {
 
 
 
-    private _peersToSignal: AgentPubKeyB64[] = [];
+    private _peersToSignal: AgentId[] = [];
     /** */
-    async startPublishFile(file: File, tags: string[], peersToSignal: AgentPubKeyB64[], callback?: FilesCb): Promise<SplitObject> {
+    async startPublishFile(file: File, tags: string[], peersToSignal: AgentId[], callback?: FilesCb): Promise<SplitObject> {
         console.log('dvm.startPublishFile: ', file, tags);
         const splitObj = await splitFile(file, this.dnaProperties.maxChunkSize);
         if (this._perspective.uploadStates[splitObj.dataHash]) {
@@ -682,14 +619,14 @@ export class FilesDvm extends DnaViewModel {
     /** */
     async resumeInbounds() {
         const [_unreplieds, inbounds] = this.deliveryZvm.inbounds();
-        for (const [noticeEh, [notice, _ts, pct]] of Object.entries(inbounds)) {
+        for (const noticeEh of inbounds.keys()) {
             await this.deliveryZvm.requestMissingChunks(noticeEh);
         }
     }
 
 
     /** */
-    async fetchFile(ppEh: EntryHashB64): Promise<[ParcelManifest, string]> {
+    async fetchFile(ppEh: EntryId): Promise<[ParcelManifest, string]> {
         const [manifest, _ts] = await this.deliveryZvm.fetchPublicManifest(ppEh);
         //this.deliveryZvm.perspective.chunkCounts[manifest.data_hash] = 0;
         const dataB64 = await this.deliveryZvm.fetchParcelData(ppEh);
@@ -698,7 +635,7 @@ export class FilesDvm extends DnaViewModel {
 
 
     /** */
-    async parcel2FileData(manifestEh: EntryHashB64): Promise<string> {
+    async parcel2FileData(manifestEh: EntryId): Promise<string> {
         const [_manifest, data] = await this.fetchFile(manifestEh);
         return data;
     }
@@ -721,7 +658,7 @@ export class FilesDvm extends DnaViewModel {
 
 
     /** */
-    async parcel2File(manifestEh: EntryHashB64): Promise<File> {
+    async parcel2File(manifestEh: EntryId): Promise<File> {
         const [manifest, data] = await this.fetchFile(manifestEh);
         /** DEBUG - check if content is valid base64 */
         // if (!base64regex.test(data)) {

@@ -1,7 +1,6 @@
 import {css, html, PropertyValues} from "lit";
 import {customElement, property, state} from "lit/decorators.js";
-import {DnaElement} from "@ddd-qc/lit-happ";
-import {decodeHashFromBase64, EntryHashB64,} from "@holochain/client";
+import {DnaElement, EntryId} from "@ddd-qc/lit-happ";
 import {FilesDvm} from "../viewModels/files.dvm";
 import {ParcelManifest} from "@ddd-qc/delivery";
 import {filesSharedStyles} from "../sharedStyles";
@@ -19,7 +18,7 @@ export class FilePreview extends DnaElement<FilesDvmPerspective, FilesDvm> {
     /** -- Properties -- */
 
     /** Hash of ParcelManifest to display */
-    @property() hash: EntryHashB64 = ''
+    @property() hash?: EntryId;
 
     /** Observed perspective from zvm */
     // @property({type: Object, attribute: false, hasChanged: (_v, _old) => true})
@@ -47,7 +46,7 @@ export class FilePreview extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 return;
             }
             this._loading = true;
-            this._manifest = await this._dvm.filesZvm.zomeProxy.getFileInfo(decodeHashFromBase64(this.hash));
+            this._manifest = await this._dvm.filesZvm.zomeProxy.getFileInfo(this.hash.hash);
             //console.log(`<file-preview>.willUpdate() ${this._manifest.description.size} < ${this._dvm.dnaProperties.maxChunkSize}?`);
             if (this._manifest && this._manifest.description.size < this._dvm.dnaProperties.maxChunkSize) {
                 const mime = kind2mime(this._manifest.description.kind_info);
@@ -82,13 +81,11 @@ export class FilePreview extends DnaElement<FilesDvmPerspective, FilesDvm> {
     /** */
     render() {
         console.log("<file-preview>.render()", this.hash, this._maybeBlobUrl);
-        if (this.hash == "") {
-            return html`
-                <div style="color:#c10a0a">${msg("No file selected")}</div>`;
+        if (!this.hash) {
+            return html`<div style="color:#c10a0a">${msg("No file selected")}</div>`;
         }
         if (!this._manifest) {
-            return html`
-                <div style="color:#c10a0a">${msg("File not found")}</div>`;
+            return html`<div style="color:#c10a0a">${msg("File not found")}</div>`;
         }
         if (this._loading) {
             return html`<sl-spinner></sl-spinner>`;

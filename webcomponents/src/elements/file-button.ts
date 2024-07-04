@@ -1,12 +1,7 @@
 import {css, html, PropertyValues} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
 import {consume} from "@lit/context";
-import {delay, DnaElement} from "@ddd-qc/lit-happ";
-import {
-    AgentPubKeyB64,
-    decodeHashFromBase64,
-    EntryHashB64,
-} from "@holochain/client";
+import {AgentId, delay, DnaElement, EntryId} from "@ddd-qc/lit-happ";
 import {FilesDvm} from "../viewModels/files.dvm";
 import {filesSharedStyles} from "../sharedStyles";
 import {FilesDvmPerspective} from "../viewModels/files.perspective";
@@ -15,7 +10,7 @@ import {kind2Icon} from "../fileTypeUtils";
 import {SelectedType} from "./files-menu";
 import {prettyFileSize} from "../utils";
 import {ParcelDescription} from "@ddd-qc/delivery";
-import {Hrl, weaveUrlFromWal, WeaveServices} from "@lightningrodlabs/we-applet";
+import {weaveUrlFromWal, WeaveServices} from "@lightningrodlabs/we-applet";
 //import {weClientContext} from "@lightningrodlabs/we-applet/context";
 import {createContext} from "@lit/context";
 import {WAL} from "@lightningrodlabs/we-applet/dist/types";
@@ -33,9 +28,9 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
     /** -- Properties -- */
 
     /** Hash of ParcelManifest to display */
-    @property() hash: EntryHashB64 = ''
+    @property() hash?: EntryId;
 
-    @property() author?: AgentPubKeyB64;
+    //@property() author?: AgentId;
 
     @property() description?: ParcelDescription;
 
@@ -68,8 +63,8 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
     /** */
     render() {
-        console.log("<file-button>.render()", this.hash, this.description, this.author);
-        if (this.hash == "" && !this.description) {
+        console.log("<file-button>.render()", this.hash, this.description);
+        if (!this.hash && !this.description) {
             return html`<sl-button class="fileButton" disabled>N/A</sl-button>`;
         }
 
@@ -77,18 +72,18 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
         let fileDescription = this.description;
         let isPrivate = true;
         //let author = this.author? this.author : this.cell.agentPubKey;
-        if (this.hash != "") {
-            const tuple = this._dvm.deliveryZvm.perspective.privateManifests[this.hash];
+        if (this.hash) {
+            const tuple = this._dvm.deliveryZvm.perspective.privateManifests.get(this.hash);
             isPrivate = false;
             if (tuple) {
                 fileDescription = tuple[0].description;
                 isPrivate = true;
             } else {
-                const tuple = this._dvm.deliveryZvm.perspective.localPublicManifests[this.hash];
+                const tuple = this._dvm.deliveryZvm.perspective.localPublicManifests.get(this.hash);
                 if (tuple) {
                     fileDescription = tuple[0].description;
                 } else {
-                    const pprm = this._dvm.deliveryZvm.perspective.publicParcels[this.hash];
+                    const pprm = this._dvm.deliveryZvm.perspective.publicParcels.get(this.hash);
                     //author = pprm.author;
                     if (pprm) {
                         fileDescription = pprm.description;
@@ -103,7 +98,7 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
         /** Retrieve tags */
         let tagList = [];
         let actionButtons = [];
-        if (this.hash != "") {
+        if (this.hash) {
             let tags;
             let type;
             if (isPrivate) {
@@ -179,7 +174,7 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
                         
                         <div slot="anchor" @click=${async (e) => {
                             const obj: WAL = {
-                                hrl: [decodeHashFromBase64(this.cell.dnaHash), decodeHashFromBase64(this.hash)],
+                                hrl: [this.cell.dnaId.hash, this.hash.hash],
                                 context: {
                                     subjectName: fileDescription.name,
                                     subjectType: "File",
