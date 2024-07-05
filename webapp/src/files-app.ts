@@ -150,7 +150,7 @@ export class FilesApp extends HappElement {
     // else {
     //   /** Create Guest profile */
     //   const profile = { nickname: "guest_" + Math.floor(Math.random() * 100), fields: {}};
-    //   console.log("setupWeProfilesDvm() createMyProfile", this.filesDvm.profilesZvm.cell.agentPubKey);
+    //   console.log("setupWeProfilesDvm() createMyProfile", this.filesDvm.profilesZvm.cell.agentId);
     //   await this.filesDvm.profilesZvm.createMyProfile(profile);
     // }
   }
@@ -350,7 +350,8 @@ export class FilesApp extends HappElement {
               </sl-card>
             </div>
           </div>`;
-      } else {
+      }
+      else {
         /** Create Guest profile */
         const profile = { nickname: "guest_" + Math.floor(Math.random() * 100),
           fields: {lang: 'en', email: 'guest@ac.me', mailgun_domain: "mg.flowplace.org", mailgun_email: "whosin@mg.flowplace.org"}};
@@ -362,7 +363,7 @@ export class FilesApp extends HappElement {
 
     /* render all */
     return html`
-      <cell-context .cell="${this.filesDvm.cell}">
+      <cell-context .cell=${this.filesDvm.cell}>
         <!-- <view-cell-context></view-cell-context> -->
         ${guardedView}
       </cell-context>        

@@ -1,6 +1,24 @@
-import {delay, DnaViewModel, prettyDate, ZvmDef, ActionId, EntryId, AgentId, EntryIdMap,
-    ZomeSignal, ZomeSignalProtocolType, TipProtocol, EntryPulse, LinkPulse, materializeEntryPulse, materializeLinkPulse,
-    ZomeSignalProtocol, ZomeSignalProtocolVariantEntry, TipProtocolVariantEntry, StateChangeType,
+import {
+    delay,
+    DnaViewModel,
+    prettyDate,
+    ZvmDef,
+    ActionId,
+    EntryId,
+    AgentId,
+    EntryIdMap,
+    ZomeSignal,
+    ZomeSignalProtocolType,
+    TipProtocol,
+    EntryPulse,
+    LinkPulse,
+    materializeEntryPulse,
+    materializeLinkPulse,
+    ZomeSignalProtocol,
+    ZomeSignalProtocolVariantEntry,
+    TipProtocolVariantEntry,
+    StateChangeType,
+    TipProtocolVariantLink, ZomeSignalProtocolVariantLink,
 } from "@ddd-qc/lit-happ";
 import {
     DELIVERY_ZOME_NAME,
@@ -40,6 +58,7 @@ import {TaggingZvm} from "./tagging.zvm";
 import {FILES_DEFAULT_ROLE_NAME} from "../bindings/files.types";
 //import {NotificationsZvm} from "@ddd-qc/notifications-dvm/dist/viewModels/notifications.zvm";
 import {ProfilesAltZvm, ProfilesZvm} from "@ddd-qc/profiles-dvm";
+import {ProfilesAltLinkType} from "@ddd-qc/profiles-dvm/dist/bindings/profilesAlt.integrity";
 
 
 
@@ -121,7 +140,8 @@ export class FilesDvm extends DnaViewModel {
     async initializePerspectiveOnline(): Promise<void> {
         console.log("filessDvm.initializePerspectiveOffline() override")
         await super.initializePerspectiveOnline();
-        this._livePeers = this.profilesZvm.getAgents(); // TODO: implement real presence logic
+        //this._livePeers = this.profilesZvm.getAgents(); // TODO: implement real presence logic
+        //console.log("filessDvm.initializePerspectiveOffline() livePeers", this._livePeers);
         console.log("filessDvm.initializePerspectiveOffline() override persp =", this.perspective)
     }
 
@@ -245,37 +265,80 @@ export class FilesDvm extends DnaViewModel {
     /** */
     mySignalHandler(appSignal: AppSignal): void {
         console.log("FilesDvm.mySignalHandler()", appSignal);
-        if (appSignal.zome_name != DELIVERY_ZOME_NAME) {
+        const zomeSignal = appSignal.payload as ZomeSignal;
+        if (!("pulses" in zomeSignal)) {
             return;
         }
-        const deliverySignal = appSignal.payload as ZomeSignal;
-        if (!("pulses" in deliverySignal)) {
+        const from = new AgentId(zomeSignal.from);
+        if (appSignal.zome_name == DELIVERY_ZOME_NAME) {
+            /*await */ this.handleDeliverySignal(zomeSignal, from);
             return;
         }
-        const from = new AgentId(deliverySignal.from);
+        if (appSignal.zome_name == ProfilesAltZvm.DEFAULT_ZOME_NAME) {
+            /*await */ this.handleProfilesSignal(zomeSignal, from);
+            return;
+        }
+    }
+
+    /** */
+    async handleProfilesSignal(zomeSignal: ZomeSignal, from: AgentId) {
         let all = [];
-        for (let pulse of deliverySignal.pulses) {
+        for (let pulse of zomeSignal.pulses) {
             /** -- Handle Signal according to type -- */
             /** Change tip to Entry or Link signal */
             if (ZomeSignalProtocolType.Tip in pulse) {
-                pulse = this.handleTip(pulse.Tip as TipProtocol, from)!;
+                pulse = this.convertTip(pulse.Tip as TipProtocol, from)!;
                 if (!pulse) {
                     continue;
                 }
             }
-            if (ZomeSignalProtocolType.Entry in pulse) {
-                all.push(this.handleEntryPulse(pulse.Entry as EntryPulse, from));
+            if (ZomeSignalProtocolType.Link in pulse) {
+                const linkPulse = materializeLinkPulse(pulse.Link as LinkPulse, Object.values(ProfilesAltLinkType));
+                switch(linkPulse.link_type) {
+                    case ProfilesAltLinkType.PathToAgent: {
+                        const peer = AgentId.from(linkPulse.target);
+                        if (!this._livePeers.map(id => id.b64).includes(peer.b64)) {
+                            console.log("Adding livePeer", peer.short);
+                            this._livePeers.push(peer);
+                        }
+                    }
+                    break;
+                    default:
+                    break;
+                }
                 continue;
             }
         }
-        /*await */ Promise.all(all);
-        console.log("FilesDvm.mySignalHandler() notifySubscribers");
+        await Promise.all(all);
+        console.log("FilesDvm.handleDeliverySignal() notifySubscribers");
         this.notifySubscribers();
     }
 
 
     /** */
-    async handleEntryPulse(entryPulse: EntryPulse, from: AgentId): Promise<void> {
+    async handleDeliverySignal(zomeSignal: ZomeSignal, from: AgentId) {
+        let all = [];
+        for (let pulse of zomeSignal.pulses) {
+            /** -- Handle Signal according to type -- */
+            /** Change tip to Entry or Link signal */
+            if (ZomeSignalProtocolType.Tip in pulse) {
+                pulse = this.convertTip(pulse.Tip as TipProtocol, from)!;
+                if (!pulse) {
+                    continue;
+                }
+            }
+            if (ZomeSignalProtocolType.Entry in pulse) {
+                all.push(this.handleDeliveryEntryPulse(pulse.Entry as EntryPulse, from));
+                continue;
+            }
+        }
+        await Promise.all(all);
+        console.log("FilesDvm.handleDeliverySignal() notifySubscribers");
+        this.notifySubscribers();
+    }
+
+    /** */
+    async handleDeliveryEntryPulse(entryPulse: EntryPulse, from: AgentId): Promise<void> {
         const pulse = materializeEntryPulse(entryPulse, Object.values(DeliveryEntryType));
         const now = Date.now();
         switch(pulse.entryType) {
@@ -394,15 +457,11 @@ export class FilesDvm extends DnaViewModel {
             }
             break;
         }
-        // /** */
-        // if (tip) {
-        //     await this.broadcastTip(tip);
-        // }
     }
 
 
     /** */
-    handleTip(tip: TipProtocol, from: AgentId): ZomeSignalProtocol | undefined {
+    convertTip(tip: TipProtocol, from: AgentId): ZomeSignalProtocol | undefined {
         const type = Object.keys(tip)[0];
         console.log("handleTip()", type, from, tip);
         /* Handle tip according to its type */
@@ -413,7 +472,9 @@ export class FilesDvm extends DnaViewModel {
             case "Entry": {
                 return {Entry: (tip as TipProtocolVariantEntry).Entry} as ZomeSignalProtocolVariantEntry;
             } break;
-            case "Link": //return {Link: (tip as TipProtocolVariantLink).Link} as ZomeSignalProtocolVariantLink; break;
+            case "Link": {
+                return {Link: (tip as TipProtocolVariantLink).Link} as ZomeSignalProtocolVariantLink; break;
+            }
             case "App":
                 break;
         }

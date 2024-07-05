@@ -77,7 +77,6 @@ import '@vaadin/grid/theme/lumo/vaadin-grid-selection-column.js';
 import '@vaadin/upload/theme/lumo/vaadin-upload.js';
 import {setLocale} from "./localization";
 import {msg} from "@lit/localize";
-import {Base64} from "js-base64";
 import {wrapPathInSvg} from "@ddd-qc/we-utils";
 import {mdiAlertOctagonOutline, mdiAlertOutline, mdiCheckCircleOutline, mdiInformationOutline, mdiCog} from "@mdi/js";
 
@@ -305,7 +304,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
     /** */
     printNoticeReceived() {
         for (const [distribAh, acks] of Array.from(this.deliveryPerspective.noticeAcks.entries())) {
-            console.log(` - "${distribAh}": distrib = "${distribAh}"; recipients = "${Object.keys(acks)}"`)
+            console.log(` - "${distribAh}": distrib = "${distribAh}"; recipients = "${Array.from(acks.keys())}"`)
         }
     }
 
@@ -606,16 +605,17 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         /** This agent's profile info */
         let myProfile = this._dvm.profilesZvm.getMyProfile();
         if (!myProfile) {
-            myProfile = {nickname: msg("unknown"), fields: { lang: "en"}} as ProfileMat;
-            console.log("Profile not found. Probing", this._dvm.cell.agentId);
-            this._dvm.profilesZvm.findProfile(this._dvm.cell.agentId).then((profile) => {
-                if (!profile) {
-                    console.log("Profile still not found after probing");
-                    return;
-                }
-                console.log("Found Profile", profile.nickname);
-                this.requestUpdate();
-            })
+        //     myProfile = {nickname: msg("unknown"), fields: { lang: "en"}} as ProfileMat;
+        //     console.log("Profile not found. Probing", this._dvm.cell.agentId);
+        //     this._dvm.profilesZvm.findProfile(this._dvm.cell.agentId).then((profile) => {
+        //         if (!profile) {
+        //             console.log("Profile still not found after probing");
+        //             return;
+        //         }
+        //         console.log("Found Profile", profile.nickname);
+        //         this.requestUpdate();
+        //     })
+            return html`<sl-spinner></sl-spinner>`;
         }
         const avatarUrl = myProfile.fields['avatar'];
         let lang = myProfile.fields['lang'];
@@ -653,21 +653,22 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
         /** -- -- */
 
-        const agentOptions = Object.entries(this._dvm.profilesZvm.perspective.profiles).map(
-            ([agentIdB64, profile]) => {
-                //console.log("" + index + ". " + agentIdB64)
-                return html `<option value="${agentIdB64}">${profile.nickname}</option>`
-            }
-        )
+        // const agentOptions = Array.from(this._dvm.profilesZvm.perspective.profileByAgent.entries()).map(
+        //     ([agentId, _profileId]) => {
+        //         //console.log("" + index + ". " + agentIdB64)
+        //         const profile = this._dvm.profilesZvm.getProfile(agentId);
+        //         return html `<option value=${agentId.b64}>${profile.nickname}</option>`
+        //     }
+        // )
 
         //console.log("localFiles found:", this.deliveryPerspective.privateManifests);
 
-        const fileOptions = Array.from(this.deliveryPerspective.privateManifests.entries()).map(
-            ([eh, [manifest, _ts]]) => {
-                //console.log("" + index + ". " + agentIdB64)
-                return html `<option value="${eh}">${manifest.description.name}</option>`
-            }
-        )
+        // const fileOptions = Array.from(this.deliveryPerspective.privateManifests.entries()).map(
+        //     ([eh, [manifest, _ts]]) => {
+        //         //console.log("" + index + ". " + agentIdB64)
+        //         return html `<option value="${eh}">${manifest.description.name}</option>`
+        //     }
+        // )
 
 
         /** Unreplied inbounds */
@@ -702,7 +703,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             });
 
         /** Unreplied outbounds */
-        let outboundList = Object.entries(this._dvm.deliveryZvm.outbounds())
+        let outboundList = Array.from(this._dvm.deliveryZvm.outbounds().entries())
             .map(([_distribAh, [distribution, ts, deliveryStates]]) => {
                 const outboundItems = Object.entries(deliveryStates).map(
                     ([recipient, state]) => {
