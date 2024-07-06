@@ -30,12 +30,11 @@ export class ProfileItem extends ZomeElement<ProfilesAltPerspective, ProfilesAlt
     render() {
         console.log("<profile-item>.render()", this.clearable);
 
-        const profilePair = this.perspective.profiles.get(this.key);
+        const profile = this._zvm.getProfile(this.key);
 
-        if (!this.key || !profilePair) {
+        if (!this.key || !profile) {
             return html`<sl-spinner></sl-spinner>`;
         }
-        const profile = profilePair[0];
 
         // <sl-badge class="avatar-badge" type="${this.determineAgentStatus(keyB64)}" pill></sl-badge>
 

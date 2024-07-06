@@ -3,7 +3,7 @@ import {property, state, customElement} from "lit/decorators.js";
 import {filesSharedStyles} from "../sharedStyles";
 import {SlInput} from "@shoelace-style/shoelace";
 import {AgentId, ZomeElement} from "@ddd-qc/lit-happ";
-import {ProfilesAltPerspective, ProfilesAltZvm} from "@ddd-qc/profiles-dvm";
+import {ProfilesAltPerspective, ProfilesAltZvm, Profile} from "@ddd-qc/profiles-dvm";
 
 
 /**
@@ -38,11 +38,11 @@ export class ProfileInput extends ZomeElement<ProfilesAltPerspective, ProfilesAl
     render() {
         console.log("<profile-input>.render()", this._selectedAgents);
 
-        const profiles = Array.from(this.perspective.profiles.entries());
+        const profiles = Array.from(this.perspective.profileByAgent.entries());
 
         const agentItems = this._selectedAgents
             .map((key) => {
-                const profile = this.perspective.profiles.get(key);
+                const profile = this._zvm.getProfile(key);
                 if (!profile) return html``;
                 //return html`<div>${profile.nickname}</div>`;
                 return html`<profile-item .key=${key} clearable @cleared=${(e) => {
@@ -60,10 +60,12 @@ export class ProfileInput extends ZomeElement<ProfilesAltPerspective, ProfilesAl
         let agentResults = undefined;
         if (this.inputElem && this.inputElem.value) {
             const filter = this.inputElem.value.toLowerCase();
-            agentResults = profiles
+            const profilePairs: [AgentId, Profile][] = profiles
                 .filter(([key, _profile]) => key.b64 != this._zvm.cell.agentId.b64) // exclude self
                 .filter(([key, _profile]) => this._selectedAgents.indexOf(key) < 0) // Don't show already selected agents
-                .filter(([_key, [profile, _ts]]) => profile.nickname.toLowerCase().includes(filter)) // Must match filter
+                .map(([key, profileId]) => [key, this.perspective.profiles.get(profileId)[0]]);
+            agentResults = profilePairs
+                .filter(([_key, profile]) => profile.nickname.toLowerCase().includes(filter)) // Must match filter
                 .map(([key, profile]) => {
                     console.log("<profile-input> map", key, profile);
                     return html`<profile-item class="selectable-profile" .key=${key} selectable @selected=${(_e) => {this.onAddAgent(key);}}></profile-item>`;
