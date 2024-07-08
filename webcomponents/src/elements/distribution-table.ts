@@ -2,7 +2,7 @@ import {css, html, LitElement} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
 import {prettyFileSize, prettyTimestamp} from "../utils";
 import {columnBodyRenderer, columnFooterRenderer} from "@vaadin/grid/lit";
-import {AgentId, ActionId, EntryId, AgentIdMap} from "@ddd-qc/lit-happ";
+import {ActionId, EntryId} from "@ddd-qc/lit-happ";
 import {DeliveryState, ParcelDescription} from "@ddd-qc/delivery/dist/bindings/delivery.types";
 import {filesSharedStyles} from "../sharedStyles";
 import {kind2Type} from "../fileTypeUtils";
@@ -12,7 +12,7 @@ import {msg} from "@lit/localize";
 
 export interface DistributionTableItem {
     distribAh: ActionId,
-    recipient: AgentId,
+    recipient: ProfileMat,
     deliveryState: DeliveryState,
     parcelEh: EntryId,
     description: ParcelDescription,
@@ -30,7 +30,6 @@ export class DistributionTable extends LitElement {
     /** -- State variables -- */
 
     @property() items: DistributionTableItem[] = [];
-    @property() profiles: AgentIdMap<ProfileMat> = new AgentIdMap();
 
     /** */
     render() {
@@ -74,9 +73,8 @@ export class DistributionTable extends LitElement {
                 <vaadin-grid-column path="recipient" header=${msg("Recipient")}
                                     ${columnBodyRenderer(
                                             ({ recipient }) => {
-                                                const maybeProfile = this.profiles.get(recipient);
-                                                return maybeProfile
-                                                        ? html`<span>${maybeProfile.nickname}</span>`
+                                                return recipient
+                                                        ? html`<span>${recipient.nickname}</span>`
                                                         : html`<span>Unknown</span>`
                                             },
                                     [],

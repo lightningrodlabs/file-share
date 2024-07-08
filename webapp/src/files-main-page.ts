@@ -850,7 +850,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                         ppEh: ppEh.b64,
                         description: pm.description,
                         timestamp,
-                        author: this.cell.agentId.b64,
+                        author: this._dvm.profilesZvm.getProfile(this.cell.agentId),
                         isLocal: true,
                         isPrivate: true
                     } as FileTableItem;
@@ -870,25 +870,21 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     .map(([ppEh, pprm]) => {
                     //const [description, timestamp, author] = this.deliveryPerspective.publicParcels[ppEh];
                     const isLocal = !!this.deliveryPerspective.localPublicManifests.get(ppEh);
-                    return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: pprm.author.b64, isLocal, isPrivate: false};
+                    return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: this._dvm.profilesZvm.getProfile(pprm.author), isLocal, isPrivate: false};
                 });
                 const allItems = privateItems.concat(publicItems/*, myPublicItems*/);
                 mainArea = html`
                     <h2>${msg("All Files")}${this._typeFilter? ": " + this._typeFilter : ""}</h2>
-                    <file-table type="all"
-                                .items=${allItems} 
-                                .profiles=${this._dvm.profilesZvm.perspective.profiles}
-                    ></file-table>
+                    <file-table type="all" .items=${allItems}></file-table>
                 `;
             }
             if (this._selectedMenuItem.type == SelectedType.PersonalFiles) {
                 mainArea = html`
                     <h2>${msg("Personal Files")}</h2>
                     <file-table type="personal"
-                                .profiles=${this._dvm.profilesZvm.perspective.profiles}
                                 .items=${Array.from(this.deliveryPerspective.privateManifests.entries()).map(([ppEh, [pm, timestamp]]) => {
                                     //const timestamp = this.deliveryPerspective.privateManifests[ppEh][1];
-                                    return {ppEh: ppEh.b64, description:pm.description, timestamp, author: this.cell.agentId.b64, isPrivate:true, isLocal:true} as FileTableItem;
+                                    return {ppEh: ppEh.b64, description:pm.description, timestamp, author: this._dvm.profilesZvm.getProfile(this.cell.agentId), isPrivate:true, isLocal:true} as FileTableItem;
                                 })}
                     ></file-table>
                 `;
@@ -904,16 +900,13 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                   .map(([ppEh, pprm]) => {
                     //const [description, timestamp, author] = this.deliveryPerspective.publicParcels[ppEh];
                     const isLocal = !!this.deliveryPerspective.localPublicManifests.get(ppEh);
-                    return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: pprm.author.b64, isLocal, isPrivate: false} as FileTableItem;
+                    return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: this._dvm.profilesZvm.getProfile(pprm.author), isLocal, isPrivate: false} as FileTableItem;
                 });
                 //const publicItems = dhtPublicItems.concat(myPublicItems);
 
                 mainArea = html`
                     <h2>${msg("Group Files")}</h2>
-                    <file-table type="group"
-                                .items=${dhtPublicItems}
-                                .profiles=${this._dvm.profilesZvm.perspective.profiles}
-                    ></file-table>
+                    <file-table type="group" .items=${dhtPublicItems}></file-table>
                 `;
             }
 
@@ -939,7 +932,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                             }
                             items.push({
                                 distribAh,
-                                recipient: recipient,
+                                recipient: this._dvm.profilesZvm.getProfile(recipient),
                                 deliveryState,
                                 parcelEh: parcelEh,
                                 description,
@@ -953,10 +946,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     .sort((a, b) => b.sentTs - a.sentTs);
                 mainArea = html`
                     <h2>${msg("Sent")}</h2>
-                    <distribution-table 
-                      .items=${distributionItems}
-                      .profiles=${this._dvm.profilesZvm.perspective.profiles}
-                    ></distribution-table>
+                    <distribution-table .items=${distributionItems}></distribution-table>
                 `;
             }
             if (this._selectedMenuItem.type == SelectedType.InProgress) {
@@ -974,7 +964,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                   .filter(([_ppEh, pprm]) => !pprm.deleteInfo)
                   .map(([ppEh, pprm]) => {
                         const isLocal = !!this.deliveryPerspective.localPublicManifests.get(ppEh);
-                        return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: pprm.author.b64, isLocal, isPrivate:false} as FileTableItem;
+                        return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: this._dvm.profilesZvm.getProfile(pprm.author), isLocal, isPrivate:false} as FileTableItem;
                     })
                     .filter((item) => {
                         const publicTags = this._dvm.taggingZvm.perspective.publicTagsByTarget.get(new EntryId(item.ppEh));
@@ -982,10 +972,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     });
                 mainArea = html`
                     <h2>${msg("Group Files")}: <span class="tag" style="display:inline; font-size: inherit">${this._selectedMenuItem.tag}</span></h2>
-                    <file-table type="group"
-                                .items=${taggedItems}
-                                .profiles=${this._dvm.profilesZvm.perspective.profiles}
-                    ></file-table>
+                    <file-table type="group" .items=${taggedItems}></file-table>
                 `;
             }
             if (this._selectedMenuItem.type == SelectedType.PrivateTag) {
@@ -1000,10 +987,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
                 mainArea = html`
                     <h2>${msg("Personal Files")}: <span class="tag" style="display:inline; font-size: inherit">${this._selectedMenuItem.tag}</span></h2>
-                    <file-table type="personal"
-                                .items=${taggedItems}
-                                .profiles=${this._dvm.profilesZvm.perspective.profiles}
-                    ></file-table>
+                    <file-table type="personal" .items=${taggedItems}></file-table>
                 `;
             }
         }

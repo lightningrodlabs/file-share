@@ -4,20 +4,21 @@ import {prettyFileSize, prettyTimestamp} from "../utils";
 import {columnBodyRenderer, columnFooterRenderer} from "@vaadin/grid/lit";
 import {ParcelDescription} from "@ddd-qc/delivery/dist/bindings/delivery.types";
 import {filesSharedStyles} from "../sharedStyles";
-import {AgentId, AgentIdMap, EntryId, ZomeElement} from "@ddd-qc/lit-happ";
+import {EntryId, ZomeElement} from "@ddd-qc/lit-happ";
 import {TaggingPerspective, TaggingZvm} from "../viewModels/tagging.zvm";
 import {TagList} from "./tag-list";
 import {kind2Type} from "../fileTypeUtils";
 import {Profile as ProfileMat} from "@ddd-qc/profiles-dvm/dist/bindings/profiles.types";
 import {msg} from "@lit/localize";
-import {AgentPubKeyB64, EntryHashB64} from "@holochain/client";
+import {EntryHashB64} from "@holochain/client";
 
 
+/** Don't use HolochainId directly as the vaadin will try to autoconvert to string for default rendering */
 export interface FileTableItem {
     ppEh: EntryHashB64,
     description: ParcelDescription,
     timestamp: number,
-    author: AgentPubKeyB64,
+    author?: ProfileMat,
     isPrivate: boolean,
     isLocal: boolean,
 }
@@ -37,7 +38,7 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
     /** -- State variables -- */
 
     @property() items: FileTableItem[] = [];
-    @property() profiles: AgentIdMap<ProfileMat> = new AgentIdMap();
+    //@property() profiles: profiles = new AgentIdMap();
 
     @property() type: string = ""
 
@@ -121,12 +122,11 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                             [],
                                     )}
                 ></vaadin-grid-column>
-                <vaadin-grid-column path="author" header=${msg("Author")} .hidden=${!this.items[0].author}
+                <vaadin-grid-column path="author" header=${msg("Author")}
                                     ${columnBodyRenderer(
                                             ({ author }) => {
-                                                const maybeProfile = this.profiles.get(new AgentId(author));
-                                                return maybeProfile
-                                                        ? html`<span>${maybeProfile.nickname}</span>`
+                                                return author
+                                                        ? html`<span>${author.nickname}</span>`
                                                         : html`<span>${msg("Unknown")}</span>`
                                             },
                                     [],
