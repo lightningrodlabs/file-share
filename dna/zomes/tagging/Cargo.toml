@@ -7,10 +7,14 @@ edition.workspace = true
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[lints]
+workspace = true
+
 [dependencies]
 serde.workspace = true
 hdk.workspace = true
 zome_utils.workspace = true
+zome_signals.workspace = true
 #path_explorer_types.workspace = true
 
 zome_tagging_integrity = {path = "../tagging_integrity" }

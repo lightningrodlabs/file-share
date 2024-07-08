@@ -142,7 +142,7 @@ export class SendDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
     /** */
     async onAddNewPrivateTag(e) {
         console.log("onAddNewPrivateTag", e);
-        await this._dvm.taggingZvm.addPrivateTag(e.detail);
+        await this._dvm.taggingZvm.commitPrivateTag(e.detail);
         this._selectedTags.push(e.detail);
         if (this.tagListElem) this.tagListElem.requestUpdate();
         this.requestUpdate();

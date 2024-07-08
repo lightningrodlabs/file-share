@@ -17,8 +17,16 @@ members = [
 
 [workspace.package]
 version = "0.1.0"
-rust-version = "1.70.0"
+rust-version = "1.75.0"
 edition = "2021"
+
+[workspace.lints.rust]
+non_upper_case_globals = "allow"
+unused_doc_comments = "allow"
+non_camel_case_types = "allow"
+non_snake_case = "allow"
+unused_attributes = "allow"
+ill_formed_attribute_input = "allow"
 
 [workspace.dependencies]
 serde = { version = "=1.0.197", default-features = false }
@@ -26,6 +34,7 @@ hdi = { version = "=0.4.1", default-features = false }
 hdk = { version = "=0.3.1", default-features = false }
 
 zome_utils = { git = "https://github.com/ddd-mtl/zome-utils", branch = "hdk-3.1" }
+zome_signals = { git = "https://github.com/ddd-mtl/zome-signals", branch = "hdk-3.1" }
 path_explorer_types = {git = "https://github.com/lightningrodlabs/path-explorer", package = "path_explorer_types", branch = "hdk-3.1"}
 
 delivery = {git = "https://github.com/ddd-mtl/delivery-zome", branch = "hdk-3.1" }

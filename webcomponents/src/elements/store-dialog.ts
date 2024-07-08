@@ -74,9 +74,9 @@ export class StoreDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
     async onAddNewTag(e) {
         console.log("onAddNewTag", e);
         if (this._localOnly) {
-            await this._dvm.taggingZvm.addPrivateTag(e.detail);
+            await this._dvm.taggingZvm.commitPrivateTag(e.detail);
         } else {
-            await this._dvm.taggingZvm.addPublicTag(e.detail);
+            await this._dvm.taggingZvm.publishPublicTag(e.detail);
         }
         this._selectedTags.push(e.detail);
         if (this.tagListElem) this.tagListElem.requestUpdate();

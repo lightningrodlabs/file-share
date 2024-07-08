@@ -1,29 +1,62 @@
 use hdk::prelude::*;
 use zome_utils::*;
+use zome_signals::*;
 use zome_tagging_integrity::*;
 use crate::{TaggingInput, UntagInput};
 
 
+
 ///
 #[hdk_extern]
-pub fn query_all_PrivateTags(_: ()) -> ExternResult<Vec<(EntryHash, Timestamp, String)>> {
+pub fn query_all_PrivateTag(_: ()) -> ExternResult<Vec<(EntryHash, Timestamp, String)>> {
     std::panic::set_hook(Box::new(zome_panic_hook));
-    /// Get all Create Elements with query
-    let tuples = get_all_typed_local::<PrivateTag>(TaggingEntryTypes::PrivateTag.try_into().unwrap())?;
-    let res = tuples.into_iter()
-        .map(|(_, create, typed)| (create.entry_hash, create.timestamp, typed.value))
-        .collect();
-    /// Done
+    /// Query
+    //let res = query_all_typed::<PrivateTag>(TaggingEntryTypes::PrivateTag.try_into().unwrap())?;
+    let tuples = query_all_entry(TaggingEntryTypes::PrivateTag.try_into().unwrap())?;
+    /// Form & Emit Signal
+    let pulses = tuples.clone().into_iter()
+      .map(|(record, _entry)| {
+          let entry_pulse = EntryPulse::try_from_new_record(record, false).unwrap();
+          return ZomeSignalProtocol::Entry(entry_pulse);
+      })
+      .collect();
+    emit_zome_signal(pulses)?;
+    /// Return
+    let res = tuples.clone().into_iter()
+      .map(|(record, entry)| (record.action().entry_hash().unwrap().to_owned(), record.action().timestamp(), PrivateTag::try_from(entry).unwrap().value))
+      .collect();
     Ok(res)
 }
 
 
+// ///
+// #[hdk_extern]
+// pub fn query_all_PrivateTag(_: ()) -> ExternResult<Vec<(EntryHash, Timestamp, String)>> {
+//     std::panic::set_hook(Box::new(zome_panic_hook));
+//     /// Get all Create Elements with query
+//     let tuples = get_all_typed_local::<PrivateTag>(TaggingEntryTypes::PrivateTag.try_into().unwrap())?;
+//     let res = tuples.into_iter()
+//         .map(|(_ah, create, typed)| (create.entry_hash, create.timestamp, typed.value))
+//         .collect();
+//     /// Form & Emit Signal
+//     let pulses = tuples.into_iter()
+//       .map(|(record, _entry)| {
+//           let entry_pulse = EntryPulse::try_from_new_record(record, false).unwrap();
+//           return ZomeSignalProtocol::Entry(entry_pulse);
+//       })
+//       .collect();
+//     emit_zome_signal(pulses)?;
+//     /// Done
+//     Ok(res)
+// }
+
+
 #[hdk_extern]
 #[feature(zits_blocking)]
-fn create_private_tag(tag_value: String) -> ExternResult<EntryHash> {
+fn commit_private_tag(tag_value: String) -> ExternResult<EntryHash> {
     std::panic::set_hook(Box::new(zome_panic_hook));
     /// Make sure Tag does not already exists
-    let private_tags: Vec<String> = query_all_PrivateTags(())?
+    let private_tags: Vec<String> = query_all_PrivateTag(())?
         .into_iter()
         .map(|(_, _, tag)| (tag))
         .collect();
@@ -46,23 +79,18 @@ fn create_private_tag(tag_value: String) -> ExternResult<EntryHash> {
 }
 
 
-///
+/// Get entry at eh and check if its Private
 pub fn query_private_entry(eh: EntryHash) -> ExternResult<Record> {
-    /// Query type
     let record = get_local_from_eh(eh)?;
-
     let maybe_visibility = record.signed_action
         .action()
         .entry_data()
         .map(|(_, entry_type)| entry_type.visibility());
-
     let Some(visiblity) = maybe_visibility
-        else { return error("Visiblity not found")};
-
+        else { return zome_error!("Visiblity not found")};
     if visiblity.is_public() {
-        return error("Entry is Public");
+        return zome_error!("Entry is Public");
     }
-
     /// Done
     Ok(record)
 }
@@ -80,7 +108,7 @@ fn tag_private_entry(input: TaggingInput) -> ExternResult<()> {
     /// Make sure entry exist and is private
     let _record = query_private_entry(input.target.clone())?;
     /// Grab existing private tags
-    let private_tuples = query_all_PrivateTags(())?;
+    let private_tuples = query_all_PrivateTag(())?;
     let private_tags: Vec<String> = private_tuples.iter()
         .map(|(_, _create, tag)| tag.to_owned())
         .collect();
@@ -89,7 +117,7 @@ fn tag_private_entry(input: TaggingInput) -> ExternResult<()> {
         let maybe_index = private_tags.iter().position(|r| r == &tag);
         let tag_eh =
             if maybe_index.is_none() {
-                let eh = create_private_tag(tag)?;
+                let eh = commit_private_tag(tag)?;
                 eh
             } else {
                 let eh = private_tuples[maybe_index.unwrap()].0.clone();
@@ -145,15 +173,18 @@ fn untag_private_entry(input: UntagInput) -> ExternResult<()> {
 
 ///
 #[hdk_extern]
-pub fn get_private_tags(eh: EntryHash) -> ExternResult<Vec<(EntryHash, String)>> {
+pub fn find_private_tags_for_entry(eh: EntryHash) -> ExternResult<Vec<(EntryHash, String)>> {
     std::panic::set_hook(Box::new(zome_panic_hook));
     /// Make sure entry exist and is private
     let _record = query_private_entry(eh.clone())?;
     /// Grab private tags
     let link_tuples = get_typed_from_links::<PrivateTag>(link_input(eh, TaggingLinkTypes::PrivateTags, None))?;
-    let res = link_tuples.into_iter()
+    let res = link_tuples.clone().into_iter()
         .map(|(tag_entry, link)| (link.target.into_entry_hash().unwrap(), tag_entry.value))
         .collect();
+    /// Emit signal
+    let links = link_tuples.into_iter().map(|(_typed, link)| link).collect();
+    emit_links_signal(links)?;
     /// Done
     Ok(res)
 }
@@ -161,10 +192,10 @@ pub fn get_private_tags(eh: EntryHash) -> ExternResult<Vec<(EntryHash, String)>>
 
 ///
 #[hdk_extern]
-pub fn get_private_entries_with_tag(tag: String) -> ExternResult<Vec<(EntryHash, String)>> {
+pub fn find_private_entries_with_tag(tag: String) -> ExternResult<Vec<(EntryHash, String)>> {
     std::panic::set_hook(Box::new(zome_panic_hook));
     /// Search for tag
-    let private_tags = query_all_PrivateTags(())?;
+    let private_tags = query_all_PrivateTag(())?;
     for tuple in private_tags {
         if tuple.2 == tag {
             /// Found: grab links

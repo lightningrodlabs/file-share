@@ -95,9 +95,9 @@
   },
   "dependencies": {
     "@holochain/client": "=0.18.0-dev.4",
-    "@ddd-qc/cell-proxy": "=0.26.4",
-    "@ddd-qc/lit-happ": "=0.26.2",
-    "@ddd-qc/profiles-dvm": "=0.26.7",
+    "@ddd-qc/cell-proxy": "=0.26.5",
+    "@ddd-qc/lit-happ": "=0.26.5",
+    "@ddd-qc/profiles-dvm": "=0.26.8",
     "@ddd-qc/we-utils": "=0.26.1",
     "@ddd-qc/path-explorer": "=0.5.0",
     "@ddd-qc/delivery": "=0.15.1",

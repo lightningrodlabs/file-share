@@ -159,12 +159,12 @@ export class TaggingProxy extends ZomeProxy {
   static readonly ENTRY_TYPES = Object.values(TaggingUnitEnum);
   static readonly LINK_TYPES = Object.values(TaggingLinkType);
  
-  async queryAllPrivateTags(): Promise<[EntryHash, Timestamp, string][]> {
-    return this.call('query_all_PrivateTags', null);
+  async queryAllPrivateTag(): Promise<[EntryHash, Timestamp, string][]> {
+    return this.call('query_all_PrivateTag', null);
   }
 
-  async createPrivateTag(tagValue: string): Promise<EntryHash> {
-    return this.callBlocking('create_private_tag', tagValue);
+  async commitPrivateTag(tagValue: string): Promise<EntryHash> {
+    return this.callBlocking('commit_private_tag', tagValue);
   }
 
   async tagPrivateEntry(input: TaggingInput): Promise<void> {
@@ -175,32 +175,32 @@ export class TaggingProxy extends ZomeProxy {
     return this.callBlocking('untag_private_entry', input);
   }
 
-  async getPrivateTags(eh: EntryHash): Promise<[EntryHash, string][]> {
-    return this.call('get_private_tags', eh);
+  async findPrivateTagsForEntry(eh: EntryHash): Promise<[EntryHash, string][]> {
+    return this.call('find_private_tags_for_entry', eh);
   }
 
-  async getPrivateEntriesWithTag(tag: string): Promise<[EntryHash, string][]> {
-    return this.call('get_private_entries_with_tag', tag);
+  async findPrivateEntriesWithTag(tag: string): Promise<[EntryHash, string][]> {
+    return this.call('find_private_entries_with_tag', tag);
   }
 
-  async getAllPublicTags(): Promise<[EntryHash, string][]> {
-    return this.call('get_all_public_tags', null);
+  async probePublicTags(): Promise<[EntryHash, string][]> {
+    return this.call('probe_public_tags', null);
   }
 
-  async createPublicTag(tagValue: string): Promise<EntryHash> {
-    return this.callBlocking('create_public_tag', tagValue);
+  async publishPublicTag(tagValue: string): Promise<EntryHash> {
+    return this.callBlocking('publish_public_tag', tagValue);
   }
 
   async tagPublicEntry(input: TaggingInput): Promise<ActionHash[]> {
     return this.call('tag_public_entry', input);
   }
 
-  async getPublicTags(eh: EntryHash): Promise<string[]> {
-    return this.call('get_public_tags', eh);
+  async findPublicTagsForEntry(eh: EntryHash): Promise<string[]> {
+    return this.call('find_public_tags_for_entry', eh);
   }
 
-  async getPublicEntriesWithTag(tag: string): Promise<[ActionHash, EntryHash, string][]> {
-    return this.call('get_public_entries_with_tag', tag);
+  async findPublicEntriesWithTag(tag: string): Promise<[ActionHash, EntryHash, string][]> {
+    return this.call('find_public_entries_with_tag', tag);
   }
 
   async untagPublicEntry(linkAh: ActionHash): Promise<ActionHash> {
