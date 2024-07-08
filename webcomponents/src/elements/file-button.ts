@@ -126,14 +126,14 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
             actionButtons.push(html`
                 <sl-tooltip placement="top" content=${msg("Download")} style="--show-delay: 200;">
                 <sl-button class="hide pop action" size="small" variant="primary" style="margin-left:5px" @click=${async (e) => {
-                    this.dispatchEvent(new CustomEvent('download', {detail: this.hash, bubbles: true, composed: true}));
+                    this.dispatchEvent(new CustomEvent<EntryId>('download', {detail: this.hash, bubbles: true, composed: true}));
                 }}>
                     <sl-icon name="download"></sl-icon>
                 </sl-button></sl-tooltip>`);
             actionButtons.push(html`
                 <sl-tooltip placement="top" content=${msg("Send")} style="--show-delay: 200;">
                 <sl-button class="hide pop action" size="small" variant="primary" @click=${async (e) => {
-                    this.dispatchEvent(new CustomEvent('send', {detail: this.hash, bubbles: true, composed: true}));
+                    this.dispatchEvent(new CustomEvent<EntryId>('send', {detail: this.hash, bubbles: true, composed: true}));
                 }}>
                     <sl-icon name="send"></sl-icon>
                 </sl-button></sl-tooltip>`);

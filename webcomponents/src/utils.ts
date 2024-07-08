@@ -127,3 +127,26 @@ export function getCompletionPct(deliveryZvm: DeliveryZvm, notice: DeliveryNotic
     console.log(`getCompletionPct() ${missingChunks.size}/${manifest[0].chunks.length} = ${pct}%`);
     return pct;
 }
+
+
+export function decodeComponentUtf32(input: Uint8Array): string {
+    const array = input.subarray(2);
+    if (array.length % 4 !== 0) {
+        throw new Error("Invalid UTF-32 data: Length of Uint8Array should be a multiple of 4.");
+    }
+
+    const codePoints = [];
+    for (let i = 0; i < array.length; i += 4) {
+        // Read 4 bytes and convert to a single 32-bit code point
+        const codePoint = (
+          (array[i + 3] << 24) |
+          (array[i + 2] << 16) |
+          (array[i + 1] << 8) |
+          array[i]
+        ) >>> 0; // >>> 0 ensures unsigned conversion
+        codePoints.push(codePoint);
+    }
+
+    // Convert array of code points to string
+    return String.fromCodePoint(...codePoints);
+}

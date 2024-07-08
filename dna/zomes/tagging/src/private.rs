@@ -200,9 +200,12 @@ pub fn find_private_entries_with_tag(tag: String) -> ExternResult<Vec<(EntryHash
         if tuple.2 == tag {
             /// Found: grab links
             let links = get_links(link_input(tuple.0, TaggingLinkTypes::PrivateEntry, None))?;
-            let res = links.into_iter()
+            let res = links.clone().into_iter()
                 .map(|link| (link.target.into_entry_hash().unwrap(), tag2str(&link.tag).unwrap()))
                 .collect();
+            /// Emit signal
+            emit_links_signal(links)?;
+            ///
             return Ok(res);
         }
     }

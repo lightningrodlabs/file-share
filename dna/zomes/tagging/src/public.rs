@@ -7,7 +7,7 @@ use crate::TaggingInput;
 
 fn root_path() -> ExternResult<TypedPath> {
     let tp = Path::from(format!("{}", PUBLIC_TAG_ROOT))
-        .typed(TaggingLinkTypes::PublicEntry)?;
+        .typed(TaggingLinkTypes::PublicPath)?;
     Ok(tp)
 }
 
@@ -19,6 +19,7 @@ fn probe_public_tags(_: ()) -> ExternResult<Vec<(EntryHash, String)>> {
     let root_tp = root_path()?;
     let links = tp_children(&root_tp)?;
     let children = links_to_paths(&root_tp, links.clone())?;
+    debug!("children_links: {:?}", links);
     debug!("children: {:?}", children);
     let mut tags = Vec::new();
     for child in children {

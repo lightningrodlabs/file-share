@@ -143,13 +143,13 @@ export class FilesMenu extends DnaElement<FilesDvmPerspective, FilesDvm> {
             : this.taggingPerspective.publicTags
 
         const groupTags = Object.entries(tags)
-            .filter(([_tag, array]) => array.length > 0)
+            .filter(([_tag, idMap]) => idMap.size > 0)
             .map(([tag, array]) => {
             return html`
             <sl-menu-item isPrivate=${isPrivate} isTag="true">
                 <sl-icon slot="prefix" name="tag"></sl-icon>
                 ${tag}
-                <sl-badge slot="suffix" variant="neutral" pill>${array.length}</sl-badge>
+                <sl-badge slot="suffix" variant="neutral" pill>${array.size}</sl-badge>
             </sl-menu-item>`;
         });
 

@@ -5,6 +5,7 @@ export enum TaggingUnitEnum {
 }
 
 export enum TaggingLinkType {
+	PublicPath = 'PublicPath',
 	PublicEntry = 'PublicEntry',
 	PrivateEntry = 'PrivateEntry',
 	PublicTags = 'PublicTags',

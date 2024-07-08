@@ -9,17 +9,27 @@ import {
 } from "@ddd-qc/lit-happ";
 import {TaggingProxy} from "../bindings/tagging.proxy";
 import {Dictionary} from "@ddd-qc/cell-proxy";
-import {PrivateTag, TaggingInput, UntagInput} from "../bindings/tagging.types";
+import {PrivateTag, PUBLIC_TAG_ROOT, TaggingInput, UntagInput} from "../bindings/tagging.types";
 import {TaggingLinkType, TaggingUnitEnum} from "../bindings/tagging.integrity";
 import {decode} from "@msgpack/msgpack";
+import {decodeComponentUtf32} from "../utils";
+
+
+export type TaggingPerspective = TaggingPerspectiveCore & TaggingPerspectiveLive;
 
 
 /** */
-export interface TaggingPerspective {
-    /** tag string -> [link_ah, target eh, target link tag][] */
-    publicTags: Dictionary<[ActionId, EntryId, string][]>,
-    /** tag string -> [target eh, target link tag][] */
-    privateTags: Dictionary<[ActionId, EntryId, string][]>,
+export interface TaggingPerspectiveCore {
+    /** tagEh -> tag string */
+    publicEhs: EntryIdMap<string>,
+    /** tag string -> (target_eh -> link_ah) */
+    publicTags: Dictionary<EntryIdMap<ActionId>>,
+    /** tag string -> (target_eh -> link_ah) */
+    privateTags: Dictionary<EntryIdMap<ActionId>>,
+}
+
+
+export interface TaggingPerspectiveLive {
     /** Any EntryHash -> tags */
     publicTagsByTarget: EntryIdMap<string[]>,
     /** Any EntryHash -> tags */
@@ -29,7 +39,14 @@ export interface TaggingPerspective {
 
 /** */
 export function createTaggingPerspective(): TaggingPerspective {
-    return { publicTags: {}, privateTags: {}, publicTagsByTarget: new EntryIdMap(), privateTagsByTarget: new EntryIdMap()}
+    return {
+        publicEhs: new EntryIdMap(),
+        publicTags: {},
+        privateTags: {},
+        /** */
+        publicTagsByTarget: new EntryIdMap(),
+        privateTagsByTarget: new EntryIdMap()
+    }
 }
 
 
@@ -97,6 +114,7 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
     /** */
     async initializePerspectiveOnline(): Promise<void> {
         const tuples = await this.zomeProxy.probePublicTags();
+        console.log("taggingZvm.initializePerspectiveOnline()", tuples);
         for (const [_eh, tag] of tuples) {
             await this.findPublicEntriesWithTag(tag);
         }
@@ -109,13 +127,85 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
     async handleLinkPulse(pulse: LinkPulseMat, from: AgentId): Promise<void> {
         /** */
         switch (pulse.link_type) {
-            case TaggingLinkType.PrivateEntry: break;
-            case TaggingLinkType.PublicEntry: break;
-            case TaggingLinkType.PublicTags: break;
-            case TaggingLinkType.PrivateTags: {
-                const profileAh = ActionId.from(pulse.target);
+            case TaggingLinkType.PublicEntry: {
+                const tagEh = EntryId.from(pulse.base);
+                const targetEh = EntryId.from(pulse.target);
                 if (pulse.state != StateChangeType.Delete) {
-
+                    const tag = this._perspective.publicEhs.get(tagEh);
+                    console.log("TaggingZvm.handleLinkPulse() PublicEntry", tag, tagEh);
+                    if (!tag) {
+                        return;
+                    }
+                    this.storeTagging(tag, targetEh, pulse.create_link_hash);
+                }
+            }
+            break;
+            case TaggingLinkType.PublicPath: {
+                const tagEh = EntryId.from(pulse.target);
+                const tag = decodeComponentUtf32(pulse.tag);
+                console.log("TaggingZvm.handleLinkPulse() PublicPath", tag, pulse.tag);
+                if (tag == PUBLIC_TAG_ROOT) {
+                    return;
+                }
+                if (pulse.state != StateChangeType.Delete) {
+                    if (!this._perspective.publicTags[tag]) {
+                        this._perspective.publicTags[tag] = new EntryIdMap();
+                    }
+                    this._perspective.publicEhs.set(tagEh, tag);
+                }
+            }
+            break;
+            case TaggingLinkType.PrivateEntry: break;
+            case TaggingLinkType.PublicTags: {
+                const targetEh = EntryId.from(pulse.base);
+                const decoder = new TextDecoder('utf-8');
+                const tag = decoder.decode(pulse.tag);
+                console.log("TaggingZvm.handleLinkPulse() PublicTags", tag, pulse.tag, targetEh);
+                if (pulse.state != StateChangeType.Delete) {
+                    this.storeTagging(tag, targetEh, pulse.create_link_hash);
+                } else {
+                    /** Delete */
+                    const targets = this._perspective.publicTags[tag];
+                    if (targets && targets.has(targetEh)) {
+                        targets.delete(targetEh);
+                    }
+                    const tags = this._perspective.publicTagsByTarget.get(targetEh);
+                    if (tags) {
+                        const i = tags.findIndex((taggy) => taggy == tag);
+                        if (i > -1) {
+                            this._perspective.publicTagsByTarget[tag].splice(i, 1);
+                        }
+                    }
+                }
+            }
+            break;
+            case TaggingLinkType.PrivateTags: {
+                //const tagEh = EntryId.from(pulse.base);
+                const targetEh = EntryId.from(pulse.base);
+                const decoder = new TextDecoder('utf-8');
+                const tag = decoder.decode(pulse.tag);
+                if (pulse.state != StateChangeType.Delete) {
+                    if (!this._perspective.privateTags[tag]) {
+                        this._perspective.privateTags[tag] = new EntryIdMap();
+                    }
+                    this._perspective.privateTags[tag].set(targetEh, pulse.create_link_hash);
+                    if (!this._perspective.privateTagsByTarget.get(targetEh)) {
+                        this._perspective.privateTagsByTarget.set(targetEh, []);
+                    }
+                    this._perspective.privateTagsByTarget.get(targetEh).push(tag);
+                } else {
+                    /** Delete */
+                    const targets = this._perspective.privateTags[tag];
+                    if (targets && targets.has(targetEh)) {
+                        targets.delete(targetEh);
+                    }
+                    const tags = this._perspective.privateTagsByTarget.get(targetEh);
+                    if (tags) {
+                        const i = tags.findIndex((taggy) => taggy == tag);
+                        if (i > -1) {
+                            this._perspective.privateTagsByTarget[tag].splice(i, 1);
+                        }
+                    }
                 }
             }
             break;
@@ -128,52 +218,47 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
         switch (pulse.entryType) {
             case TaggingUnitEnum.PrivateTag:
                 const privateTag = decode(pulse.bytes) as PrivateTag;
-                if (pulse.state != StateChangeType.Delete) {
-                    this._perspective.privateTags[privateTag.value] = [];
-                } else {
-
+                if (pulse.state != StateChangeType.Delete && !this._perspective.privateTags[privateTag.value]) {
+                    this._perspective.privateTags[privateTag.value] = new EntryIdMap();
                 }
                 break;
         }
     }
 
 
+    /** */
+    storeTagging(tag: string, targetEh: EntryId, linkAh: ActionId) {
+        if (!this._perspective.publicTags[tag]) {
+            this._perspective.publicTags[tag] = new EntryIdMap();
+        }
+        this._perspective.publicTags[tag].set(targetEh, linkAh);
+        /** publicTagsByTarget */
+        if (!this._perspective.publicTagsByTarget.get(targetEh)) {
+            this._perspective.publicTagsByTarget.set(targetEh, []);
+        }
+        this._perspective.publicTagsByTarget.get(targetEh).push(tag);
+    }
+
+
+
     /** -- Methods -- */
 
     /** */
-    async findPrivateEntriesWithTag(tag: string): Promise<[ActionId, EntryId, string][]> {
-        const targets: [ActionId, EntryId, string][] = (await this.zomeProxy.findPrivateEntriesWithTag(tag))
-            .map(([eh, lt]) => [undefined, new EntryId(eh), lt]);
-        console.log("findPrivateEntriesWithTag()", tag, targets);
-        // this._perspective.privateTags[tag] = targets;
-        // for (const[_ah, target, _lt] of targets) {
-        //     if (!this._perspective.privateTagsByTarget.get(target)) {
-        //         this._perspective.privateTagsByTarget.set(target, []);
-        //     }
-        //     this._perspective.privateTagsByTarget.get(target).push(tag);
-        // }
-        // this.notifySubscribers();
-        return targets;
+    async findPrivateEntriesWithTag(tag: string): Promise<void> {
+        if (!tag || tag == "") {
+            return Promise.reject("tag argument is empty");
+        }
+        await this.zomeProxy.findPrivateEntriesWithTag(tag);
     }
 
 
     /** */
-    async findPublicEntriesWithTag(tag: string): Promise<[ActionId, EntryId, string][]> {
-        const targets: [ActionId, EntryId, string][] = (await this.zomeProxy.findPublicEntriesWithTag(tag))
-            .map(([ah, eh, lt]) => [new ActionId(ah), new EntryId(eh), lt]);
-        console.log("findPublicEntriesWithTag()", tag, targets);
-        // this._perspective.publicTags[tag] = targets;
-        // for (const[linkAh, target, _lt] of targets) {
-        //     if (!this._perspective.publicTagsByTarget.get(target)) {
-        //         this._perspective.publicTagsByTarget.set(target, []);
-        //     }
-        //     this._perspective.publicTagsByTarget.get(target).push(tag);
-        // }
-        // this.notifySubscribers();
-        return targets;
+    async findPublicEntriesWithTag(tag: string): Promise<void> {
+        if (!tag || tag == "") {
+            return Promise.reject("tag argument is empty");
+        }
+        const _res = await this.zomeProxy.findPublicEntriesWithTag(tag);
     }
-
-
 
 
     /** */
@@ -187,7 +272,6 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
             /** new tag discovered, so get all its targets */
             await this.findPublicEntriesWithTag(tag);
         }
-        //this.notifySubscribers();
         return tags;
     }
 
@@ -215,47 +299,27 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
 
 
     /** */
-    async untagPrivateEntry(eh: EntryId, tag: string) {
-        console.log("taggingZvm.untagPrivateEntry()", eh, tag);
+    async untagPrivateEntry(targetEh: EntryId, tag: string) {
+        console.log("taggingZvm.untagPrivateEntry()", targetEh, tag);
         const input = {
-            target: eh.hash,
+            target: targetEh.hash,
             tag,
         } as UntagInput;
         await this.zomeProxy.untagPrivateEntry(input);
-        // /** update perspective */
-        // const isSameEh = (pair) => eh == pair[0];
-        // const i = this._perspective.privateTags[tag].findIndex(isSameEh);
-        // if (i > -1) {
-        //     this._perspective.privateTags[tag].splice(i, 1);
-        // }
-        // /** */
-        // const index = this._perspective.privateTagsByTarget.get(eh).indexOf(tag);
-        // if (index > -1) {
-        //     this._perspective.privateTagsByTarget.get(eh).splice(index, 1);
-        // }
-        // /** Done */
-        // this.notifySubscribers();
     }
 
 
     /** */
-    async untagPublicEntryAll(eh: EntryId) {
-        const tags = this._perspective.publicTagsByTarget.get(eh);
-        console.log("taggingZvm.untagPublicEntryAll()", eh);
+    async untagPublicEntryAll(targetEh: EntryId) {
+        console.log("taggingZvm.untagPublicEntryAll()", targetEh);
+        const tags = this._perspective.publicTagsByTarget.get(targetEh);
         if (!tags) {
-            return Promise.reject("Target PublicEntry not found");
+            return Promise.reject("Not tags found for Target");
         }
         for (const tag of tags) {
-            const index = this._perspective.publicTags[tag].findIndex((tuple) => tuple[1] == eh);
-            console.log("untagPublicEntryAll() tag ", tag, index);
-            const tuple = this._perspective.publicTags[tag][index];
-            await this.zomeProxy.untagPublicEntry(tuple[0].hash);
-            //this._perspective.publicTags[tag].splice(index, 1);
+            const linkAh = this._perspective.publicTags[tag].get(targetEh);
+            await this.zomeProxy.untagPublicEntry(linkAh.hash);
         }
-        // /** update perspective */
-        // this._perspective.publicTagsByTarget.delete(eh);
-        // /** Done */
-        // this.notifySubscribers();
     }
 
 
@@ -271,18 +335,6 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
             link_tag_to_entry: targetInfo,
         } as TaggingInput;
         await this.zomeProxy.tagPrivateEntry(input);
-        // /** update perspective */
-        // for (const tag of tags) {
-        //     if (!this._perspective.privateTags[tag]) {
-        //         this._perspective.privateTags[tag] = [];
-        //     }
-        //     this._perspective.privateTags[tag].push([undefined, eh, targetInfo])
-        //     if (!this._perspective.privateTagsByTarget.get(eh)) {
-        //         this._perspective.privateTagsByTarget.set(eh, []);
-        //     }
-        //     this._perspective.privateTagsByTarget.get(eh).push(tag);
-        // }
-        // this.notifySubscribers();
     }
 
 
@@ -298,19 +350,5 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
             link_tag_to_entry: targetInfo,
         } as TaggingInput;
         const _link_ahs = await this.zomeProxy.tagPublicEntry(input);
-        //let i = 0;
-        // /** update perspective */
-        // for (const tag of tags) {
-        //     if (!this._perspective.publicTags[tag]) {
-        //         this._perspective.publicTags[tag] = [];
-        //     }
-        //     this._perspective.publicTags[tag].push([new ActionId(link_ahs[i]), eh, targetInfo])
-        //     if (!this._perspective.publicTagsByTarget.get(eh)) {
-        //         this._perspective.publicTagsByTarget.set(eh, []);
-        //     }
-        //     this._perspective.publicTagsByTarget.get(eh).push(tag);
-        //     i += 1;
-        // }
-        // this.notifySubscribers();
     }
 }

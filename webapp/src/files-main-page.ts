@@ -847,10 +847,10 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     .map(([ppEh, [pm, timestamp]]) => {
                     //const timestamp = this.deliveryPerspective.privateManifests[ppEh][1];
                     return {
-                        ppEh,
+                        ppEh: ppEh.b64,
                         description: pm.description,
                         timestamp,
-                        author: this.cell.agentId,
+                        author: this.cell.agentId.b64,
                         isLocal: true,
                         isPrivate: true
                     } as FileTableItem;
@@ -859,7 +859,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 //     //const timestamp = this.deliveryPerspective.localPublicManifests[ppEh][1];
                 //     return {pp_eh: decodeHashFromBase64(ppEh), description: pm.description, timestamp, author: this.cell.agentPubKey, isLocal: true, isPrivate: false} as FileTableItem;
                 // });
-                const publicItems = Array.from(this.deliveryPerspective.publicParcels.entries())
+                const publicItems: FileTableItem[] = Array.from(this.deliveryPerspective.publicParcels.entries())
                     .filter(([_ppEh, pprm]) => !pprm.deleteInfo)
                     .filter(([_ppEh, pprm]) => {
                         const type = kind2Type(pprm.description.kind_info);
@@ -870,7 +870,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     .map(([ppEh, pprm]) => {
                     //const [description, timestamp, author] = this.deliveryPerspective.publicParcels[ppEh];
                     const isLocal = !!this.deliveryPerspective.localPublicManifests.get(ppEh);
-                    return {ppEh, description: pprm.description, timestamp: pprm.creationTs, author: pprm.author, isLocal, isPrivate: false} as FileTableItem;
+                    return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: pprm.author.b64, isLocal, isPrivate: false};
                 });
                 const allItems = privateItems.concat(publicItems/*, myPublicItems*/);
                 mainArea = html`
@@ -888,7 +888,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                                 .profiles=${this._dvm.profilesZvm.perspective.profiles}
                                 .items=${Array.from(this.deliveryPerspective.privateManifests.entries()).map(([ppEh, [pm, timestamp]]) => {
                                     //const timestamp = this.deliveryPerspective.privateManifests[ppEh][1];
-                                    return {ppEh, description:pm.description, timestamp, author:this.cell.agentId, isPrivate:true, isLocal:true} as FileTableItem;
+                                    return {ppEh: ppEh.b64, description:pm.description, timestamp, author: this.cell.agentId.b64, isPrivate:true, isLocal:true} as FileTableItem;
                                 })}
                     ></file-table>
                 `;
@@ -904,7 +904,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                   .map(([ppEh, pprm]) => {
                     //const [description, timestamp, author] = this.deliveryPerspective.publicParcels[ppEh];
                     const isLocal = !!this.deliveryPerspective.localPublicManifests.get(ppEh);
-                    return {ppEh, description: pprm.description, timestamp: pprm.creationTs, author: pprm.author, isLocal, isPrivate: false} as FileTableItem;
+                    return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: pprm.author.b64, isLocal, isPrivate: false} as FileTableItem;
                 });
                 //const publicItems = dhtPublicItems.concat(myPublicItems);
 
@@ -974,10 +974,10 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                   .filter(([_ppEh, pprm]) => !pprm.deleteInfo)
                   .map(([ppEh, pprm]) => {
                         const isLocal = !!this.deliveryPerspective.localPublicManifests.get(ppEh);
-                        return {ppEh, description: pprm.description, timestamp: pprm.creationTs, author: pprm.author, isLocal, isPrivate:false} as FileTableItem;
+                        return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: pprm.author.b64, isLocal, isPrivate:false} as FileTableItem;
                     })
                     .filter((item) => {
-                        const publicTags = this._dvm.taggingZvm.perspective.publicTagsByTarget.get(item.ppEh);
+                        const publicTags = this._dvm.taggingZvm.perspective.publicTagsByTarget.get(new EntryId(item.ppEh));
                         return publicTags && publicTags.includes(this._selectedMenuItem.tag);
                     });
                 mainArea = html`
@@ -991,10 +991,10 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             if (this._selectedMenuItem.type == SelectedType.PrivateTag) {
                 const taggedItems = Array.from(this.deliveryPerspective.privateManifests.entries()).map(([ppEh, [pm, timestamp]]) => {
                     //const timestamp = this.deliveryPerspective.privateManifests[ppEh][1];
-                    return {ppEh, description: pm.description, timestamp, isLocal: false, isPrivate: true} as FileTableItem;
+                    return {ppEh: ppEh.b64, description: pm.description, timestamp, isLocal: false, isPrivate: true} as FileTableItem;
                 })
                 .filter((item) => {
-                    const tags = this._dvm.taggingZvm.perspective.privateTagsByTarget.get(item.ppEh);
+                    const tags = this._dvm.taggingZvm.perspective.privateTagsByTarget.get(new EntryId(item.ppEh));
                     return tags && tags.includes(this._selectedMenuItem.tag);
                 });
 

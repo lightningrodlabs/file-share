@@ -42,15 +42,16 @@ export class DistributionTable extends LitElement {
         const totalSize = this.items.reduce((accumulator, item) => accumulator + item.description.size, 0);
 
         /** render all */
+        //return html``;
         return html`
-            <vaadin-grid .items="${this.items}">
+            <vaadin-grid .items=${this.items}>
                 <vaadin-grid-selection-column></vaadin-grid-selection-column>
                 <!-- <vaadin-grid-column path="deliveryState" header=
                                     ${columnBodyRenderer(
                                             ({ deliveryState }) => html`<span>${deliveryState}</span>`,
                                             [],
                                     )}>
-                </vaadin-grid-column> -->                
+                </vaadin-grid-column> -->
                 <vaadin-grid-column path="description" header=${msg("Filename")}
                                     ${columnBodyRenderer(
                                             ({ description }) => html`<span>${description.name}</span>`,
@@ -92,39 +93,39 @@ export class DistributionTable extends LitElement {
                                             ({ receptionTs }) => html`<span>${prettyTimestamp(receptionTs)}</span>`,
                                             [],
                                     )}
-                ></vaadin-grid-column>                
+                ></vaadin-grid-column>
                 <vaadin-grid-column
-                        path="ppEh" header="" width="120px"
+                        path="parcelEh" header="" width="120px"
                         ${columnBodyRenderer(
-                                ({ppEh}) => {
+                                ({parcelEh}) => {
                                     return html`
                                         <sl-button size="small" variant="primary" style="margin-left:5px" @click=${async (e) => {
-                                            this.dispatchEvent(new CustomEvent('download', {detail: ppEh, bubbles: true, composed: true}));
+                                            this.dispatchEvent(new CustomEvent<EntryId>('download', {detail: parcelEh, bubbles: true, composed: true}));
                                         }}>
                                             <sl-icon name="download"></sl-icon>
                                         </sl-button>
                                         <sl-button size="small" variant="primary" @click=${async (e) => {
-                                            this.dispatchEvent(new CustomEvent('send', {detail: ppEh, bubbles: true, composed: true}));
+                                            this.dispatchEvent(new CustomEvent<EntryId>('send', {detail: parcelEh, bubbles: true, composed: true}));
                                         }}>
                                             <sl-icon name="send"></sl-icon>
                                         </sl-button>
                                         <sl-button size="small" variant="neutral"
                                                    @click=${async (e) => {
-                                                       this.dispatchEvent(new CustomEvent('view', {
-                                                           detail: ppEh,
+                                                       this.dispatchEvent(new CustomEvent<EntryId>('view', {
+                                                           detail: parcelEh,
                                                            bubbles: true,
                                                            composed: true
                                                        }));
                                                    }}>
                                             <sl-icon name="info-lg"></sl-icon>
-                                        </sl-button>                                        
+                                        </sl-button>
                                     `
                                 },
                                 []
                         )}
                         ${columnFooterRenderer(() => html`<span>${this.items.length} ${msg("files")}</span>`, [this.items])}
-                ></vaadin-grid-column>                
-            </vaadin-grid>            
+                ></vaadin-grid-column>
+            </vaadin-grid>
         `;
     }
 

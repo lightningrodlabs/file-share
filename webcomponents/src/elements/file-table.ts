@@ -10,13 +10,14 @@ import {TagList} from "./tag-list";
 import {kind2Type} from "../fileTypeUtils";
 import {Profile as ProfileMat} from "@ddd-qc/profiles-dvm/dist/bindings/profiles.types";
 import {msg} from "@lit/localize";
+import {AgentPubKeyB64, EntryHashB64} from "@holochain/client";
 
 
 export interface FileTableItem {
-    ppEh: EntryId,
+    ppEh: EntryHashB64,
     description: ParcelDescription,
     timestamp: number,
-    author: AgentId,
+    author: AgentPubKeyB64,
     isPrivate: boolean,
     isLocal: boolean,
 }
@@ -42,7 +43,7 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
 
     @property() selectable?: string;
 
-    @state() private _selectedItems: FileTableItem[] = [];
+    //@state() private _selectedItems: FileTableItem[] = [];
 
 
     /** */
@@ -60,7 +61,6 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
 
         const totalSize = this.items.reduce((accumulator, item) => accumulator + item.description.size, 0);
 
-
         // if (this.selectable == undefined) {
         //     this._selectedItems = this.items;
         // }
@@ -71,8 +71,9 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
         // }}"
 
         /** render all */
+        //return html``;
         return html`
-            <vaadin-grid id="grid" 
+            <vaadin-grid id="grid"
                          .items=${this.items}>
                 <vaadin-grid-selection-column></vaadin-grid-selection-column>
                 <vaadin-grid-column path="description" header=${msg("Filename")}
@@ -81,6 +82,7 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                             [],
                                     )}>
                 </vaadin-grid-column>
+                
                 <vaadin-grid-column path="description" header=${msg("Size")} width="80px"
                                     ${columnBodyRenderer(
                                 ({ description }) => html`<span>${prettyFileSize(description.size)}</span>`,
@@ -94,9 +96,10 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                             [],
                                     )}
                 ></vaadin-grid-column>
+                    
                 <vaadin-grid-column path="ppEh" header=${msg("Group Tags")}
                                     ${columnBodyRenderer(
-                                            ({ ppEh }) => html`<tag-list .tags=${this._zvm.getTargetPublicTags(ppEh)}></tag-list>`,
+                                            ({ ppEh }) => html`<tag-list .tags=${this._zvm.getTargetPublicTags(new EntryId(ppEh))}></tag-list>`,
                                             [],
                                     )}
                 ></vaadin-grid-column>
@@ -105,9 +108,9 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                             ({ ppEh }) => html`
                                                 <div style="display:flex">
                                                     <tag-list id="priv-tags-${ppEh}" selectable deletable
-                                                              .tags=${this._zvm.getTargetPrivateTags(ppEh)}
-                                                              @deleted=${async (e) => {
-                                                                  await this._zvm.untagPrivateEntry(ppEh, e.detail);
+                                                              .tags=${this._zvm.getTargetPrivateTags(new EntryId(ppEh))}
+                                                              @deleted=${async (e: CustomEvent<string>) => {
+                                                                  await this._zvm.untagPrivateEntry(new EntryId(ppEh), e.detail);
                                                                   const tagList = this.shadowRoot.getElementById(`priv-tags-${ppEh}`) as TagList;
                                                                   tagList.requestUpdate();
                                                               }}
@@ -121,7 +124,7 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                 <vaadin-grid-column path="author" header=${msg("Author")} .hidden=${!this.items[0].author}
                                     ${columnBodyRenderer(
                                             ({ author }) => {
-                                                const maybeProfile = this.profiles.get(author);
+                                                const maybeProfile = this.profiles.get(new AgentId(author));
                                                 return maybeProfile
                                                         ? html`<span>${maybeProfile.nickname}</span>`
                                                         : html`<span>${msg("Unknown")}</span>`
@@ -157,8 +160,8 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                         return html`
                                             <sl-button size="small" variant="primary" style="margin-left:5px"
                                                        @click=${async (e) => {
-                                                           this.dispatchEvent(new CustomEvent('selected', {
-                                                               detail: ppEh,
+                                                           this.dispatchEvent(new CustomEvent<EntryId>('selected', {
+                                                               detail: new EntryId(ppEh),
                                                                bubbles: true,
                                                                composed: true
                                                            }));
@@ -168,34 +171,34 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                         `;
                                     } else {
                                         // TODO: Optimize. Should have a better way to get the item here instead of doing a search for each item.
-                                        const item = this.items.filter((item) => item.ppEh.b64 == ppEh.b64);
+                                        const item = this.items.filter((item) => item.ppEh == ppEh);
                                         const isPublic = item.length > 0 && !item[0].isPrivate;
                                         //console.log("isPublic", isPublic, item, ppEh)
                                         return html`
                                             <sl-button size="small" variant="primary" style="margin-left:5px"
                                                        @click=${async (e) => {
-                                                          this.dispatchEvent(new CustomEvent('download', {
-                                                              detail: ppEh,
+                                                          this.dispatchEvent(new CustomEvent<EntryId>('download', {
+                                                              detail: new EntryId(ppEh),
                                                               bubbles: true,
                                                               composed: true
                                                           }));
                                                       }}>
                                                 <sl-icon name="download"></sl-icon>
                                             </sl-button>
-                                            <sl-button size="small" variant="primary" 
+                                            <sl-button size="small" variant="primary"
                                                        @click=${async (e) => {
-                                                          this.dispatchEvent(new CustomEvent('send', {
-                                                              detail: ppEh,
+                                                          this.dispatchEvent(new CustomEvent<EntryId>('send', {
+                                                              detail: new EntryId(ppEh),
                                                               bubbles: true,
                                                               composed: true
                                                           }));
                                                       }}>
                                                 <sl-icon name="send"></sl-icon>
                                             </sl-button>
-                                            <sl-button size="small" variant="neutral" 
+                                            <sl-button size="small" variant="neutral"
                                                        @click=${async (e) => {
-                                                          this.dispatchEvent(new CustomEvent('view', {
-                                                              detail: ppEh,
+                                                          this.dispatchEvent(new CustomEvent<EntryId>('view', {
+                                                              detail: new EntryId(ppEh),
                                                               bubbles: true,
                                                               composed: true
                                                           }));
@@ -206,8 +209,8 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                             <sl-button size="small" variant="danger"
                                                        @click=${async (e) => {
                                                 console.log("Dispatching delete Event", ppEh)
-                                                this.dispatchEvent(new CustomEvent('delete', {
-                                                    detail: ppEh,
+                                                this.dispatchEvent(new CustomEvent<EntryId>('delete', {
+                                                    detail: new EntryId(ppEh),
                                                     bubbles: true,
                                                     composed: true
                                                 }));
@@ -220,8 +223,8 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                 []
                         )}
                         ${columnFooterRenderer(() => html`<span>${this.items.length} ${msg("files")}</span>`, [this.items])}
-                ></vaadin-grid-column>                
-            </vaadin-grid>            
+                ></vaadin-grid-column>
+            </vaadin-grid>
         `;
     }
 

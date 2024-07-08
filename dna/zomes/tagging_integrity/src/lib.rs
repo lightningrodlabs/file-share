@@ -33,6 +33,7 @@ pub struct PrivateTag {
 #[hdk_link_types]
 #[derive(Serialize, Deserialize)]
 pub enum TaggingLinkTypes {
+   PublicPath,
    PublicEntry,
    PrivateEntry,
    PublicTags,
