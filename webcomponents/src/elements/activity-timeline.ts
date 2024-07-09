@@ -205,7 +205,7 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
         // }
         //const id = "activity-item__" + manifestEh;
 
-        const [profile, _avatar] = agent2avatar(peer, this._dvm.profilesZvm.perspective);
+        const [profile, _avatar] = agent2avatar(peer, this._dvm.profilesZvm.getProfile(peer));
         console.log("agent2avatar()", peer, profile);
         const authorSpan = peer.b64 == this.cell.agentId.b64
             ? html`<span style="font-weight: bold;">${msg("yourself")}</span>`

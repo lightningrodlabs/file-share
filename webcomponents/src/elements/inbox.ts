@@ -120,7 +120,7 @@ export class Inbox extends DnaElement<unknown, FilesDvm> {
 
     /** */
     render() {
-        console.log("<activity-timeline>.render()", this._initialized);
+        console.log("<files-inbox>.render()", this._initialized);
 
         let items = [
             html`<sl-skeleton effect="sheen"></sl-skeleton>`,
@@ -133,7 +133,7 @@ export class Inbox extends DnaElement<unknown, FilesDvm> {
             const [unreplieds, incompletes] = this._dvm.deliveryZvm.inbounds();
             const unrepliedItems: [number, TemplateResult<1>][] = Array.from(unreplieds.entries()).map(
                 ([noticeEh, [notice, ts]]) => {
-                    console.log("" + noticeEh, this.deliveryPerspective.notices.get(noticeEh));
+                    console.log("<files-inbox> unreplied " + noticeEh.b64, this.deliveryPerspective.notices.get(noticeEh));
                     const senderKey = new AgentId(notice.sender);
                     const senderProfile = this._dvm.profilesZvm.getProfile(senderKey);
                     let senderName = senderKey.b64;
@@ -144,9 +144,10 @@ export class Inbox extends DnaElement<unknown, FilesDvm> {
                     const date = new Date(ts / 1000); // Holochain timestamp is in micro-seconds, Date wants milliseconds
                     const date_str = date.toLocaleString('en-US', {hour12: false});
                     /** */
+                    // .author=${notice.sender}
                     const unrepliedLi = html`
                     <div class="inboxLine unreplied">
-                        <file-button .description=${notice.summary.parcel_reference.description} .author=${notice.sender}></file-button>
+                        <file-button .description=${notice.summary.parcel_reference.description}></file-button>
                         is being sent by
                         <span class="nickname">${senderName}</span>
                         <div class="gap"></div>
@@ -164,7 +165,7 @@ export class Inbox extends DnaElement<unknown, FilesDvm> {
 
             const incompleteItems: [number, TemplateResult<1>][] = Array.from(incompletes.entries()).map(
                 ([noticeEh, [notice, ts, missingChunks]]) => {
-                    console.log("" + noticeEh, this.deliveryPerspective.notices.get(noticeEh));
+                    console.log("<files-inbox> incomplete " + noticeEh.b64, this.deliveryPerspective.notices.get(noticeEh));
                     const senderKey = new AgentId(notice.sender);
                     const senderProfile = this._dvm.profilesZvm.getProfile(senderKey);
                     let senderName = senderKey.b64;
@@ -176,9 +177,10 @@ export class Inbox extends DnaElement<unknown, FilesDvm> {
                     const date_str = date.toLocaleString('en-US', {hour12: false});
                     /** */
                     const pct = getCompletionPct(this._dvm.deliveryZvm, notice, missingChunks);
+                    //  .author=${notice.sender}
                     const incompleteItem = html`
                         <div class="inboxLine">
-                            <file-button .description=${notice.summary.parcel_reference.description} .author=${notice.sender}></file-button>
+                            <file-button .description=${notice.summary.parcel_reference.description}></file-button>
                             ${msg("from")}
                             <span class="nickname">${senderName}</span>
                             <div class="gap"></div>

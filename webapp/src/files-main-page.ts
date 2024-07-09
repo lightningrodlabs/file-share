@@ -245,7 +245,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         if (acceptButton) {
             //console.log("UPDATED button found!", acceptButton);
             const acceptEh = new EntryId(acceptButton.getAttribute("eh"));
-            const alert = document.getElementById("new-notice-" + acceptEh) as SlAlert;
+            const alert = document.getElementById("new-notice-" + acceptEh.b64) as SlAlert;
             //console.log("UPDATED alert", alert);
             //const declineEh = declineButton.getAttribute("eh");
             //const notice = this._dvm.deliveryZvm.perspective.notices[acceptEh];
@@ -396,15 +396,15 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             const recipientName = maybeProfile? maybeProfile.nickname : "unknown";
             title = msg("Incoming file request");
             message = `"${description.name}" (${prettyFileSize(description.size)}) ${msg("from")}: ${recipientName}`;
-            id = "new-notice-" + noticeEh
+            id = "new-notice-" + noticeEh.b64
             duration = Infinity;
             extraHtml = `
                 <div>
-                    <sl-button id="accept-notice-btn" variant="default" size="small" eh="${noticeEh}">
+                    <sl-button id="accept-notice-btn" variant="default" size="small" eh="${noticeEh.b64}">
                       <sl-icon slot="prefix" name="check"></sl-icon>
                       ${msg("Accept")}
                     </sl-button>
-                    <sl-button id="decline-notice-btn" variant="default" size="small" eh="${noticeEh}">
+                    <sl-button id="decline-notice-btn" variant="default" size="small" eh="${noticeEh.b64}">
                       <sl-icon slot="prefix" name="x"></sl-icon>
                       ${msg("Decline")}
                     </sl-button>
@@ -675,7 +675,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         //let unrepliedInbounds: TemplateResult<1>[] = [];
         let unrepliedInbounds = Array.from(this._dvm.deliveryZvm.inbounds()[0].entries())
                 .map(([noticeEh, [notice, _ts]]) => {
-                console.log("" + noticeEh, this.deliveryPerspective.notices.get(noticeEh));
+                console.log("" + noticeEh.b64, this.deliveryPerspective.notices.get(noticeEh));
                 const senderKey = new AgentId(notice.sender);
                 const senderProfile = this._dvm.profilesZvm.getProfile(senderKey);
                 let senderName = senderKey.b64;
@@ -683,7 +683,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     senderName = senderProfile.nickname;
                 }
                 const unrepliedLi = html`
-                    <li id="inbound_${noticeEh}">
+                    <li id="inbound_${noticeEh.b64}">
                         <span class="nickname">${senderName}</span>
                         ${msg("wants to send you")} 
                         <span style="font-weight: bold">${notice.summary.parcel_reference.description.name}</span>
@@ -705,11 +705,12 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         /** Unreplied outbounds */
         let outboundList = Array.from(this._dvm.deliveryZvm.outbounds().entries())
             .map(([_distribAh, [distribution, ts, deliveryStates]]) => {
-                const outboundItems = Object.entries(deliveryStates).map(
+                const outboundItems = Array.from(deliveryStates.entries()).map(
                     ([recipient, state]) => {
+                        const maybe = this._dvm.profilesZvm.getProfile(recipient);
                         return {
                             distribution,
-                            recipient,
+                            nickname: maybe? maybe.nickname : "",
                             timestamp: ts,
                             state,
                         }
@@ -726,12 +727,11 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                                                     [],
                                             )}>
                         </vaadin-grid-column>                        
-                        <vaadin-grid-column path="recipient" header=${msg("Recipient")}
+                        <vaadin-grid-column path="nickname" header=${msg("Recipient")}
                                             ${columnBodyRenderer(
-                                                    ({ recipient }) => {
-                                                        const maybeProfile = this._dvm.profilesZvm.perspective.profiles[recipient];
-                                                        return maybeProfile
-                                                                ? html`<span>${maybeProfile.nickname}</span>`
+                                                    ({ nickname }) => {
+                                                        return nickname != ""
+                                                                ? html`<span>${nickname}</span>`
                                                                 : html`<sl-skeleton effect="sheen"></sl-skeleton>`
                                                     },
                                                     [],

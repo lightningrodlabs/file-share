@@ -62,7 +62,7 @@ export class ProfileItem extends ZomeElement<ProfilesAltPerspective, ProfilesAlt
                     this.dispatchEvent(new CustomEvent<AgentId>('selected', {detail: this.key, bubbles: true, composed: true}))
                 }
             }}>
-                <sl-avatar id=${this.key} initials=${getInitials(profile.nickname)} .image=${profile && profile.fields.avatar? profile.fields.avatar : ""}></sl-avatar>
+                <sl-avatar id=${this.key.b64} initials=${getInitials(profile.nickname)} .image=${profile && profile.fields.avatar? profile.fields.avatar : ""}></sl-avatar>
                 <span id="nickname">${profile.nickname}</span>
                 ${clearButton}
             </div>

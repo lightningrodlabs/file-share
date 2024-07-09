@@ -59,6 +59,7 @@ import {FILES_DEFAULT_ROLE_NAME} from "../bindings/files.types";
 //import {NotificationsZvm} from "@ddd-qc/notifications-dvm/dist/viewModels/notifications.zvm";
 import {ProfilesAltZvm, ProfilesZvm} from "@ddd-qc/profiles-dvm";
 import {ProfilesAltLinkType} from "@ddd-qc/profiles-dvm/dist/bindings/profilesAlt.integrity";
+import {Dictionary} from "@ddd-qc/cell-proxy";
 
 
 
@@ -69,10 +70,10 @@ export class FilesDvm extends DnaViewModel {
 
     /** For commit & send follow-up */
     /** dataHash -> recipients[] */
-    private _mustSendTo: EntryIdMap<AgentId[]> = new EntryIdMap();
+    private _mustSendTo: Dictionary<AgentId[]> = {}
     /** For publish or send follow-up */
     /** dataHash -> {isPrivate, tags} */
-    private _mustAddTags: EntryIdMap<Object> = new EntryIdMap();
+    private _mustAddTags: Dictionary<Object> = {}
 
     /** -- DnaViewModel Interface -- */
 
@@ -151,7 +152,8 @@ export class FilesDvm extends DnaViewModel {
     /** */
     private _sendFile(manifestEh: EntryId, manifest: ParcelManifest) {
         const sendTo = this._mustSendTo[manifest.data_hash];
-        const recipients = sendTo.map((agent) => (' ' + agent).slice(1)); // deep copy string for promise
+        //const recipients = sendTo.map((agent) => (' ' + agent).slice(1)); // deep copy string for promise
+        const recipients = sendTo.map((agent) => new AgentId(agent.b64)); // deep copy string for promise
         console.log("sendFile follow up", manifestEh, sendTo);
         this.filesZvm.sendFile(manifestEh, sendTo).then((distribAh) => {
             /** Into Notification */
