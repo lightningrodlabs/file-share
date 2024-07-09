@@ -56,18 +56,16 @@ pub fn query_all_PrivateTag(_: ()) -> ExternResult<Vec<(EntryHash, Timestamp, St
 fn commit_private_tag(tag_value: String) -> ExternResult<EntryHash> {
     std::panic::set_hook(Box::new(zome_panic_hook));
     /// Make sure Tag does not already exists
-    let private_tags: Vec<String> = query_all_PrivateTag(())?
-        .into_iter()
-        .map(|(_, _, tag)| (tag))
-        .collect();
-    if private_tags.contains(&tag_value) {
-        return error("Private tag already exists");
+    for (eh, _, tag) in query_all_PrivateTag(())? {
+        if tag == tag_value {
+            return Ok(eh);
+        }
     }
     /// Make sur tag length is OK
     if let Ok(properties) = get_properties() {
         if tag_value.len() > properties.max_tag_name_length as usize ||
             tag_value.len() < properties.min_tag_name_length as usize {
-            return error("Tag length is incorrect.");
+            return zome_error!("Tag length is incorrect.");
         }
     }
     /// Create Entry

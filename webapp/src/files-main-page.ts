@@ -879,14 +879,14 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 `;
             }
             if (this._selectedMenuItem.type == SelectedType.PersonalFiles) {
+                const personalItems: FileTableItem[] = Array.from(this.deliveryPerspective.privateManifests.entries())
+                  .map(([ppEh, [pm, timestamp]]) => {
+                    //const timestamp = this.deliveryPerspective.privateManifests[ppEh][1];
+                    return {ppEh: ppEh.b64, description:pm.description, timestamp, author: this._dvm.profilesZvm.getProfile(this.cell.agentId), isPrivate:true, isLocal:true};
+                })
                 mainArea = html`
                     <h2>${msg("Personal Files")}</h2>
-                    <file-table type="personal"
-                                .items=${Array.from(this.deliveryPerspective.privateManifests.entries()).map(([ppEh, [pm, timestamp]]) => {
-                                    //const timestamp = this.deliveryPerspective.privateManifests[ppEh][1];
-                                    return {ppEh: ppEh.b64, description:pm.description, timestamp, author: this._dvm.profilesZvm.getProfile(this.cell.agentId), isPrivate:true, isLocal:true} as FileTableItem;
-                                })}
-                    ></file-table>
+                    <file-table type="personal" .items=${personalItems}></file-table>
                 `;
             }
             if (this._selectedMenuItem.type == SelectedType.GroupFiles) {
@@ -959,32 +959,38 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
             }
             if (this._selectedMenuItem.type == SelectedType.PublicTag) {
-                console.log("PublicTag", this._dvm.taggingZvm.perspective.publicTagsByTarget);
-                const taggedItems = Array.from(this.deliveryPerspective.publicParcels.entries())
+                console.log("Public taggedItems 0", this._dvm.taggingZvm.perspective.publicTagsByTarget, this.deliveryPerspective.publicParcels);
+                let taggedItems = Array.from(this.deliveryPerspective.publicParcels.entries())
                   .filter(([_ppEh, pprm]) => !pprm.deleteInfo)
                   .map(([ppEh, pprm]) => {
                         const isLocal = !!this.deliveryPerspective.localPublicManifests.get(ppEh);
                         return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: this._dvm.profilesZvm.getProfile(pprm.author), isLocal, isPrivate:false} as FileTableItem;
                     })
-                    .filter((item) => {
-                        const publicTags = this._dvm.taggingZvm.perspective.publicTagsByTarget.get(new EntryId(item.ppEh));
-                        return publicTags && publicTags.includes(this._selectedMenuItem.tag);
-                    });
+                console.log("Public taggedItems 1", this._selectedMenuItem.tag, taggedItems);
+                taggedItems = taggedItems.filter((item) => {
+                    const publicTags = this._dvm.taggingZvm.perspective.publicTagsByTarget.get(new EntryId(item.ppEh));
+                    console.log("public taggedItems tags", publicTags, item.ppEh);
+                    return publicTags && publicTags.includes(this._selectedMenuItem.tag);
+                });
+                console.log("Public taggedItems 2", this._selectedMenuItem.tag, taggedItems, this.deliveryPerspective.publicParcels, this._dvm.taggingZvm.perspective.publicTagsByTarget);
+                /** */
                 mainArea = html`
                     <h2>${msg("Group Files")}: <span class="tag" style="display:inline; font-size: inherit">${this._selectedMenuItem.tag}</span></h2>
                     <file-table type="group" .items=${taggedItems}></file-table>
                 `;
             }
             if (this._selectedMenuItem.type == SelectedType.PrivateTag) {
-                const taggedItems = Array.from(this.deliveryPerspective.privateManifests.entries()).map(([ppEh, [pm, timestamp]]) => {
+                let taggedItems = Array.from(this.deliveryPerspective.privateManifests.entries()).map(([ppEh, [pm, timestamp]]) => {
                     //const timestamp = this.deliveryPerspective.privateManifests[ppEh][1];
                     return {ppEh: ppEh.b64, description: pm.description, timestamp, isLocal: false, isPrivate: true} as FileTableItem;
-                })
-                .filter((item) => {
+                });
+                console.log("private taggedItems 1", this._selectedMenuItem.tag, taggedItems);
+                taggedItems = taggedItems.filter((item) => {
                     const tags = this._dvm.taggingZvm.perspective.privateTagsByTarget.get(new EntryId(item.ppEh));
+                    console.log("private taggedItems tags", tags, item.ppEh);
                     return tags && tags.includes(this._selectedMenuItem.tag);
                 });
-
+                console.log("private taggedItems 2", this._selectedMenuItem.tag, taggedItems, this.deliveryPerspective.privateManifests, this._dvm.taggingZvm.perspective.privateTagsByTarget);
                 mainArea = html`
                     <h2>${msg("Personal Files")}: <span class="tag" style="display:inline; font-size: inherit">${this._selectedMenuItem.tag}</span></h2>
                     <file-table type="personal" .items=${taggedItems}></file-table>

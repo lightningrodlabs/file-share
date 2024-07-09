@@ -55,7 +55,7 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
 
     /** */
     render() {
-        console.log("<file-table>.render()", this.items);
+        console.log("<file-table>.render()", this.type, this.items, this._zvm.perspective);
         if (!this.items.length) {
             return html`${msg("No items found")}`;
         }

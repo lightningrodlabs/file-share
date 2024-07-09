@@ -136,14 +136,14 @@ export class FilesDvm extends DnaViewModel {
     }
 
 
-    /** Store probeLog timestamp upon first load of app */
-    async initializePerspectiveOnline(): Promise<void> {
-        console.log("filessDvm.initializePerspectiveOffline() override")
-        await super.initializePerspectiveOnline();
-        //this._livePeers = this.profilesZvm.getAgents(); // TODO: implement real presence logic
-        //console.log("filessDvm.initializePerspectiveOffline() livePeers", this._livePeers);
-        console.log("filessDvm.initializePerspectiveOffline() override persp =", this.perspective)
-    }
+    // /** Store probeLog timestamp upon first load of app */
+    // async initializePerspectiveOnline(): Promise<void> {
+    //     console.log("filessDvm.initializePerspectiveOffline() override")
+    //     await super.initializePerspectiveOnline();
+    //     //this._livePeers = this.profilesZvm.getAgents(); // TODO: implement real presence logic
+    //     //console.log("filessDvm.initializePerspectiveOffline() livePeers", this._livePeers);
+    //     console.log("filessDvm.initializePerspectiveOffline() override persp =", this.perspective)
+    // }
 
 
     /** -- Methods -- */

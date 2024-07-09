@@ -20,6 +20,7 @@ export const taggingFunctionNames: FunctionName[] = [
 	"find_public_tags_for_entry",
 	"find_public_entries_with_tag",
 	"untag_public_entry",
+	"cast_tip",
 ];
 
 

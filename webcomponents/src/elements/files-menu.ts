@@ -135,13 +135,10 @@ export class FilesMenu extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 <sl-skeleton effect="sheen"></sl-skeleton>
             `;
         }
-
-        console.log("renderTags()", this.taggingPerspective.publicTags);
-
+        console.log("renderTags()", this.taggingPerspective.publicTags, this.taggingPerspective.privateTags);
         const tags = isPrivate
             ? this.taggingPerspective.privateTags
             : this.taggingPerspective.publicTags
-
         const groupTags = Object.entries(tags)
             .filter(([_tag, idMap]) => idMap.size > 0)
             .map(([tag, array]) => {
