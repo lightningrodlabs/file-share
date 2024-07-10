@@ -63,7 +63,7 @@ export class FilesApp extends HappElement {
       : HC_ADMIN_PORT
         ? new URL(`ws://localhost:${HC_ADMIN_PORT}`)
         : undefined;
-    super(appWs ? appWs : HC_APP_PORT, appId, adminUrl);
+    super(appWs ? appWs : HC_APP_PORT, appId, adminUrl, 20 * 1000);
     console.log("FilesApp.HVM_DEF", FilesApp.HVM_DEF);
     if (_canAuthorizeZfns == undefined) {
       this._canAuthorizeZfns = true;

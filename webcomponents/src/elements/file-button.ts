@@ -7,7 +7,7 @@ import {filesSharedStyles} from "../sharedStyles";
 import {FilesDvmPerspective} from "../viewModels/files.perspective";
 import {TaggingPerspective} from "../viewModels/tagging.zvm";
 import {kind2Icon} from "../fileTypeUtils";
-import {SelectedType} from "./files-menu";
+import {SelectedEvent, SelectedType} from "./files-menu";
 import {prettyFileSize} from "../utils";
 import {ParcelDescription} from "@ddd-qc/delivery";
 import {weaveUrlFromWal, WeaveServices} from "@lightningrodlabs/we-applet";
@@ -18,6 +18,7 @@ import {msg} from "@lit/localize";
 import {SlTooltip} from "@shoelace-style/shoelace";
 
 export const weClientContext = createContext<WeaveServices>('weave_client');
+
 
 /**
  * @element
@@ -112,7 +113,7 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 return html`
                     <sl-button class="hide tag-button pop" size="small" variant="primary" style="margin-left:5px"
                                @click=${async (e) => {
-                                   this.dispatchEvent(new CustomEvent('tag', {
+                                   this.dispatchEvent(new CustomEvent<SelectedEvent>('tag', {
                                        detail: {type, tag},
                                        bubbles: true,
                                        composed: true

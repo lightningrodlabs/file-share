@@ -25,9 +25,13 @@ import {
     type2Icon,
     FileTableItem,
     kind2Type,
-    DistributionTableItem, filesSharedStyles, kind2Icon, ProfileInfo, FilesNotificationVariantPublicSharingRemoved,
+    DistributionTableItem,
+    filesSharedStyles,
+    kind2Icon,
+    ProfileInfo,
+    FilesNotificationVariantPublicSharingRemoved,
 } from "@ddd-qc/files";
-import {DeliveryPerspective, DeliveryState, ParcelReference} from "@ddd-qc/delivery";
+import {DeliveryPerspective, DeliveryState} from "@ddd-qc/delivery";
 import {
     FilesDvmPerspective,
     FilesNotification,
@@ -589,7 +593,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             <h2>${msg("Recent Activity")}</h2>
             <activity-timeline
                     style="padding-right: 5px;"
-                    @tag=${(e) => this._selectedMenuItem = e.detail}
+                    @tag=${(e: CustomEvent<SelectedEvent>) => this._selectedMenuItem = e.detail}
             ></activity-timeline>`;
     }
 
@@ -632,7 +636,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             console.log("searchInputElem", filter, results);
             searchResultItems = results.map((ppEh) => html`
                 <file-button    .hash=${ppEh}
-                                @tag=${(e) => {this._selectedMenuItem = e.detail; this.searchInputElem.value = ""}}
+                                @tag=${(e: CustomEvent<SelectedEvent>) => {this._selectedMenuItem = e.detail; this.searchInputElem.value = ""}}
                 ></file-button>
             `);
         }
@@ -978,6 +982,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     <h2>${msg("Group Files")}: <span class="tag" style="display:inline; font-size: inherit">${this._selectedMenuItem.tag}</span></h2>
                     <file-table type="group" .items=${taggedItems}></file-table>
                 `;
+                this.menuElem.setSelected(this._selectedMenuItem.tag);
             }
             if (this._selectedMenuItem.type == SelectedType.PrivateTag) {
                 let taggedItems = Array.from(this.deliveryPerspective.privateManifests.entries()).map(([ppEh, [pm, timestamp]]) => {
@@ -995,6 +1000,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     <h2>${msg("Personal Files")}: <span class="tag" style="display:inline; font-size: inherit">${this._selectedMenuItem.tag}</span></h2>
                     <file-table type="personal" .items=${taggedItems}></file-table>
                 `;
+                this.menuElem.setSelected(this._selectedMenuItem.tag);
             }
         }
 
