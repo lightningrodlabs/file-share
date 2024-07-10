@@ -2,7 +2,7 @@ import {css, html, LitElement} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
 import {prettyFileSize, prettyTimestamp} from "../utils";
 import {columnBodyRenderer, columnFooterRenderer} from "@vaadin/grid/lit";
-import {ActionId, EntryId} from "@ddd-qc/lit-happ";
+import {EntryId} from "@ddd-qc/lit-happ";
 import {DeliveryState, ParcelDescription} from "@ddd-qc/delivery/dist/bindings/delivery.types";
 import {filesSharedStyles} from "../sharedStyles";
 import {kind2Type} from "../fileTypeUtils";

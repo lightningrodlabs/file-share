@@ -35,7 +35,9 @@ export function arrayBufferToBase64(buffer: ArrayBuffer): string {
     for (let i = 0; i < len; i++) {
         binary += String.fromCharCode(bytes[i]);
     }
-    return window.btoa( binary );
+    const base64 = window.btoa(binary);
+    //const binary_string = window.atob(base64); // Check if correct
+    return base64;
 }
 
 
