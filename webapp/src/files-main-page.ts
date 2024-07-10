@@ -596,7 +596,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
     /** */
     render() {
-        console.log("<files-main-page>.render()")
+        //console.log("<files-main-page>.render()")
         const isInDev = HAPP_ENV == HappEnvType.Devtest || HAPP_ENV == HappEnvType.DevtestWe || HAPP_ENV == HappEnvType.DevTestHolo;
         //const isInDev = true;
         console.log("<files-main-page>.render()", isInDev, this._initialized, this.deliveryPerspective.probeDhtCount, this._selectedMenuItem, this.deliveryPerspective, this._dvm.profilesZvm.perspective);
@@ -641,7 +641,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         /** -- Notifications -- */
         const newNotifDiff = this.perspective.notificationLogs.length - this._notifCount;
         if (newNotifDiff > 0) {
-            console.log("New notifications diff:", newNotifDiff);
+            console.log("New notifications diff:", newNotifDiff, this._notifCount);
             for(let i = this._notifCount; i < this.perspective.notificationLogs.length; i++) {
                 const notifLog = this.perspective.notificationLogs[i];
                 console.log("New notifications:", notifLog);
@@ -931,10 +931,10 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                                 deliveryState = DeliveryState.ParcelDelivered;
                             }
                             items.push({
-                                distribAh,
+                                distribAh: distribAh.b64,
                                 recipient: this._dvm.profilesZvm.getProfile(recipient),
                                 deliveryState,
-                                parcelEh: parcelEh,
+                                parcelEh: parcelEh.b64,
                                 description,
                                 sentTs,
                                 receptionTs,
@@ -1041,8 +1041,8 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                             // console.log("myNotifier:", this._dvm.notificationsZvm.perspective.myNotifier? encodeHashToBase64(this._dvm.notificationsZvm.perspective.myNotifier) : "none");
                         }}>dump</button>
                         <button type="button" @click=${() => {this.refresh();}}>refresh</button>
-                        <button type="button" @click=${() => {/*this._dvm.notificationsZvm.selectNotifier();*/}}>select</button>
-                        <button type="button" @click=${() => {/*this._dvm.notificationsZvm.zomeProxy.grantUnrestrictedCapability();*/}}>grant</button>
+                        <!-- <button type="button" @click=${() => {/*this._dvm.notificationsZvm.selectNotifier();*/}}>select</button>
+                        <button type="button" @click=${() => {/*this._dvm.notificationsZvm.zomeProxy.grantUnrestrictedCapability();*/}}>grant</button> -->
 
                         <button type="button" @click=${ async() => {
                             // //const myContact = this._dvm.notificationsZvm.perspective.contacts[this.cell.agentPubKey];

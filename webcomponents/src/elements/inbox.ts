@@ -123,14 +123,15 @@ export class Inbox extends DnaElement<unknown, FilesDvm> {
         console.log("<files-inbox>.render()", this._initialized);
 
         let items = [
-            html`<sl-skeleton effect="sheen"></sl-skeleton>`,
-            html`<sl-skeleton effect="sheen"></sl-skeleton>`,
-            html`<sl-skeleton effect="sheen"></sl-skeleton>`,
+            html`<sl-skeleton style="height:30px" effect="sheen"></sl-skeleton>`,
+            html`<sl-skeleton style="height:30px" effect="sheen"></sl-skeleton>`,
+            html`<sl-skeleton style="height:30px" effect="sheen"></sl-skeleton>`,
         ];
 
         if (this._initialized) {
             //let unrepliedInbounds: TemplateResult<1>[] = [];
             const [unreplieds, incompletes] = this._dvm.deliveryZvm.inbounds();
+            /** unreplieds */
             const unrepliedItems: [number, TemplateResult<1>][] = Array.from(unreplieds.entries()).map(
                 ([noticeEh, [notice, ts]]) => {
                     console.log("<files-inbox> unreplied " + noticeEh.b64, this.deliveryPerspective.notices.get(noticeEh));
@@ -148,12 +149,12 @@ export class Inbox extends DnaElement<unknown, FilesDvm> {
                     const unrepliedLi = html`
                     <div class="inboxLine unreplied">
                         <file-button .description=${notice.summary.parcel_reference.description}></file-button>
-                        is being sent by
+                        ${msg("is being sent by")}
                         <span class="nickname">${senderName}</span>
                         <div class="gap"></div>
                         <sl-button id="decline-button" type="button" @click=${()=> {this._dvm.deliveryZvm.declineDelivery(noticeEh);}}>
                             ${msg("Decline")}
-                        </sl-button>                            
+                        </sl-button>
                         <sl-button id="accept-button" type="button" @click=${() => {this._dvm.deliveryZvm.acceptDelivery(noticeEh);}}>
                             ${msg("Accept")}
                         </sl-button>
@@ -256,6 +257,9 @@ export class Inbox extends DnaElement<unknown, FilesDvm> {
 
               #list-div {
                 margin-top: 10px;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
               }
 
               sl-icon {

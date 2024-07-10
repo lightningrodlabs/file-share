@@ -8,13 +8,15 @@ import {filesSharedStyles} from "../sharedStyles";
 import {kind2Type} from "../fileTypeUtils";
 import {Profile as ProfileMat} from "@ddd-qc/profiles-dvm";
 import {msg} from "@lit/localize";
+import {ActionHashB64, EntryHashB64} from "@holochain/client";
 
 
+/** Don't use HolochainId directly as the vaadin will try to autoconvert to string for default rendering */
 export interface DistributionTableItem {
-    distribAh: ActionId,
+    distribAh: ActionHashB64,
     recipient: ProfileMat,
     deliveryState: DeliveryState,
-    parcelEh: EntryId,
+    parcelEh: EntryHashB64,
     description: ParcelDescription,
     sentTs: number,
     receptionTs: number,
@@ -98,19 +100,19 @@ export class DistributionTable extends LitElement {
                                 ({parcelEh}) => {
                                     return html`
                                         <sl-button size="small" variant="primary" style="margin-left:5px" @click=${async (e) => {
-                                            this.dispatchEvent(new CustomEvent<EntryId>('download', {detail: parcelEh, bubbles: true, composed: true}));
+                                            this.dispatchEvent(new CustomEvent<EntryId>('download', {detail: new EntryId(parcelEh), bubbles: true, composed: true}));
                                         }}>
                                             <sl-icon name="download"></sl-icon>
                                         </sl-button>
                                         <sl-button size="small" variant="primary" @click=${async (e) => {
-                                            this.dispatchEvent(new CustomEvent<EntryId>('send', {detail: parcelEh, bubbles: true, composed: true}));
+                                            this.dispatchEvent(new CustomEvent<EntryId>('send', {detail: new EntryId(parcelEh), bubbles: true, composed: true}));
                                         }}>
                                             <sl-icon name="send"></sl-icon>
                                         </sl-button>
                                         <sl-button size="small" variant="neutral"
                                                    @click=${async (e) => {
                                                        this.dispatchEvent(new CustomEvent<EntryId>('view', {
-                                                           detail: parcelEh,
+                                                           detail: new EntryId(parcelEh),
                                                            bubbles: true,
                                                            composed: true
                                                        }));
