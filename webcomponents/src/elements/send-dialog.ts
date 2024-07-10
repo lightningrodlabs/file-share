@@ -82,18 +82,6 @@ export class SendDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
     }
 
 
-
-    /** */
-    protected async firstUpdated() {
-        // FIXME
-        // const agentItems = Object.entries(await this._dvm.profilesZvm.probeAllProfiles()).map(
-        //     ([agentIdB64, profile]) => {return {key: agentIdB64, name: profile.nickname} as AgentItem});
-        // this._allAgents = agentItems;
-        // //console.log("_allAgents", this._allAgents);
-        // this._filteredAgents = agentItems;
-    };
-
-
     /** */
     private filterChanged(event: ComboBoxFilterChangedEvent) {
         const filter = event.detail.value;

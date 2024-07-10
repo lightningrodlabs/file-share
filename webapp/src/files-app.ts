@@ -340,6 +340,13 @@ export class FilesApp extends HappElement {
                     @save-profile=${async (e: CustomEvent<ProfileInfo>) => {
                       console.log("onSaveProfile() app ", e.detail);
                       await this.filesDvm.profilesZvm.createMyProfile(e.detail.profile);
+                      /** Wait for perspective to update */
+                      /** TODO: add a timeout */
+                      let maybeMeProfile;
+                      do {
+                          maybeMeProfile = this.filesDvm.profilesZvm.getMyProfile();
+                          await delay(20);
+                      } while (!maybeMeProfile)
                       this.requestUpdate();
                     }}
                     @lang-selected=${(e: CustomEvent) => {

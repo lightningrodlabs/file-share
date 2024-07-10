@@ -1,5 +1,5 @@
 import {
-  AppWebsocket, encodeHashToBase64,
+  AppWebsocket,
 } from "@holochain/client";
 //import { msg } from "@lit/localize";
 import {
@@ -10,6 +10,7 @@ import {FilesApp} from "@files/app";
 import {AppletViewInfo, ProfilesApi} from "@ddd-qc/we-utils";
 import {ExternalAppProxy} from "@ddd-qc/cell-proxy/";
 import {destructureCloneId, HCL} from "@ddd-qc/lit-happ";
+import {AgentId, EntryId} from "@ddd-qc/cell-proxy";
 
 
 export interface ViewFileContext {
@@ -34,8 +35,8 @@ export async function createFilesApplet(
   console.log("createFilesApplet() thisAppletId", appletViewInfo.appletHash);
 
   const mainAppInfo = await appletViewInfo.appletClient.appInfo();
-
-  console.log("createFilesApplet() mainAppInfo", mainAppInfo, encodeHashToBase64(mainAppInfo.agent_pub_key));
+  const agentId = new AgentId(mainAppInfo.agent_pub_key);
+  console.log("createFilesApplet() mainAppInfo", mainAppInfo, agentId);
 
   //const showFileOnly = false; // FIXME
 
@@ -43,7 +44,7 @@ export async function createFilesApplet(
   const mainAppWs = appletViewInfo.appletClient as AppWebsocket;
   //const mainAppWs = mainAppAgentWs.appWebsocket;
   let profilesAppInfo = await profilesClient.client.appInfo();
-  console.log("createFilesApplet() profilesAppInfo", profilesAppInfo, encodeHashToBase64(mainAppInfo.agent_pub_key));
+  console.log("createFilesApplet() profilesAppInfo", profilesAppInfo, agentId);
   /** Check if roleName is actually a cloneId */
   let maybeCloneId = undefined;
   let baseRoleName = profilesClient.roleName;
@@ -55,7 +56,9 @@ export async function createFilesApplet(
   /** Determine profilesCellProxy */
   const hcl = new HCL(profilesAppInfo.installed_app_id, baseRoleName, maybeCloneId);
   const profilesApi = new ProfilesApi(profilesClient);
+  console.log("createFilesApplet() profilesApi", profilesApi);
   const profilesAppProxy = new ExternalAppProxy(profilesApi, 10 * 1000);
+  console.log("createFilesApplet() profilesAppProxy", profilesAppProxy);
   await profilesAppProxy.fetchCells(profilesAppInfo.installed_app_id, baseRoleName);
   const profilesCellProxy = await profilesAppProxy.createCellProxy(hcl);
   console.log("createFilesApplet() profilesCellProxy", profilesCellProxy);
@@ -63,7 +66,7 @@ export async function createFilesApplet(
   const app = await FilesApp.fromWe(
     mainAppWs, undefined, false, mainAppInfo.installed_app_id,
     profilesAppInfo.installed_app_id, baseRoleName, maybeCloneId, profilesClient.zomeName, profilesAppProxy,
-    weServices, appletViewInfo.appletHash, appletViewInfo.view, appletViewInfo.groupProfiles);
+    weServices, new EntryId(appletViewInfo.appletHash), appletViewInfo.view, appletViewInfo.groupProfiles);
   console.log("createFilesApplet() app", app);
   /** Done */
   return app;

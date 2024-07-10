@@ -6,7 +6,7 @@ import {blockTypes} from "./appletServices/blockTypes";
 import {DeliveryEntryType} from "@ddd-qc/delivery";
 import {devtestNames, setupFilesEntryView} from "./devtest";
 import {search} from "./appletServices/search";
-import {AppClient, RoleName, ZomeName} from "@holochain/client";
+import {AppClient} from "@holochain/client";
 import {WAL} from "@lightningrodlabs/we-applet/dist/types";
 import {mdiFileOutline} from "@mdi/js";
 

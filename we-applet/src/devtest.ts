@@ -1,8 +1,7 @@
 import {createDefaultWeServicesMock, DevTestNames, AssetViewInfo, setupDevtest} from "@ddd-qc/we-utils";
 import {FILES_DEFAULT_ROLE_NAME} from "@ddd-qc/files";
-import {ActionHash, EntryHash, fakeActionHash} from "@holochain/client";
 import {emptyEntryAppletView} from "@ddd-qc/we-utils/dist/mocks/renderInfoMock";
-import {snake} from "@ddd-qc/cell-proxy";
+import {EntryId, snake} from "@ddd-qc/cell-proxy";
 import {createFilesApplet, ViewFileContext} from "./createFilesApplet";
 import {DELIVERY_INTERGRITY_ZOME_NAME, DeliveryEntryType} from "@ddd-qc/delivery";
 import {AppletView} from "@lightningrodlabs/we-applet";
@@ -46,20 +45,20 @@ export async function setupFilesEntryView() {
     const context: ViewFileContext = {
         detail: "none",
     }
-    const appletView = createManifestEntryRenderInfo(await fakeActionHash(), context);
+    const appletView = createManifestEntryRenderInfo(EntryId.empty(), context);
     return setupDevtest(createFilesApplet, devtestNames, createDefaultWeServicesMock, appletView);
 }
 
 
 /** */
-function createManifestEntryRenderInfo(eh: EntryHash, context: ViewFileContext): AssetViewInfo {
+function createManifestEntryRenderInfo(eh: EntryId, context: ViewFileContext): AssetViewInfo {
     const entryInfo = emptyEntryAppletView as AssetViewInfo;
     entryInfo.recordInfo = {
         roleName: FILES_DEFAULT_ROLE_NAME,
         integrityZomeName: DELIVERY_INTERGRITY_ZOME_NAME,
         entryType: snake(DeliveryEntryType.PublicManifest),
     };
-    entryInfo.wal.hrl[1] = eh;
+    entryInfo.wal.hrl[1] = eh.hash;
     entryInfo.wal.context = context;
 
     return entryInfo;
