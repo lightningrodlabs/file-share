@@ -10,7 +10,6 @@ import {toastError} from "../toast";
 import {TagList} from "./tag-list";
 import {kind2Icon} from "../fileTypeUtils";
 import {msg} from "@lit/localize";
-import {EntryHashB64} from "@holochain/client";
 
 
 
@@ -98,9 +97,9 @@ export class StoreDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
         if (this._file) {
             let allTags;
             if (this._localOnly) {
-                allTags = this._dvm.taggingZvm.allPrivateTags;
+                allTags = this._dvm.taggingZvm.perspective.allPrivateTags;
             } else {
-                allTags = this._dvm.taggingZvm.allPublicTags;
+                allTags = this._dvm.taggingZvm.perspective.allPublicTags;
             }
             allTags.filter((tag) => this._selectedTags.indexOf(tag) < 0);
             /** */
@@ -165,7 +164,7 @@ export class StoreDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
                                    let maybeSplitObj;
                                    let str = msg("File already published to group or stored locally")
                                    try {
-                                       maybeSplitObj = await this._dvm.startPublishFile(this._file, this._selectedTags, this._dvm.profilesZvm.getAgents(),(manifestEh: EntryId) => {
+                                       maybeSplitObj = await this._dvm.startPublishFile(this._file, this._selectedTags, this._dvm.profilesZvm.perspective.agents,(manifestEh: EntryId) => {
                                            console.log("<store-dialog>.onUploadDone()", manifestEh, this);
                                            this.dispatchEvent(new CustomEvent<EntryId>('created', {detail: manifestEh, bubbles: true, composed: true}));
                                            if (this.dialogElem) this.dialogElem.open = false;

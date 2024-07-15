@@ -1,13 +1,14 @@
 import {css, html, PropertyValues} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
-import {DnaElement} from "@ddd-qc/lit-happ";
+import {ActionId, DnaElement, EntryIdMap} from "@ddd-qc/lit-happ";
 import {FilesDvm} from "../viewModels/files.dvm";
 import {FilesDvmPerspective} from "../viewModels/files.perspective";
 import {DeliveryPerspective} from "@ddd-qc/delivery";
 import {filesSharedStyles} from "../sharedStyles";
-import {SlDrawer, SlMenu, SlMenuItem} from "@shoelace-style/shoelace";
-import {TaggingPerspective} from "../viewModels/tagging.zvm";
+import {SlMenu} from "@shoelace-style/shoelace";
 import {msg} from "@lit/localize";
+import {Dictionary} from "@ddd-qc/cell-proxy";
+import {TaggingPerspective} from "../viewModels/tagging.perspective";
 
 
 /** */
@@ -135,10 +136,10 @@ export class FilesMenu extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 <sl-skeleton effect="sheen"></sl-skeleton>
             `;
         }
-        console.log("renderTags()", this.taggingPerspective.publicTags, this.taggingPerspective.privateTags);
-        const tags = isPrivate
-            ? this.taggingPerspective.privateTags
-            : this.taggingPerspective.publicTags
+        console.log("renderTags()", this.taggingPerspective.publicTargetsByTag, this.taggingPerspective.privateTargetsByTag);
+        const tags: Dictionary<EntryIdMap<ActionId | null>> = isPrivate
+            ? this.taggingPerspective.privateTargetsByTag
+            : this.taggingPerspective.publicTargetsByTag
         const groupTags = Object.entries(tags)
             .filter(([_tag, idMap]) => idMap.size > 0)
             .map(([tag, array]) => {
@@ -163,9 +164,9 @@ export class FilesMenu extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
     /** */
     render() {
-        console.log("<files-menu>.render()", this._initialized, this.deliveryPerspective.probeDhtCount, this.taggingPerspective);
+        console.log("<files-menu>.render()", this._initialized, this._dvm.deliveryZvm.probeDhtCount, this.taggingPerspective);
 
-        const initialized = !!(this._initialized && this.deliveryPerspective.probeDhtCount);
+        const initialized = !!(this._initialized && this._dvm.deliveryZvm.probeDhtCount);
 
         //let localPublicCount = 0;
         let dhtPublicCount = 0;

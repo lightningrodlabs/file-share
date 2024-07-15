@@ -509,7 +509,7 @@ export class FilesDvm extends DnaViewModel {
         /** Remove PublicParcel */
         await this.deliveryZvm.zomeProxy.unpublishPublicParcel(pprm.prEh.hash);
         /** Remove tags */
-        const tags = this.taggingZvm.getTargetPublicTags(eh);
+        const tags = this.taggingZvm.perspective.getTargetPublicTags(eh);
         console.log("removePublicParcel()", tags);
         if (tags.length > 0) {
             await this.taggingZvm.untagPublicEntryAll(eh);
@@ -522,7 +522,7 @@ export class FilesDvm extends DnaViewModel {
     /** Can't send to self */
     async startCommitPrivateAndSendFile(file: File, recipients: AgentId[], tags: string[]): Promise<SplitObject | undefined> {
         const agents = recipients
-            .filter((agent) => agent.b64 != this.cell.agentId.b64)
+            .filter((agent) => !agent.equals(this.cell.agentId))
         console.log("startCommitPrivateAndSendFile()", recipients, agents);
         if (agents.length == 0) {
             return undefined;
@@ -696,15 +696,15 @@ export class FilesDvm extends DnaViewModel {
         const dvmExport = {};
 
         //await this.deliveryZvm.probeDht();
-        const dJson = this.deliveryZvm.exportPerspective();
+
+        const dJson = this.deliveryZvm.export();
         dvmExport[DeliveryZvm.DEFAULT_ZOME_NAME] = JSON.parse(dJson);
 
-        const pJson = this.profilesZvm.exportPerspective(/*this.originalsZvm*/);
+        const pJson = this.profilesZvm.export(/*this.originalsZvm*/);
         dvmExport[ProfilesZvm.DEFAULT_ZOME_NAME] = JSON.parse(pJson);
 
-        // TODO
-        //const tJson = this.taggingZvm.exportPerspective();
-        //dvmExport[TaggingZvm.DEFAULT_ZOME_NAME] = JSON.parse(tJson);
+        const tJson = this.taggingZvm.export();
+        dvmExport[TaggingZvm.DEFAULT_ZOME_NAME] = JSON.parse(tJson);
 
         // const oJson = this.originalsZvm.exportPerspective();
         // dvmExport[AuthorshipZvm.DEFAULT_ZOME_NAME] = JSON.parse(oJson);

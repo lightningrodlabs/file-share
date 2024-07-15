@@ -338,7 +338,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             const recipients = (notifLog[2] as FilesNotificationVariantDeliveryRequestSent).recipients;
             let recipientName = "" + recipients.length + " peers";
             if (recipients.length == 1) {
-                const maybeProfile = this._dvm.profilesZvm.getProfile(recipients[0]);
+                const maybeProfile = this._dvm.profilesZvm.perspective.getProfile(recipients[0]);
                 recipientName = maybeProfile ? maybeProfile.nickname : "unknown";
             }
             console.log("DeliveryRequestSent", notifLog, recipients, recipientName);
@@ -361,7 +361,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             const recipient = (notifLog[2] as FilesNotificationVariantDistributionToRecipientComplete).recipient;
             const manifestEh = new EntryId(this.deliveryPerspective.distributions.get(distribAh)[0].delivery_summary.parcel_reference.parcel_eh);
             const privateManifest = this.deliveryPerspective.privateManifests.get(manifestEh)[0];
-            const maybeProfile = this._dvm.profilesZvm.getProfile(recipient);
+            const maybeProfile = this._dvm.profilesZvm.perspective.getProfile(recipient);
             const recipientName = maybeProfile? maybeProfile.nickname : msg("Unknown");
             variant = 'success';
             icon = "check2-circle";
@@ -396,7 +396,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             const noticeEh = (notifLog[2] as FilesNotificationVariantNewNoticeReceived).noticeEh;
             const description = (notifLog[2] as FilesNotificationVariantNewNoticeReceived).description;
             const recipient = (notifLog[2] as FilesNotificationVariantNewNoticeReceived).sender;
-            const maybeProfile = this._dvm.profilesZvm.getProfile(recipient);
+            const maybeProfile = this._dvm.profilesZvm.perspective.getProfile(recipient);
             const recipientName = maybeProfile? maybeProfile.nickname : "unknown";
             title = msg("Incoming file request");
             message = `"${description.name}" (${prettyFileSize(description.size)}) ${msg("from")}: ${recipientName}`;
@@ -419,7 +419,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             const notif = notifLog[2] as FilesNotificationVariantReplyReceived;
             const distrib = this.deliveryPerspective.distributions.get(notif.distribAh)[0];
             const description = distrib.delivery_summary.parcel_reference.description;
-            const maybeProfile = this._dvm.profilesZvm.getProfile(notif.recipient);
+            const maybeProfile = this._dvm.profilesZvm.perspective.getProfile(notif.recipient);
             const recipientName = maybeProfile? maybeProfile.nickname : "unknown";
             if (notif.hasAccepted) {
                 title = msg("File accepted");
@@ -540,7 +540,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
     /** */
     renderHome(unrepliedInbounds) {
-        const initialized = !!(this._initialized && this.deliveryPerspective.probeDhtCount);
+        const initialized = !!(this._initialized && this._dvm.deliveryZvm.probeDhtCount);
 
         /** Count files per type */
         const privDescriptions = Array.from(this.deliveryPerspective.privateManifests.values())
@@ -603,7 +603,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         //console.log("<files-main-page>.render()")
         const isInDev = HAPP_ENV == HappEnvType.Devtest || HAPP_ENV == HappEnvType.DevtestWe || HAPP_ENV == HappEnvType.DevTestHolo;
         //const isInDev = true;
-        console.log("<files-main-page>.render()", isInDev, this._initialized, this.deliveryPerspective.probeDhtCount, this._selectedMenuItem, this.deliveryPerspective, this._dvm.profilesZvm.perspective);
+        console.log("<files-main-page>.render()", isInDev, this._initialized, this._dvm.deliveryZvm.probeDhtCount, this._selectedMenuItem, this.deliveryPerspective, this._dvm.profilesZvm.perspective);
 
 
         /** This agent's profile info */
@@ -681,7 +681,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 .map(([noticeEh, [notice, _ts]]) => {
                 console.log("" + noticeEh.b64, this.deliveryPerspective.notices.get(noticeEh));
                 const senderKey = new AgentId(notice.sender);
-                const senderProfile = this._dvm.profilesZvm.getProfile(senderKey);
+                const senderProfile = this._dvm.profilesZvm.perspective.getProfile(senderKey);
                 let senderName = senderKey.b64;
                 if (senderProfile) {
                     senderName = senderProfile.nickname;
@@ -711,7 +711,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             .map(([_distribAh, [distribution, ts, deliveryStates]]) => {
                 const outboundItems = Array.from(deliveryStates.entries()).map(
                     ([recipient, state]) => {
-                        const maybe = this._dvm.profilesZvm.getProfile(recipient);
+                        const maybe = this._dvm.profilesZvm.perspective.getProfile(recipient);
                         return {
                             distribution,
                             nickname: maybe? maybe.nickname : "",
@@ -834,7 +834,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             <sl-skeleton effect="sheen" style="margin:15px; width: 30%; height: 24px;"></sl-skeleton>
             <sl-skeleton effect="sheen" style="margin:15px; width: 30%; height: 24px;"></sl-skeleton>
             `;
-        if (this._selectedMenuItem && this.deliveryPerspective.probeDhtCount) {
+        if (this._selectedMenuItem && this._dvm.deliveryZvm.probeDhtCount) {
             console.log("_selectedMenuItem", this._selectedMenuItem)
 
             if (this._selectedMenuItem.type == SelectedType.Home) {
@@ -854,7 +854,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                         ppEh: ppEh.b64,
                         description: pm.description,
                         timestamp,
-                        author: this._dvm.profilesZvm.getProfile(this.cell.agentId),
+                        author: this._dvm.profilesZvm.perspective.getProfile(this.cell.agentId),
                         isLocal: true,
                         isPrivate: true
                     } as FileTableItem;
@@ -874,7 +874,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     .map(([ppEh, pprm]) => {
                     //const [description, timestamp, author] = this.deliveryPerspective.publicParcels[ppEh];
                     const isLocal = !!this.deliveryPerspective.localPublicManifests.get(ppEh);
-                    return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: this._dvm.profilesZvm.getProfile(pprm.author), isLocal, isPrivate: false};
+                    return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: this._dvm.profilesZvm.perspective.getProfile(pprm.author), isLocal, isPrivate: false};
                 });
                 const allItems = privateItems.concat(publicItems/*, myPublicItems*/);
                 mainArea = html`
@@ -886,7 +886,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 const personalItems: FileTableItem[] = Array.from(this.deliveryPerspective.privateManifests.entries())
                   .map(([ppEh, [pm, timestamp]]) => {
                     //const timestamp = this.deliveryPerspective.privateManifests[ppEh][1];
-                    return {ppEh: ppEh.b64, description:pm.description, timestamp, author: this._dvm.profilesZvm.getProfile(this.cell.agentId), isPrivate:true, isLocal:true};
+                    return {ppEh: ppEh.b64, description:pm.description, timestamp, author: this._dvm.profilesZvm.perspective.getProfile(this.cell.agentId), isPrivate:true, isLocal:true};
                 })
                 mainArea = html`
                     <h2>${msg("Personal Files")}</h2>
@@ -904,7 +904,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                   .map(([ppEh, pprm]) => {
                     //const [description, timestamp, author] = this.deliveryPerspective.publicParcels[ppEh];
                     const isLocal = !!this.deliveryPerspective.localPublicManifests.get(ppEh);
-                    return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: this._dvm.profilesZvm.getProfile(pprm.author), isLocal, isPrivate: false} as FileTableItem;
+                    return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: this._dvm.profilesZvm.perspective.getProfile(pprm.author), isLocal, isPrivate: false} as FileTableItem;
                 });
                 //const publicItems = dhtPublicItems.concat(myPublicItems);
 
@@ -936,7 +936,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                             }
                             items.push({
                                 distribAh: distribAh.b64,
-                                recipient: this._dvm.profilesZvm.getProfile(recipient),
+                                recipient: this._dvm.profilesZvm.perspective.getProfile(recipient),
                                 deliveryState,
                                 parcelEh: parcelEh.b64,
                                 description,
@@ -963,20 +963,20 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
             }
             if (this._selectedMenuItem.type == SelectedType.PublicTag) {
-                console.log("Public taggedItems 0", this._dvm.taggingZvm.perspective.publicTagsByTarget, this.deliveryPerspective.publicParcels);
+                console.log("Public taggedItems 0", this.deliveryPerspective.publicParcels);
                 let taggedItems = Array.from(this.deliveryPerspective.publicParcels.entries())
                   .filter(([_ppEh, pprm]) => !pprm.deleteInfo)
                   .map(([ppEh, pprm]) => {
                         const isLocal = !!this.deliveryPerspective.localPublicManifests.get(ppEh);
-                        return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: this._dvm.profilesZvm.getProfile(pprm.author), isLocal, isPrivate:false} as FileTableItem;
+                        return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: this._dvm.profilesZvm.perspective.getProfile(pprm.author), isLocal, isPrivate:false} as FileTableItem;
                     })
                 console.log("Public taggedItems 1", this._selectedMenuItem.tag, taggedItems);
                 taggedItems = taggedItems.filter((item) => {
-                    const publicTags = this._dvm.taggingZvm.perspective.publicTagsByTarget.get(new EntryId(item.ppEh));
+                    const publicTags = this._dvm.taggingZvm.perspective.getTargetPublicTags(new EntryId(item.ppEh));
                     console.log("public taggedItems tags", publicTags, item.ppEh);
                     return publicTags && publicTags.includes(this._selectedMenuItem.tag);
                 });
-                console.log("Public taggedItems 2", this._selectedMenuItem.tag, taggedItems, this.deliveryPerspective.publicParcels, this._dvm.taggingZvm.perspective.publicTagsByTarget);
+                console.log("Public taggedItems 2", this._selectedMenuItem.tag, taggedItems, this.deliveryPerspective.publicParcels);
                 /** */
                 mainArea = html`
                     <h2>${msg("Group Files")}: <span class="tag" style="display:inline; font-size: inherit">${this._selectedMenuItem.tag}</span></h2>
@@ -991,11 +991,11 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 });
                 console.log("private taggedItems 1", this._selectedMenuItem.tag, taggedItems);
                 taggedItems = taggedItems.filter((item) => {
-                    const tags = this._dvm.taggingZvm.perspective.privateTagsByTarget.get(new EntryId(item.ppEh));
+                    const tags = this._dvm.taggingZvm.perspective.getTargetPrivateTags(new EntryId(item.ppEh));
                     console.log("private taggedItems tags", tags, item.ppEh);
                     return tags && tags.includes(this._selectedMenuItem.tag);
                 });
-                console.log("private taggedItems 2", this._selectedMenuItem.tag, taggedItems, this.deliveryPerspective.privateManifests, this._dvm.taggingZvm.perspective.privateTagsByTarget);
+                console.log("private taggedItems 2", this._selectedMenuItem.tag, taggedItems, this.deliveryPerspective.privateManifests);
                 mainArea = html`
                     <h2>${msg("Personal Files")}: <span class="tag" style="display:inline; font-size: inherit">${this._selectedMenuItem.tag}</span></h2>
                     <file-table type="personal" .items=${taggedItems}></file-table>

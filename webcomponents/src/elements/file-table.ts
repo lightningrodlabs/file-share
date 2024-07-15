@@ -5,12 +5,13 @@ import {columnBodyRenderer, columnFooterRenderer} from "@vaadin/grid/lit";
 import {ParcelDescription} from "@ddd-qc/delivery/dist/bindings/delivery.types";
 import {filesSharedStyles} from "../sharedStyles";
 import {EntryId, ZomeElement} from "@ddd-qc/lit-happ";
-import {TaggingPerspective, TaggingZvm} from "../viewModels/tagging.zvm";
+import {TaggingZvm} from "../viewModels/tagging.zvm";
 import {TagList} from "./tag-list";
 import {kind2Type} from "../fileTypeUtils";
 import {Profile as ProfileMat} from "@ddd-qc/profiles-dvm/dist/bindings/profiles.types";
 import {msg} from "@lit/localize";
 import {EntryHashB64} from "@holochain/client";
+import {TaggingPerspective} from "../viewModels/tagging.perspective";
 
 
 /** Don't use HolochainId directly as the vaadin will try to autoconvert to string for default rendering */
@@ -100,7 +101,7 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                     
                 <vaadin-grid-column path="ppEh" header=${msg("Group Tags")}
                                     ${columnBodyRenderer(
-                                            ({ ppEh }) => html`<tag-list .tags=${this._zvm.getTargetPublicTags(new EntryId(ppEh))}></tag-list>`,
+                                            ({ ppEh }) => html`<tag-list .tags=${this._zvm.perspective.getTargetPublicTags(new EntryId(ppEh))}></tag-list>`,
                                             [],
                                     )}
                 ></vaadin-grid-column>
@@ -109,7 +110,7 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                             ({ ppEh }) => html`
                                                 <div style="display:flex">
                                                     <tag-list id="priv-tags-${ppEh}" selectable deletable
-                                                              .tags=${this._zvm.getTargetPrivateTags(new EntryId(ppEh))}
+                                                              .tags=${this._zvm.perspective.getTargetPrivateTags(new EntryId(ppEh))}
                                                               @deleted=${async (e: CustomEvent<string>) => {
                                                                   await this._zvm.untagPrivateEntry(new EntryId(ppEh), e.detail);
                                                                   const tagList = this.shadowRoot.getElementById(`priv-tags-${ppEh}`) as TagList;

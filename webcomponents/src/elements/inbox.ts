@@ -136,7 +136,7 @@ export class Inbox extends DnaElement<unknown, FilesDvm> {
                 ([noticeEh, [notice, ts]]) => {
                     console.log("<files-inbox> unreplied " + noticeEh.b64, this.deliveryPerspective.notices.get(noticeEh));
                     const senderKey = new AgentId(notice.sender);
-                    const senderProfile = this._dvm.profilesZvm.getProfile(senderKey);
+                    const senderProfile = this._dvm.profilesZvm.perspective.getProfile(senderKey);
                     let senderName = senderKey.b64;
                     if (senderProfile) {
                         senderName = senderProfile.nickname;
@@ -168,7 +168,7 @@ export class Inbox extends DnaElement<unknown, FilesDvm> {
                 ([noticeEh, [notice, ts, missingChunks]]) => {
                     console.log("<files-inbox> incomplete " + noticeEh.b64, this.deliveryPerspective.notices.get(noticeEh));
                     const senderKey = new AgentId(notice.sender);
-                    const senderProfile = this._dvm.profilesZvm.getProfile(senderKey);
+                    const senderProfile = this._dvm.profilesZvm.perspective.getProfile(senderKey);
                     let senderName = senderKey.b64;
                     if (senderProfile) {
                         senderName = senderProfile.nickname;

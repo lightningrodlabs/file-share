@@ -30,7 +30,7 @@ export class ProfileItem extends ZomeElement<ProfilesAltPerspective, ProfilesAlt
     render() {
         console.log("<profile-item>.render()", this.clearable);
 
-        const profile = this._zvm.getProfile(this.key);
+        const profile = this._zvm.perspective.getProfile(this.key);
 
         if (!this.key || !profile) {
             return html`<sl-spinner></sl-spinner>`;

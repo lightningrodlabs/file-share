@@ -42,7 +42,7 @@ export class ProfileInput extends ZomeElement<ProfilesAltPerspective, ProfilesAl
 
         const agentItems = this._selectedAgents
             .map((key) => {
-                const profile = this._zvm.getProfile(key);
+                const profile = this._zvm.perspective.getProfile(key);
                 if (!profile) return html``;
                 //return html`<div>${profile.nickname}</div>`;
                 return html`<profile-item .key=${key} clearable @cleared=${(e) => {
@@ -61,7 +61,7 @@ export class ProfileInput extends ZomeElement<ProfilesAltPerspective, ProfilesAl
         if (this.inputElem && this.inputElem.value) {
             const filter = this.inputElem.value.toLowerCase();
             const profilePairs: [AgentId, Profile][] = profiles
-                .filter(([key, _profile]) => key.b64 != this._zvm.cell.agentId.b64) // exclude self
+                .filter(([key, _profile]) => !key.equals(this._zvm.cell.agentId)) // exclude self
                 .filter(([key, _profile]) => this._selectedAgents.indexOf(key) < 0) // Don't show already selected agents
                 .map(([key, profileId]) => [key, this.perspective.profiles.get(profileId)[0]]);
             agentResults = profilePairs

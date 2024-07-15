@@ -154,7 +154,7 @@ export class SendDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
         if (this._file) {
             // ${comboBoxRenderer(this.agentRenderer, [])}
 
-            const allTags = this._dvm.taggingZvm.allPrivateTags
+            const allTags = this._dvm.taggingZvm.perspective.allPrivateTags
                 .filter((tag) => this._selectedTags.indexOf(tag) < 0)
 
             content = html`

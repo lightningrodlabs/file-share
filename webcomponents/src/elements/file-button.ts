@@ -1,11 +1,11 @@
 import {css, html, PropertyValues} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
 import {consume} from "@lit/context";
-import {AgentId, delay, DnaElement, EntryId} from "@ddd-qc/lit-happ";
+import {delay, DnaElement, EntryId} from "@ddd-qc/lit-happ";
 import {FilesDvm} from "../viewModels/files.dvm";
 import {filesSharedStyles} from "../sharedStyles";
 import {FilesDvmPerspective} from "../viewModels/files.perspective";
-import {TaggingPerspective} from "../viewModels/tagging.zvm";
+import {TaggingPerspective} from "../viewModels/tagging.perspective";
 import {kind2Icon} from "../fileTypeUtils";
 import {SelectedEvent, SelectedType} from "./files-menu";
 import {prettyFileSize} from "../utils";
@@ -103,10 +103,10 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
             let tags;
             let type;
             if (isPrivate) {
-                tags = this._dvm.taggingZvm.getTargetPrivateTags(this.hash);
+                tags = this._dvm.taggingZvm.perspective.getTargetPrivateTags(this.hash);
                 type = SelectedType.PrivateTag;
             } else {
-                tags = this._dvm.taggingZvm.getTargetPublicTags(this.hash);
+                tags = this._dvm.taggingZvm.perspective.getTargetPublicTags(this.hash);
                 type = SelectedType.PublicTag;
             }
             tagList = tags.map((tag) => {
