@@ -98,7 +98,7 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
 
     /** */
     async handleLinkPulse(pulse: LinkPulseMat, _from: AgentId): Promise<void> {
-        console.log("TaggingZvm.handleLinkPulse()", pulse);
+        //console.log("TaggingZvm.handleLinkPulse()", pulse);
         /** */
         switch (pulse.link_type) {
             case TaggingLinkType.PublicPath: {
