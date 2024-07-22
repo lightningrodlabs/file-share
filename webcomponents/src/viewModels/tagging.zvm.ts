@@ -41,6 +41,20 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
     }
 
 
+    /** Dump perspective as JSON  (caller should call getAllPublicManifest() first) */
+    export(/*originalsZvm: AuthorshipZvm*/): string {
+        const snapshot = this._perspective.makeSnapshot();
+        return JSON.stringify(snapshot, null, 2);
+    }
+
+    /** */
+    import(json: string, _canPublish: boolean) {
+        const snapshot = JSON.parse(json) as TaggingSnapshot;
+        // if (canPublish) {
+        // }
+        this._perspective.restore(snapshot)
+    }
+
 
     /** -- Init -- */
 
@@ -84,7 +98,7 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
 
     /** */
     async handleLinkPulse(pulse: LinkPulseMat, _from: AgentId): Promise<void> {
-        //console.log("TaggingZvm.handleLinkPulse()", pulse, from);
+        console.log("TaggingZvm.handleLinkPulse()", pulse);
         /** */
         switch (pulse.link_type) {
             case TaggingLinkType.PublicPath: {
@@ -268,18 +282,4 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
         const _link_ahs = await this.zomeProxy.tagPublicEntry(input);
     }
 
-
-    /** Dump perspective as JSON  (caller should call getAllPublicManifest() first) */
-    export(/*originalsZvm: AuthorshipZvm*/): string {
-        const snapshot = this._perspective.makeSnapshot();
-        return JSON.stringify(snapshot, null, 2);
-    }
-
-    /** */
-    import(json: string, _canPublish: boolean) {
-        const snapshot = JSON.parse(json) as TaggingSnapshot;
-        // if (canPublish) {
-        // }
-        this._perspective.restore(snapshot)
-    }
 }

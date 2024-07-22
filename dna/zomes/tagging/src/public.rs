@@ -151,17 +151,17 @@ pub fn find_public_entries_with_tag(tag: String) -> ExternResult<Vec<(ActionHash
     std::panic::set_hook(Box::new(zome_panic_hook));
     /// Form path
     let mut tp = root_path()?;
-    tp.path.append_component(tag.into());
+    tp.path.append_component(tag.clone().into());
     /// Grab entries
     let link_details = get_link_details(tp.path_entry_hash()?, TaggingLinkTypes::PublicEntry, None, GetOptions::network())?;
     let mut create_links = Vec::new();
     let mut delete_links = Vec::new();
     for (create_sah, maybe_deletes) in link_details.into_inner() {
         let Action::CreateLink(create) = create_sah.hashed.content.clone()
-          else { panic!("get_link_details() should return a CreateLink Action")};
+          else { return zome_error!("get_link_details() should return a CreateLink Action")};
         if maybe_deletes.len() > 0 {
             let Action::DeleteLink(delete) = maybe_deletes[0].hashed.content.clone()
-              else { panic!("get_link_details() should return a CreateLink Action")};
+              else { return zome_error!("get_link_details() should return a CreateLink Action")};
             let delete_link = link_from_delete(&delete, &create);
             delete_links.push(delete_link);
         } else {
@@ -170,6 +170,7 @@ pub fn find_public_entries_with_tag(tag: String) -> ExternResult<Vec<(ActionHash
         }
     }
     /// Signal
+    debug!("find_public_entries_with_tag() {}| {}", tag.clone(), create_links.len());
     emit_links_signal(create_links.clone())?;
     for delete in delete_links {
         emit_link_signal(delete, StateChange::Delete(false))?;

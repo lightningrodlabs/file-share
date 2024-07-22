@@ -3,16 +3,18 @@ import {Dictionary} from "@ddd-qc/cell-proxy";
 import {ActionHashB64, EntryHashB64} from "@holochain/client";
 
 
-/** */
+/** Snapshot is the condensed data form */
 export interface TaggingSnapshot {
+  /** tagEh, tag string, TargetEhs */
   publicTags: [EntryHashB64, string, EntryHashB64[]][];
+  /** TargetEh, CreateLinkAh */
   publicTargetLinks: [EntryHashB64, ActionHashB64][];
   privateTags: [EntryHashB64, string, EntryHashB64[]][];
   privateTargetLinks: [EntryHashB64, ActionHashB64][];
 }
 
 
-/** */
+/** Core is the read-only form */
 export class TaggingPerspectiveCore {
   /** tagEh -> tag string */
   protected _publicTags = new EntryIdMap<string>();
@@ -30,7 +32,7 @@ export class TaggingPerspectiveCore {
 
   /** API */
 
-  get publicTags(): EntryIdMap<string> {return this._privateTags}
+  get publicTags(): EntryIdMap<string> {return this._publicTags}
   get publicTargetsByTag(): Dictionary<EntryIdMap<ActionId | null>> {return this._publicTargetsByTag}
   get privateTargetsByTag(): Dictionary<EntryIdMap<ActionId>> {return this._privateTargetsByTag}
   get privateTags(): EntryIdMap<string> {return this._privateTags}
@@ -57,16 +59,15 @@ export class TaggingPerspectiveCore {
 }
 
 
-/** */
-export class TaggingPerspective extends TaggingPerspectiveCore  {
 
+/** Live app form */
+export class TaggingPerspective extends TaggingPerspectiveCore  {
 
   /** -- Getters -- */
 
   get core(): TaggingPerspectiveCore {
     return this;
   }
-
 
 
   /** -- Store -- */
