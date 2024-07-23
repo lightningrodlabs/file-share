@@ -9,7 +9,7 @@ import {PrivateTag, PUBLIC_TAG_ROOT, TaggingInput, UntagInput} from "../bindings
 import {TaggingLinkType, TaggingUnitEnum} from "../bindings/tagging.integrity";
 import {decode} from "@msgpack/msgpack";
 import {decodeComponentUtf32} from "../utils";
-import {TaggingPerspective, TaggingPerspectiveCore, TaggingSnapshot} from "./tagging.perspective";
+import {TaggingPerspective, TaggingPerspectiveMutable, TaggingSnapshot} from "./tagging.perspective";
 
 
 
@@ -25,12 +25,12 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
 
     /** -- ViewModel -- */
 
-    private _perspective: TaggingPerspective = new TaggingPerspective();
+    private _perspective: TaggingPerspectiveMutable = new TaggingPerspectiveMutable();
 
 
     /* */
-    get perspective(): TaggingPerspectiveCore {
-        return this._perspective.core;
+    get perspective(): TaggingPerspective {
+        return this._perspective.readonly;
     }
 
 
@@ -116,7 +116,7 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
             case TaggingLinkType.PublicEntry: {
                 const tagEh = EntryId.from(pulse.base);
                 const targetEh = EntryId.from(pulse.target);
-                const tag = this._perspective.core.publicTags.get(tagEh);
+                const tag = this._perspective.readonly.publicTags.get(tagEh);
                 console.log("TaggingZvm.handleLinkPulse() PublicEntry", tag, tagEh);
                 if (!tag) {
                     console.warn("Unknown Public tagEh", tagEh);
@@ -148,7 +148,7 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
                 const targetEh = EntryId.from(pulse.target);
                 //const decoder = new TextDecoder('utf-8');
                 //const tag = decoder.decode(pulse.tag);
-                const tag = this._perspective.core.privateTags.get(tagEh);
+                const tag = this._perspective.readonly.privateTags.get(tagEh);
                 console.log("TaggingZvm.handleLinkPulse() PrivateTags", tag, targetEh, tagEh);
                 if (!tag) {
                     console.warn("Unknown Private tagEh", tagEh);

@@ -48,32 +48,32 @@ export class DistributionTable extends LitElement {
             <vaadin-grid .items=${this.items}>
                 <vaadin-grid-selection-column></vaadin-grid-selection-column>
                 <!-- <vaadin-grid-column path="deliveryState" header=
-                                    ${columnBodyRenderer(
+                                    ${columnBodyRenderer<DistributionTableItem>(
                                             ({ deliveryState }) => html`<span>${deliveryState}</span>`,
                                             [],
                                     )}>
                 </vaadin-grid-column> -->
                 <vaadin-grid-column path="description" header=${msg("Filename")}
-                                    ${columnBodyRenderer(
+                                    ${columnBodyRenderer<DistributionTableItem>(
                                             ({ description }) => html`<span>${description.name}</span>`,
                                             [],
                                     )}>
                 </vaadin-grid-column>
                 <vaadin-grid-column path="description" header=${msg("Size")}
-                                    ${columnBodyRenderer(
+                                    ${columnBodyRenderer<DistributionTableItem>(
                                 ({ description }) => html`<span>${prettyFileSize(description.size)}</span>`,
                             [],
                                     )}
                                     ${columnFooterRenderer(() => html`<span>${prettyFileSize(totalSize)} ${msg("total")}</span>`, [totalSize])}
                 ></vaadin-grid-column>
                 <vaadin-grid-column path="description" header=${msg("Type")}
-                                    ${columnBodyRenderer(
+                                    ${columnBodyRenderer<DistributionTableItem>(
                                             ({ description }) => html`<span>${kind2Type(description.kind_info)}</span>`,
                                             [],
                                     )}
                 ></vaadin-grid-column>
                 <vaadin-grid-column path="recipient" header=${msg("Recipient")}
-                                    ${columnBodyRenderer(
+                                    ${columnBodyRenderer<DistributionTableItem>(
                                             ({ recipient }) => {
                                                 return recipient
                                                         ? html`<span>${recipient.nickname}</span>`
@@ -83,20 +83,20 @@ export class DistributionTable extends LitElement {
                                     )}
                 ></vaadin-grid-column>
                 <vaadin-grid-column path="sentTs" header=${msg("Sent Date")}
-                                    ${columnBodyRenderer(
+                                    ${columnBodyRenderer<DistributionTableItem>(
                                             ({ sentTs }) => html`<span>${prettyTimestamp(sentTs)}</span>`,
                                             [],
                                     )}
                 ></vaadin-grid-column>
                 <vaadin-grid-column path="receptionTs" header=${msg("Received Date")}
-                                    ${columnBodyRenderer(
+                                    ${columnBodyRenderer<DistributionTableItem>(
                                             ({ receptionTs }) => html`<span>${prettyTimestamp(receptionTs)}</span>`,
                                             [],
                                     )}
                 ></vaadin-grid-column>
                 <vaadin-grid-column
                         path="parcelEh" header="" width="120px"
-                        ${columnBodyRenderer(
+                        ${columnBodyRenderer<DistributionTableItem>(
                                 ({parcelEh}) => {
                                     return html`
                                         <sl-button size="small" variant="primary" style="margin-left:5px" @click=${async (e) => {

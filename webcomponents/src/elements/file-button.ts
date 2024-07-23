@@ -5,7 +5,7 @@ import {delay, DnaElement, EntryId} from "@ddd-qc/lit-happ";
 import {FilesDvm} from "../viewModels/files.dvm";
 import {filesSharedStyles} from "../sharedStyles";
 import {FilesDvmPerspective} from "../viewModels/files.perspective";
-import {TaggingPerspective} from "../viewModels/tagging.perspective";
+import {TaggingPerspectiveMutable} from "../viewModels/tagging.perspective";
 import {kind2Icon} from "../fileTypeUtils";
 import {SelectedEvent, SelectedType} from "./files-menu";
 import {prettyFileSize} from "../utils";
@@ -44,7 +44,7 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
     /** Observed perspective from zvm */
     @property({type: Object, attribute: false, hasChanged: (_v, _old) => true})
-    taggingPerspective!: TaggingPerspective;
+    taggingPerspective!: TaggingPerspectiveMutable;
 
 
     /**

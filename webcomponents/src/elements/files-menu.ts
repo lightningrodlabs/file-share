@@ -8,7 +8,7 @@ import {filesSharedStyles} from "../sharedStyles";
 import {SlMenu} from "@shoelace-style/shoelace";
 import {msg} from "@lit/localize";
 import {Dictionary} from "@ddd-qc/cell-proxy";
-import {TaggingPerspective} from "../viewModels/tagging.perspective";
+import {TaggingPerspectiveMutable} from "../viewModels/tagging.perspective";
 
 
 /** */
@@ -41,7 +41,7 @@ export class FilesMenu extends DnaElement<FilesDvmPerspective, FilesDvm> {
     deliveryPerspective!: DeliveryPerspective;
 
     @property({type: Object, attribute: false, hasChanged: (_v, _old) => true})
-    taggingPerspective!: TaggingPerspective;
+    taggingPerspective!: TaggingPerspectiveMutable;
 
 
     @state() private _initialized = false;

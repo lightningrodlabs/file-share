@@ -14,147 +14,41 @@ export interface TaggingSnapshot {
 }
 
 
-/** Core is the read-only form */
-export class TaggingPerspectiveCore {
+/** Read-only perspective */
+export class TaggingPerspective {
   /** tagEh -> tag string */
-  protected _publicTags = new EntryIdMap<string>();
+  publicTags: EntryIdMap<string> = new EntryIdMap();
   /** tag string -> (target_eh -> link_ah) */
-  protected _publicTargetsByTag: Dictionary<EntryIdMap<ActionId | null>> = {};
+  publicTargetsByTag: Dictionary<EntryIdMap<ActionId | null>> = {};
   /** tagEh -> tag string */
-  protected _privateTags = new EntryIdMap<string> ();
+  privateTags: EntryIdMap<string> = new EntryIdMap();
   /** tag string -> (target_eh -> link_ah) */
-  protected _privateTargetsByTag: Dictionary<EntryIdMap<ActionId>> = {};
+  privateTargetsByTag: Dictionary<EntryIdMap<ActionId>> = {};
 
   /** */
-  protected _publicTagsByTarget = new EntryIdMap<string[]>();
-  protected _privateTagsByTarget = new EntryIdMap<string[]>();
+  publicTagsByTarget: EntryIdMap<string[]> = new EntryIdMap();
+  privateTagsByTarget: EntryIdMap<string[]> = new EntryIdMap();
 
 
   /** API */
 
-  get publicTags(): EntryIdMap<string> {return this._publicTags}
-  get publicTargetsByTag(): Dictionary<EntryIdMap<ActionId | null>> {return this._publicTargetsByTag}
-  get privateTargetsByTag(): Dictionary<EntryIdMap<ActionId>> {return this._privateTargetsByTag}
-  get privateTags(): EntryIdMap<string> {return this._privateTags}
-
-
-  get allPublicTags(): string[] {return Object.keys(this._publicTargetsByTag) }
-  get allPrivateTags(): string[] {return Object.keys(this._privateTargetsByTag) }
+  get allPublicTags(): string[] {return Object.keys(this.publicTargetsByTag) }
+  get allPrivateTags(): string[] {return Object.keys(this.privateTargetsByTag) }
 
 
   /** */
   getTargetPrivateTags(eh: EntryId): string[] {
-    if (!this._privateTagsByTarget.get(eh)) {
+    if (!this.privateTagsByTarget.get(eh)) {
       return [];
     }
-    return this._privateTagsByTarget.get(eh);
+    return this.privateTagsByTarget.get(eh);
   }
   /** */
   getTargetPublicTags(eh: EntryId): string[] {
-    if (!this._publicTagsByTarget.get(eh)) {
+    if (!this.publicTagsByTarget.get(eh)) {
       return [];
     }
-    return this._publicTagsByTarget.get(eh);
-  }
-}
-
-
-
-/** Live app form */
-export class TaggingPerspective extends TaggingPerspectiveCore  {
-
-  /** -- Getters -- */
-
-  get core(): TaggingPerspectiveCore {
-    return this;
-  }
-
-
-  /** -- Store -- */
-
-  /** */
-  storePublicTag(tagEh: EntryId, tag: string) {
-    if (!this._publicTargetsByTag[tag]) {
-      this._publicTargetsByTag[tag] = new EntryIdMap();
-    }
-    this._publicTags.set(tagEh, tag);
-  }
-
-
-  /** */
-  storePrivateTag(tagEh: EntryId, tag: string) {
-    if (!this._privateTargetsByTag[tag]) {
-      //this._perspective.privateTags[privateTag.value] = new EntryIdMap();
-      this._privateTags.set(tagEh, tag);
-    }
-  }
-  unstorePrivateTag(tagEh: EntryId) {
-    this._privateTags.delete(tagEh);
-  }
-
-
-  /** */
-  storePublicTagging(tag: string, targetEh: EntryId, linkAh: ActionId | null) {
-    console.debug("Tagging.storePublicTagging()", tag, targetEh.short, this);
-    if (!this._publicTargetsByTag[tag]) {
-      this._publicTargetsByTag[tag] = new EntryIdMap();
-    }
-    const maybeLinkAh = this._publicTargetsByTag[tag].get(targetEh);
-    if (!maybeLinkAh || maybeLinkAh == null) {
-      this._publicTargetsByTag[tag].set(targetEh, linkAh);
-    }
-    /** publicTagsByTarget */
-    if (!this._publicTagsByTarget.get(targetEh)) {
-      this._publicTagsByTarget.set(targetEh, []);
-    }
-    if (!this._publicTagsByTarget.get(targetEh).includes(tag)) {
-      this._publicTagsByTarget.get(targetEh).push(tag);
-    }
-  }
-  /** */
-  unstorePublicTagging(tag: string, targetEh: EntryId) {
-    const targets = this._publicTargetsByTag[tag];
-    if (targets && targets.has(targetEh)) {
-      targets.delete(targetEh);
-    }
-    const tags = this._publicTagsByTarget.get(targetEh);
-    if (tags) {
-      const i = tags.findIndex((taggy) => taggy == tag);
-      if (i > -1) {
-        tags.splice(i, 1);
-        this._publicTagsByTarget.set(targetEh, tags);
-      }
-    }
-  }
-
-
-  /** */
-  storePrivateTagging(tag: string, targetEh: EntryId, linkAh: ActionId) {
-    if (!this._privateTargetsByTag[tag]) {
-      this._privateTargetsByTag[tag] = new EntryIdMap();
-    }
-    this._privateTargetsByTag[tag].set(targetEh, linkAh);
-    if (!this._privateTagsByTarget.get(targetEh)) {
-      this._privateTagsByTarget.set(targetEh, []);
-    }
-    this._privateTagsByTarget.get(targetEh).push(tag);
-  }
-
-
-  /** */
-  unstorePrivateTagging(tag: string, targetEh: EntryId) {
-    const targets = this._privateTargetsByTag[tag];
-    if (targets && targets.has(targetEh)) {
-      targets.delete(targetEh);
-    }
-    const tags = this._privateTagsByTarget.get(targetEh);
-    if (tags) {
-      const i = tags.findIndex((taggy) => taggy == tag);
-      if (i > -1) {
-        tags.splice(i, 1)
-        this._privateTagsByTarget.set(targetEh, tags);
-      }
-    }
+    return this.publicTagsByTarget.get(eh);
   }
 
 
@@ -168,8 +62,8 @@ export class TaggingPerspective extends TaggingPerspectiveCore  {
     const privateTags: [EntryHashB64, string, EntryHashB64[]][] = [];
     const privateTargetLinks: [EntryHashB64, ActionHashB64][] = [];
     /** Public */
-    for (const [tagEh, tag] of (this._publicTags.entries())) {
-      const map = this._publicTargetsByTag[tag];
+    for (const [tagEh, tag] of (this.publicTags.entries())) {
+      const map = this.publicTargetsByTag[tag];
       const targets: EntryHashB64[] = Array.from(map.keys()).map((id) => id.b64);
       publicTags.push([tagEh.b64, tag, targets]);
       for (const [targetEh, linkAh] of map.entries()) {
@@ -179,8 +73,8 @@ export class TaggingPerspective extends TaggingPerspectiveCore  {
       }
     }
     /** Private */
-    for (const [tagEh, tag] of (this._privateTags.entries())) {
-      const map = this._privateTargetsByTag[tag];
+    for (const [tagEh, tag] of (this.privateTags.entries())) {
+      const map = this.privateTargetsByTag[tag];
       const targets: EntryHashB64[] = Array.from(map.keys()).map((id) => id.b64);
       privateTags.push([tagEh.b64, tag, targets]);
       for (const [targetEh, linkAh] of map.entries()) {
@@ -191,17 +85,119 @@ export class TaggingPerspective extends TaggingPerspectiveCore  {
     return {publicTags, publicTargetLinks, privateTags, privateTargetLinks}
   }
 
+}
 
+
+
+/** Live app form */
+export class TaggingPerspectiveMutable extends TaggingPerspective  {
+
+  /** -- Getters -- */
+
+  get readonly(): TaggingPerspective {
+    return this;
+  }
+
+
+  /** -- Store -- */
+
+  /** */
+  storePublicTag(tagEh: EntryId, tag: string) {
+    if (!this.publicTargetsByTag[tag]) {
+      this.publicTargetsByTag[tag] = new EntryIdMap();
+    }
+    this.publicTags.set(tagEh, tag);
+  }
+
+
+  /** */
+  storePrivateTag(tagEh: EntryId, tag: string) {
+    if (!this.privateTargetsByTag[tag]) {
+      //this._perspective.privateTags[privateTag.value] = new EntryIdMap();
+      this.privateTags.set(tagEh, tag);
+    }
+  }
+  unstorePrivateTag(tagEh: EntryId) {
+    this.privateTags.delete(tagEh);
+  }
+
+
+  /** */
+  storePublicTagging(tag: string, targetEh: EntryId, linkAh: ActionId | null) {
+    console.debug("Tagging.storePublicTagging()", tag, targetEh.short, this);
+    if (!this.publicTargetsByTag[tag]) {
+      this.publicTargetsByTag[tag] = new EntryIdMap();
+    }
+    const maybeLinkAh = this.publicTargetsByTag[tag].get(targetEh);
+    if (!maybeLinkAh || maybeLinkAh == null) {
+      this.publicTargetsByTag[tag].set(targetEh, linkAh);
+    }
+    /** publicTagsByTarget */
+    if (!this.publicTagsByTarget.get(targetEh)) {
+      this.publicTagsByTarget.set(targetEh, []);
+    }
+    if (!this.publicTagsByTarget.get(targetEh).includes(tag)) {
+      this.publicTagsByTarget.get(targetEh).push(tag);
+    }
+  }
+  /** */
+  unstorePublicTagging(tag: string, targetEh: EntryId) {
+    const targets = this.publicTargetsByTag[tag];
+    if (targets && targets.has(targetEh)) {
+      targets.delete(targetEh);
+    }
+    const tags = this.publicTagsByTarget.get(targetEh);
+    if (tags) {
+      const i = tags.findIndex((taggy) => taggy == tag);
+      if (i > -1) {
+        tags.splice(i, 1);
+        this.publicTagsByTarget.set(targetEh, tags);
+      }
+    }
+  }
+
+
+  /** */
+  storePrivateTagging(tag: string, targetEh: EntryId, linkAh: ActionId) {
+    if (!this.privateTargetsByTag[tag]) {
+      this.privateTargetsByTag[tag] = new EntryIdMap();
+    }
+    this.privateTargetsByTag[tag].set(targetEh, linkAh);
+    if (!this.privateTagsByTarget.get(targetEh)) {
+      this.privateTagsByTarget.set(targetEh, []);
+    }
+    this.privateTagsByTarget.get(targetEh).push(tag);
+  }
+
+
+  /** */
+  unstorePrivateTagging(tag: string, targetEh: EntryId) {
+    const targets = this.privateTargetsByTag[tag];
+    if (targets && targets.has(targetEh)) {
+      targets.delete(targetEh);
+    }
+    const tags = this.privateTagsByTarget.get(targetEh);
+    if (tags) {
+      const i = tags.findIndex((taggy) => taggy == tag);
+      if (i > -1) {
+        tags.splice(i, 1)
+        this.privateTagsByTarget.set(targetEh, tags);
+      }
+    }
+  }
+
+
+  /** -- Memento -- */
   /** */
   restore(snapshot: TaggingSnapshot) {
     /** Clear */
-    this._publicTags.clear();
-    this._publicTargetsByTag = {};
-    this._privateTargetsByTag = {};
-    this._privateTags.clear();
+    this.publicTags.clear();
+    this.publicTargetsByTag = {};
+    this.privateTargetsByTag = {};
+    this.privateTags.clear();
     /** */
-    this._publicTagsByTarget.clear();
-    this._privateTagsByTarget.clear();
+    this.publicTagsByTarget.clear();
+    this.privateTagsByTarget.clear();
     /** Store */
     const publicLinkMap: EntryIdMap<ActionId> = new EntryIdMap();
     for (const [targetEh, linkAh] of Object.values(snapshot.publicTargetLinks)) {

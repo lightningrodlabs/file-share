@@ -11,7 +11,7 @@ import {kind2Type} from "../fileTypeUtils";
 import {Profile as ProfileMat} from "@ddd-qc/profiles-dvm/dist/bindings/profiles.types";
 import {msg} from "@lit/localize";
 import {EntryHashB64} from "@holochain/client";
-import {TaggingPerspective} from "../viewModels/tagging.perspective";
+import {TaggingPerspectiveMutable} from "../viewModels/tagging.perspective";
 
 
 /** Don't use HolochainId directly as the vaadin will try to autoconvert to string for default rendering */
@@ -29,7 +29,7 @@ export interface FileTableItem {
  * @element
  */
 @customElement("file-table")
-export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
+export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm> {
 
     /** */
     constructor() {
@@ -79,34 +79,34 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                          .items=${this.items}>
                 <vaadin-grid-selection-column></vaadin-grid-selection-column>
                 <vaadin-grid-column path="description" header=${msg("Filename")}
-                                    ${columnBodyRenderer(
+                                    ${columnBodyRenderer<FileTableItem>(
                                             ({ description }) => html`<span>${description.name}</span>`,
                                             [],
                                     )}>
                 </vaadin-grid-column>
                 
                 <vaadin-grid-column path="description" header=${msg("Size")} width="80px"
-                                    ${columnBodyRenderer(
+                                    ${columnBodyRenderer<FileTableItem>(
                                 ({ description }) => html`<span>${prettyFileSize(description.size)}</span>`,
                             [],
                                     )}
                                     ${columnFooterRenderer(() => html`<span>${prettyFileSize(totalSize)} ${msg("total")}</span>`, [totalSize])}
                 ></vaadin-grid-column>
                 <vaadin-grid-column path="description" header=${msg("Type")}
-                                    ${columnBodyRenderer(
+                                    ${columnBodyRenderer<FileTableItem>(
                                             ({ description }) => html`<span>${kind2Type(description.kind_info)}</span>`,
                                             [],
                                     )}
                 ></vaadin-grid-column>
                     
                 <vaadin-grid-column path="ppEh" header=${msg("Group Tags")}
-                                    ${columnBodyRenderer(
+                                    ${columnBodyRenderer<FileTableItem>(
                                             ({ ppEh }) => html`<tag-list .tags=${this._zvm.perspective.getTargetPublicTags(new EntryId(ppEh))}></tag-list>`,
                                             [],
                                     )}
                 ></vaadin-grid-column>
                 <vaadin-grid-column path="ppEh" header=${msg("Personal Tags")}
-                                    ${columnBodyRenderer(
+                                    ${columnBodyRenderer<FileTableItem>(
                                             ({ ppEh }) => html`
                                                 <div style="display:flex">
                                                     <tag-list id="priv-tags-${ppEh}" selectable deletable
@@ -124,7 +124,7 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                     )}
                 ></vaadin-grid-column>
                 <vaadin-grid-column path="author" header=${msg("Author")}
-                                    ${columnBodyRenderer(
+                                    ${columnBodyRenderer<FileTableItem>(
                                             ({ author }) => {
                                                 return author
                                                         ? html`<span>${author.nickname}</span>`
@@ -134,28 +134,28 @@ export class FileTable extends ZomeElement<TaggingPerspective, TaggingZvm> {
                                     )}
                 ></vaadin-grid-column>
                 <vaadin-grid-column path="timestamp" header=${msg("Date")}
-                                    ${columnBodyRenderer(
+                                    ${columnBodyRenderer<FileTableItem>(
                                             ({ timestamp }) => html`<span>${prettyTimestamp(timestamp)}</span>`,
                                             [],
                                     )}
                 ></vaadin-grid-column>
                 <vaadin-grid-column path="isLocal" header=${msg("Local")} width="80px"
                                     .hidden=${this.type == "personal"}
-                                    ${columnBodyRenderer(
+                                    ${columnBodyRenderer<FileTableItem>(
                                             ({ isLocal }) => html`<span>${isLocal? msg("Yes") : msg("No")}</span>`,
                                             [],
                                     )}
                 ></vaadin-grid-column>
                 <vaadin-grid-column path="isPrivate" header=${msg("Private")} width="80px"
                                     .hidden=${this.type == "group" || this.type == "personal"}
-                                    ${columnBodyRenderer(
+                                    ${columnBodyRenderer<FileTableItem>(
                                             ({ isPrivate }) => html`<span>${isPrivate? msg("Yes") : msg("No")}</span>`,
                                             [],
                                     )}
                 ></vaadin-grid-column>
                 <vaadin-grid-column
                         path="ppEh" header="" width="160px" style="text-overflow: clip;"
-                        ${columnBodyRenderer(
+                        ${columnBodyRenderer<FileTableItem>(
                                 ({ppEh}) => {
                                     if (this.selectable == "") {
                                         return html`
