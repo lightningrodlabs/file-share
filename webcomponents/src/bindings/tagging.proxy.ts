@@ -4,14 +4,14 @@ import {PUBLIC_TAG_ROOT, TAGGING_ZOME_NAME, TaggingEntry, PrivateTag, TaggingInp
 import {
 WebsocketConnectionOptions,
 /** types.ts */
-HoloHash,
-AgentPubKey,
-DnaHash,
-WasmHash,
-EntryHash,
-ActionHash,
-AnyDhtHash,
-ExternalHash,
+//HoloHash,
+//AgentPubKey,
+//DnaHash,
+//WasmHash,
+//EntryHash,
+//ActionHash,
+//AnyDhtHash,
+//ExternalHash,
 KitsuneAgent,
 KitsuneSpace,
 HoloHashB64,
@@ -124,6 +124,15 @@ NetworkSeed,
 ZomeLocation,
    } from '@holochain/client';
 
+
+/// Simple Hashes
+type AgentArray = Uint8Array;
+type DnaArray = Uint8Array;
+type WasmArray = Uint8Array;
+type EntryArray = Uint8Array;
+type ActionArray = Uint8Array;
+type AnyDhtArray = Uint8Array;
+
 import {
 /** Common */
 DhtOpHashB64,
@@ -159,11 +168,11 @@ export class TaggingProxy extends ZomeProxy {
   static readonly ENTRY_TYPES = Object.values(TaggingUnitEnum);
   static readonly LINK_TYPES = Object.values(TaggingLinkType);
  
-  async queryAllPrivateTag(): Promise<[EntryHash, Timestamp, string][]> {
+  async queryAllPrivateTag(): Promise<[EntryArray, Timestamp, string][]> {
     return this.call('query_all_PrivateTag', null);
   }
 
-  async commitPrivateTag(tagValue: string): Promise<EntryHash> {
+  async commitPrivateTag(tagValue: string): Promise<EntryArray> {
     return this.callBlocking('commit_private_tag', tagValue);
   }
 
@@ -175,35 +184,35 @@ export class TaggingProxy extends ZomeProxy {
     return this.callBlocking('untag_private_entry', input);
   }
 
-  async findPrivateTagsForEntry(eh: EntryHash): Promise<[EntryHash, string][]> {
+  async findPrivateTagsForEntry(eh: EntryArray): Promise<[EntryArray, string][]> {
     return this.call('find_private_tags_for_entry', eh);
   }
 
-  async findPrivateEntriesWithTag(tag: string): Promise<[EntryHash, string][]> {
+  async findPrivateEntriesWithTag(tag: string): Promise<[EntryArray, string][]> {
     return this.call('find_private_entries_with_tag', tag);
   }
 
-  async probePublicTags(): Promise<[EntryHash, string][]> {
+  async probePublicTags(): Promise<[EntryArray, string][]> {
     return this.call('probe_public_tags', null);
   }
 
-  async publishPublicTag(tagValue: string): Promise<EntryHash> {
+  async publishPublicTag(tagValue: string): Promise<EntryArray> {
     return this.callBlocking('publish_public_tag', tagValue);
   }
 
-  async tagPublicEntry(input: TaggingInput): Promise<ActionHash[]> {
+  async tagPublicEntry(input: TaggingInput): Promise<ActionArray[]> {
     return this.call('tag_public_entry', input);
   }
 
-  async findPublicTagsForEntry(eh: EntryHash): Promise<string[]> {
+  async findPublicTagsForEntry(eh: EntryArray): Promise<string[]> {
     return this.call('find_public_tags_for_entry', eh);
   }
 
-  async findPublicEntriesWithTag(tag: string): Promise<[ActionHash, EntryHash, string][]> {
+  async findPublicEntriesWithTag(tag: string): Promise<[ActionArray, EntryArray, string][]> {
     return this.call('find_public_entries_with_tag', tag);
   }
 
-  async untagPublicEntry(linkAh: ActionHash): Promise<ActionHash> {
+  async untagPublicEntry(linkAh: ActionArray): Promise<ActionArray> {
     return this.callBlocking('untag_public_entry', linkAh);
   }
 }

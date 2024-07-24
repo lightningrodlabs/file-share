@@ -56,7 +56,7 @@ export async function search(appletClient: AppClient, appletHash: AppletHash, we
     /** Transform results into WAL */
     const results: Array<WAL> = concat
         .map(([eh, description, author, isPrivate]) => { return {
-            hrl: [this.cell.dnaId.hash, eh.hash],
+            hrl: [this.cell.address.dnaId.hash, eh.hash],
             context: {
                 subjectName: description.name,
                 subjectType: "File",

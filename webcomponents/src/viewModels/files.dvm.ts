@@ -522,7 +522,7 @@ export class FilesDvm extends DnaViewModel {
     /** Can't send to self */
     async startCommitPrivateAndSendFile(file: File, recipients: AgentId[], tags: string[]): Promise<SplitObject | undefined> {
         const agents = recipients
-            .filter((agent) => !agent.equals(this.cell.agentId))
+            .filter((agent) => !agent.equals(this.cell.address.agentId))
         console.log("startCommitPrivateAndSendFile()", recipients, agents);
         if (agents.length == 0) {
             return undefined;

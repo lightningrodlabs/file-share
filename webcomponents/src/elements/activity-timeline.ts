@@ -194,7 +194,7 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
             case ActivityLogType.NewPersonalFile: {
                 const variant = log.value as ActivityLogTypeVariantNewPersonalFile;
                 manifestEh = variant.manifestEh;
-                peer = this.cell.agentId;
+                peer = this.cell.address.agentId;
                 message = msg(`was added privately by`);
                 break;}
         }
@@ -207,7 +207,7 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
 
         const [profile, _avatar] = agent2avatar(peer, this._dvm.profilesZvm.perspective.getProfile(peer));
         console.log("agent2avatar()", peer, profile);
-        const authorSpan = peer.equals(this.cell.agentId)
+        const authorSpan = peer.equals(this.cell.address.agentId)
             ? html`<span style="font-weight: bold;">${msg("yourself")}</span>`
             : html`<span class="nickname">${profile.nickname}</span>`;
 

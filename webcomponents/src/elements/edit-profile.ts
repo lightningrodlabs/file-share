@@ -142,7 +142,7 @@ export class EditProfile extends ZomeElement<unknown, FilesZvm> {
             style="margin-left: 16px;"
           ></sl-input>
             <div style="flex-grow:1;"></div>
-            ${HAPP_BUILD_MODE == 'Debug'? html`<sl-tooltip .content=${this.cell.agentId.b64}><sl-icon name="hash" style="font-size: 24px;"></sl-icon></sl-tooltip>` : html``}
+            ${HAPP_BUILD_MODE == 'Debug'? html`<sl-tooltip .content=${this.cell.address.agentId.b64}><sl-icon name="hash" style="font-size: 24px;"></sl-icon></sl-tooltip>` : html``}
         </div>
         
         <div class="row" style="justify-content: center; margin-bottom: 8px; align-self: start;" >

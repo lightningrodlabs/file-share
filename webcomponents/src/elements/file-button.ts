@@ -175,7 +175,7 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
                         
                         <div slot="anchor" @click=${async (e) => {
                             const obj: WAL = {
-                                hrl: [this.cell.dnaId.hash, this.hash.hash],
+                                hrl: [this.cell.address.dnaId.hash, this.hash.hash],
                                 context: {
                                     subjectName: fileDescription.name,
                                     subjectType: "File",

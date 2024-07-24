@@ -137,7 +137,7 @@ export class FilesApp extends HappElement {
     //const maybeProfiles = await this._weProfilesDvm.profilesZvm.zomeProxy.getAgentsWithProfile();
     //const maybeAgents = maybeProfiles.map((eh) => encodeHashToBase64(eh));
     //console.log("maybeAgents", maybeAgents);
-    const maybeMyProfile = await this._weProfilesDvm.profilesZvm.probeProfile(dvm.profilesZvm.cell.agentId.b64);
+    const maybeMyProfile = await this._weProfilesDvm.profilesZvm.probeProfile(dvm.profilesZvm.cell.address.agentId.b64);
     console.log("setupWeProfilesDvm() maybeMyProfile", maybeMyProfile);
     if (maybeMyProfile) {
       const maybeLang = maybeMyProfile.fields['lang'];
@@ -208,8 +208,8 @@ export class FilesApp extends HappElement {
   /** */
   async perspectiveInitializedOffline(): Promise<void> {
     console.log("<files-app>.perspectiveInitializedOffline()");
-    const maybeProfile = await this.filesDvm.profilesZvm.findProfile(this.filesDvm.cell.agentId);
-    console.log("perspectiveInitializedOffline() maybeProfile", maybeProfile, this.filesDvm.cell.agentId);
+    const maybeProfile = await this.filesDvm.profilesZvm.findProfile(this.filesDvm.cell.address.agentId);
+    console.log("perspectiveInitializedOffline() maybeProfile", maybeProfile, this.filesDvm.cell.address.agentId);
     /** Done */
     this._offlinePerspectiveloaded = true;
   }
@@ -299,7 +299,7 @@ export class FilesApp extends HappElement {
               @created=${async (e: CustomEvent<EntryId>) => {
                 try {
                   console.log("@created event", e.detail);
-                  const wal: WAL = {hrl: [this.filesDvm.cell.dnaId.hash, e.detail.hash], context: null}
+                  const wal: WAL = {hrl: [this.filesDvm.cell.address.dnaId.hash, e.detail.hash], context: null}
                   await creatableViewInfo.resolve(wal);
                 } catch(e) {
                   creatableViewInfo.reject(e)
@@ -362,7 +362,7 @@ export class FilesApp extends HappElement {
         /** Create Guest profile */
         const profile = { nickname: "guest_" + Math.floor(Math.random() * 100),
           fields: {lang: 'en', email: 'guest@ac.me', mailgun_domain: "mg.flowplace.org", mailgun_email: "whosin@mg.flowplace.org"}};
-        console.log("<files-app> createMyProfile", this.filesDvm.profilesZvm.cell.agentId);
+        console.log("<files-app> createMyProfile", this.filesDvm.profilesZvm.cell.address.agentId);
         this.filesDvm.profilesZvm.createMyProfile(profile).then(() => this.requestUpdate());
         guardedView = html`<sl-spinner></sl-spinner>`;
       }

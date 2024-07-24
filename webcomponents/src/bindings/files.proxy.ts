@@ -4,14 +4,14 @@ import {ATTACHMENTS_ROOT, FILES_DEFAULT_COORDINATOR_ZOME_NAME, FILES_DEFAULT_INT
 import {
 WebsocketConnectionOptions,
 /** types.ts */
-HoloHash,
-AgentPubKey,
-DnaHash,
-WasmHash,
-EntryHash,
-ActionHash,
-AnyDhtHash,
-ExternalHash,
+//HoloHash,
+//AgentPubKey,
+//DnaHash,
+//WasmHash,
+//EntryHash,
+//ActionHash,
+//AnyDhtHash,
+//ExternalHash,
 KitsuneAgent,
 KitsuneSpace,
 HoloHashB64,
@@ -124,6 +124,15 @@ NetworkSeed,
 ZomeLocation,
    } from '@holochain/client';
 
+
+/// Simple Hashes
+type AgentArray = Uint8Array;
+type DnaArray = Uint8Array;
+type WasmArray = Uint8Array;
+type EntryArray = Uint8Array;
+type ActionArray = Uint8Array;
+type AnyDhtArray = Uint8Array;
+
 import {
 /** Common */
 DhtOpHashB64,
@@ -162,27 +171,27 @@ export class FilesProxy extends ZomeProxy {
   static readonly ENTRY_TYPES = Object.values(FilesUnitEnum);
   static readonly LINK_TYPES = Object.values(FilesLinkType);
  
-  async attachToHrl(input: AttachInput): Promise<ActionHash> {
+  async attachToHrl(input: AttachInput): Promise<ActionArray> {
     return this.callBlocking('attach_to_hrl', input);
   }
 
-  async getFilesFromHrl(hrl: [DnaHash, EntryHash]): Promise<EntryHash[]> {
+  async getFilesFromHrl(hrl: [DnaArray, EntryArray]): Promise<EntryArray[]> {
     return this.call('get_files_from_hrl', hrl);
   }
 
-  async commitPrivateFile(input: WriteManifestInput): Promise<[EntryHash, ParcelDescription]> {
+  async commitPrivateFile(input: WriteManifestInput): Promise<[EntryArray, ParcelDescription]> {
     return this.call('commit_private_file', input);
   }
 
-  async getAh(eh: EntryHash): Promise<ActionHash | null> {
+  async getAh(eh: EntryArray): Promise<ActionArray | null> {
     return this.call('get_ah', eh);
   }
 
-  async getFileInfo(eh: EntryHash): Promise<ParcelManifest> {
+  async getFileInfo(eh: EntryArray): Promise<ParcelManifest> {
     return this.call('get_file_info', eh);
   }
 
-  async getPrivateFilesFrom(sender: AgentPubKey): Promise<EntryHash[]> {
+  async getPrivateFilesFrom(sender: AgentArray): Promise<EntryArray[]> {
     return this.call('get_private_files_from', sender);
   }
 
@@ -190,27 +199,27 @@ export class FilesProxy extends ZomeProxy {
     return this.call('process_inbox', null);
   }
 
-  async publishFileManifest(input: WriteManifestInput): Promise<[EntryHash, ParcelDescription]> {
+  async publishFileManifest(input: WriteManifestInput): Promise<[EntryArray, ParcelDescription]> {
     return this.callZomeBlockPostCommit('PublicParcel','publish_file_manifest', input);
   }
 
-  async refuseFileShare(parcelEh: EntryHash): Promise<EntryHash> {
+  async refuseFileShare(parcelEh: EntryArray): Promise<EntryArray> {
     return this.call('refuse_file_share', parcelEh);
   }
 
-  async acceptFileShare(parcelEh: EntryHash): Promise<EntryHash> {
+  async acceptFileShare(parcelEh: EntryArray): Promise<EntryArray> {
     return this.call('accept_file_share', parcelEh);
   }
 
-  async sendFile(input: SendFileInput): Promise<ActionHash> {
+  async sendFile(input: SendFileInput): Promise<ActionArray> {
     return this.call('send_file', input);
   }
 
-  async writePrivateFileChunks(chunks: ParcelChunk[]): Promise<EntryHash[]> {
+  async writePrivateFileChunks(chunks: ParcelChunk[]): Promise<EntryArray[]> {
     return this.call('write_private_file_chunks', chunks);
   }
 
-  async writePublicFileChunks(chunks: ParcelChunk[]): Promise<EntryHash[]> {
+  async writePublicFileChunks(chunks: ParcelChunk[]): Promise<EntryArray[]> {
     return this.call('write_public_file_chunks', chunks);
   }
 }

@@ -3,14 +3,14 @@
 import {
 WebsocketConnectionOptions,
 /** types.ts */
-HoloHash,
-AgentPubKey,
-DnaHash,
-WasmHash,
-EntryHash,
-ActionHash,
-AnyDhtHash,
-ExternalHash,
+//HoloHash,
+//AgentPubKey,
+//DnaHash,
+//WasmHash,
+//EntryHash,
+//ActionHash,
+//AnyDhtHash,
+//ExternalHash,
 KitsuneAgent,
 KitsuneSpace,
 HoloHashB64,
@@ -123,6 +123,15 @@ NetworkSeed,
 ZomeLocation,
    } from '@holochain/client';
 
+
+/// Simple Hashes
+type AgentArray = Uint8Array;
+type DnaArray = Uint8Array;
+type WasmArray = Uint8Array;
+type EntryArray = Uint8Array;
+type ActionArray = Uint8Array;
+type AnyDhtArray = Uint8Array;
+
 import {
 /** Common */
 DhtOpHashB64,
@@ -149,8 +158,8 @@ ValidationReceipt,
 import {DistributionStrategy, ParcelManifest, ParcelChunk, ParcelDescription, ParcelKind, ParcelReference} from '@ddd-qc/delivery';
 
 export interface AttachInput {
-  hrl: [DnaHash, EntryHash]
-  manifestEh: EntryHash
+  hrl: [DnaArray, EntryArray]
+  manifestEh: EntryArray
 }
 
 export interface WriteManifestInput {
@@ -158,14 +167,14 @@ export interface WriteManifestInput {
   filetype: string
   data_hash: string
   orig_filesize: number
-  chunks: EntryHash[]
+  chunks: EntryArray[]
 }
 
 /**  */
 export interface SendFileInput {
-  manifest_eh: EntryHash
+  manifest_eh: EntryArray
   strategy: DistributionStrategy
-  recipients: AgentPubKey[]
+  recipients: AgentArray[]
 }
 
 /**

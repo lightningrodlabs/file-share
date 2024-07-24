@@ -854,7 +854,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                         ppEh: ppEh.b64,
                         description: pm.description,
                         timestamp,
-                        author: this._dvm.profilesZvm.perspective.getProfile(this.cell.agentId),
+                        author: this._dvm.profilesZvm.perspective.getProfile(this.cell.address.agentId),
                         isLocal: true,
                         isPrivate: true
                     } as FileTableItem;
@@ -886,7 +886,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 const personalItems: FileTableItem[] = Array.from(this.deliveryPerspective.privateManifests.entries())
                   .map(([ppEh, [pm, timestamp]]) => {
                     //const timestamp = this.deliveryPerspective.privateManifests[ppEh][1];
-                    return {ppEh: ppEh.b64, description:pm.description, timestamp, author: this._dvm.profilesZvm.perspective.getProfile(this.cell.agentId), isPrivate:true, isLocal:true};
+                    return {ppEh: ppEh.b64, description:pm.description, timestamp, author: this._dvm.profilesZvm.perspective.getProfile(this.cell.address.agentId), isPrivate:true, isLocal:true};
                 })
                 mainArea = html`
                     <h2>${msg("Personal Files")}</h2>
