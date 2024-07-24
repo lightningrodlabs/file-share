@@ -36,7 +36,7 @@ export async function search(appletClient: AppClient, appletHash: AppletHash, we
     const privateFiles: [EntryId, ParcelManifest][] = []; // FIXME: await proxy.getPrivateFiles();
     const matchingPrivate: [EntryId, ParcelDescription, AgentId, boolean][] = privateFiles
         .filter(([_eh, manifest]) => manifest.description.name.toLowerCase().includes(searchLC))
-        .map(([eh, manifest]) => [eh, manifest.description, proxy.cell.agentId, true]);
+        .map(([eh, manifest]) => [eh, manifest.description, proxy.cell.address.agentId, true]);
 
     //console.log("Files/we-applet/search(): privateFiles", matchingPrivate.length, privateFiles.length);
 
