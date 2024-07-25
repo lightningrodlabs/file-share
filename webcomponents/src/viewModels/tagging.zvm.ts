@@ -2,7 +2,7 @@ import {
     delay,
     EntryId,
     ZomeViewModelWithSignals,
-    EntryPulseMat, AgentId, LinkPulseMat, StateChangeType
+    EntryPulseMat, AgentId, LinkPulseMat, StateChangeType, holoIdReviver
 } from "@ddd-qc/lit-happ";
 import {TaggingProxy} from "../bindings/tagging.proxy";
 import {PrivateTag, PUBLIC_TAG_ROOT, TaggingInput, UntagInput} from "../bindings/tagging.types";
@@ -49,7 +49,7 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
 
     /** */
     import(json: string, _canPublish: boolean) {
-        const snapshot = JSON.parse(json) as TaggingSnapshot;
+        const snapshot = JSON.parse(json, holoIdReviver) as TaggingSnapshot;
         // if (canPublish) {
         // }
         this._perspective.restore(snapshot)
