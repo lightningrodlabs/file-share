@@ -94,13 +94,13 @@
     "typescript": "~5.2.0"
   },
   "dependencies": {
-    "@holochain/client": "^0.18.0-dev.4",
+    "@holochain/client": "^0.18.0-dev.9",
     "@ddd-qc/cell-proxy": "=0.27.4",
     "@ddd-qc/lit-happ": "=0.27.1",
     "@ddd-qc/profiles-dvm": "=0.27.4",
     "@ddd-qc/we-utils": "=0.27.2",
     "@ddd-qc/path-explorer": "=0.5.0",
-    "@ddd-qc/delivery": "=0.15.7",
+    "@ddd-qc/delivery": "=0.15.8",
     "@holochain-open-dev/core-types": "0.7.0",
     "@holochain-open-dev/profiles": "=0.17.3",
     "@lightningrodlabs/we-applet": "=0.17.1",

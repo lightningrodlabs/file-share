@@ -186,6 +186,7 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
                                                       }}>
                                                 <sl-icon name="download"></sl-icon>
                                             </sl-button>
+                                            ${!isPublic? html`
                                             <sl-button size="small" variant="primary"
                                                        @click=${async (e) => {
                                                           this.dispatchEvent(new CustomEvent<EntryId>('send', {
@@ -195,7 +196,7 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
                                                           }));
                                                       }}>
                                                 <sl-icon name="send"></sl-icon>
-                                            </sl-button>
+                                            </sl-button>`: html``}
                                             <sl-button size="small" variant="neutral"
                                                        @click=${async (e) => {
                                                           this.dispatchEvent(new CustomEvent<EntryId>('view', {

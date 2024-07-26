@@ -1,5 +1,5 @@
 import {Timestamp} from "@holochain/client";
-import {EntryId, AgentId, ActionId} from "@ddd-qc/lit-happ";
+import {EntryId, AgentId, ActionId, EntryIdMap} from "@ddd-qc/lit-happ";
 import {ParcelDescription} from "@ddd-qc/delivery";
 import {SplitObject} from "../utils";
 
@@ -19,6 +19,8 @@ interface UploadState {
 
 /** */
 export interface FilesDvmPerspective {
+    /** ManifestEh -> File */
+    fileCache: EntryIdMap<File>;
     /** dataHash -> UploadState */
     uploadStates: Record<string, UploadState>;
     /** Notifications */

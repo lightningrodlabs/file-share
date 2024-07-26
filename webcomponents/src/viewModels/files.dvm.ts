@@ -16,7 +16,7 @@ import {
     ZomeSignalProtocolVariantEntry,
     TipProtocolVariantEntry,
     StateChangeType,
-    TipProtocolVariantLink, ZomeSignalProtocolVariantLink,
+    TipProtocolVariantLink, ZomeSignalProtocolVariantLink, assertIsDefined, EntryIdMap,
 } from "@ddd-qc/lit-happ";
 import {
     DELIVERY_ZOME_NAME,
@@ -99,7 +99,7 @@ export class FilesDvm extends DnaViewModel {
 
     /** -- ViewModel Interface -- */
 
-    private _perspective: FilesDvmPerspective = {uploadStates: {}, notificationLogs: []};
+    private _perspective: FilesDvmPerspective = {fileCache: new EntryIdMap(), uploadStates: {}, notificationLogs: []};
 
 
     /** */
@@ -178,8 +178,8 @@ export class FilesDvm extends DnaViewModel {
         const maybeCachedData = this.getFileFromCache(manifest.data_hash);
         let file;
         if (maybeCachedData == null) {
-            file = await this.parcel2File(manifestEh);
-            await this.cacheFile(file);
+            file = (await this.fetchFile(manifestEh))[1];
+            await this.cacheFileLocalStorage(file);
         } else {
             file = this.data2File(manifest, maybeCachedData);
         }
@@ -193,7 +193,7 @@ export class FilesDvm extends DnaViewModel {
 
 
     /** */
-    async cacheFile(file: File) {
+    async cacheFileLocalStorage(file: File) {
         const content = await file.arrayBuffer();
         const contentB64 = arrayBufferToBase64(content);
         if (contentB64.length > 1 * 1024 * 1024) {
@@ -368,7 +368,7 @@ export class FilesDvm extends DnaViewModel {
                         this._perspective.uploadStates[manifest.data_hash].callback(pulse.eh);
                     }
                     /*await*/
-                    this.cacheFile(this._perspective.uploadStates[manifest.data_hash].file);
+                    this.cacheFileLocalStorage(this._perspective.uploadStates[manifest.data_hash].file);
                     delete this._perspective.uploadStates[manifest.data_hash];
                 }
             }
@@ -645,18 +645,18 @@ export class FilesDvm extends DnaViewModel {
 
 
     /** */
-    async fetchFile(ppEh: EntryId): Promise<[ParcelManifest, string]> {
+    async fetchFile(ppEh: EntryId): Promise<[ParcelManifest, File]> {
+        assertIsDefined(ppEh);
         const [manifest, _ts] = await this.deliveryZvm.fetchPublicManifest(ppEh);
+        const maybeData = this._perspective.fileCache.get(ppEh);
+        if (maybeData) {
+            return [manifest, maybeData];
+        }
         //this.deliveryZvm.perspective.chunkCounts[manifest.data_hash] = 0;
         const dataB64 = await this.deliveryZvm.fetchParcelData(ppEh);
-        return [manifest, dataB64];
-    }
-
-
-    /** */
-    async parcel2FileData(manifestEh: EntryId): Promise<string> {
-        const [_manifest, data] = await this.fetchFile(manifestEh);
-        return data;
+        const file = this.data2File(manifest, dataB64);
+        this._perspective.fileCache.set(ppEh, file);
+        return [manifest, file];
     }
 
 
@@ -669,22 +669,16 @@ export class FilesDvm extends DnaViewModel {
             const types = fields[1].split(';');
             filetype = types[0];
         }
-        const byteArray = base64ToArrayBuffer(data)
-        const blob = new Blob([byteArray], { type: filetype});
-        const file = new File([blob], manifest.description.name);
-        return file;
-    }
-
-
-    /** */
-    async parcel2File(manifestEh: EntryId): Promise<File> {
-        const [manifest, data] = await this.fetchFile(manifestEh);
         /** DEBUG - check if content is valid base64 */
         // if (!base64regex.test(data)) {
         //   const invalid_hash = sha256(data);
         //   console.error("File '" + manifest.filename + "' is invalid base64. hash is: " + invalid_hash);
         // }
-        return this.data2File(manifest, data);
+        /** */
+        const byteArray = base64ToArrayBuffer(data)
+        const blob = new Blob([byteArray], { type: filetype});
+        const file = new File([blob], manifest.description.name);
+        return file;
     }
 
 

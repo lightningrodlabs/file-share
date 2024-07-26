@@ -97,7 +97,7 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
         }
 
         /** Retrieve tags */
-        let tagList = [];
+        let tagList: string[] = [];
         let actionButtons = [];
         if (this.hash) {
             let tags;
@@ -131,13 +131,16 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 }}>
                     <sl-icon name="download"></sl-icon>
                 </sl-button></sl-tooltip>`);
-            actionButtons.push(html`
-                <sl-tooltip placement="top" content=${msg("Send")} style="--show-delay: 200;">
-                <sl-button class="hide pop action" size="small" variant="primary" @click=${async (e) => {
-                    this.dispatchEvent(new CustomEvent<EntryId>('send', {detail: this.hash, bubbles: true, composed: true}));
-                }}>
-                    <sl-icon name="send"></sl-icon>
-                </sl-button></sl-tooltip>`);
+            if (fileDescription.visibility == 'Private') {
+                actionButtons.push(html`
+                    <sl-tooltip placement="top" content=${msg("Send")} style="--show-delay: 200;">
+                        <sl-button class="hide pop action" size="small" variant="primary" @click=${async (e) => {
+                            this.dispatchEvent(new CustomEvent<EntryId>('send', {detail: this.hash, bubbles: true, composed: true}));
+                        }}>
+                            <sl-icon name="send"></sl-icon>
+                        </sl-button>
+                    </sl-tooltip>`);
+            }
             /** Add button for each attachment type */
             // FIXME: use creatables API instead
             // if (this.weServices && this.weServices.attachmentTypes && this.hash != '') {
