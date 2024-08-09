@@ -1,5 +1,5 @@
 import {css, html, LitElement} from "lit";
-import {property, state, customElement} from "lit/decorators.js";
+import {property, customElement} from "lit/decorators.js";
 import {prettyFileSize, prettyTimestamp} from "../utils";
 import {columnBodyRenderer, columnFooterRenderer} from "@vaadin/grid/lit";
 import {ParcelDescription} from "@ddd-qc/delivery/dist/bindings/delivery.types";
@@ -55,7 +55,7 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
 
 
     /** */
-    render() {
+    override render() {
         console.log("<file-table>.render()", this.type, this.items, this._zvm.perspective);
         if (!this.items.length) {
             return html`${msg("No items found")}`;
@@ -113,7 +113,7 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
                                                               .tags=${this._zvm.perspective.getTargetPrivateTags(new EntryId(ppEh))}
                                                               @deleted=${async (e: CustomEvent<string>) => {
                                                                   await this._zvm.untagPrivateEntry(new EntryId(ppEh), e.detail);
-                                                                  const tagList = this.shadowRoot.getElementById(`priv-tags-${ppEh}`) as TagList;
+                                                                  const tagList = this.shadowRoot!.getElementById(`priv-tags-${ppEh}`) as TagList;
                                                                   tagList.requestUpdate();
                                                               }}
                                                     ></tag-list>
@@ -160,7 +160,7 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
                                     if (this.selectable == "") {
                                         return html`
                                             <sl-button size="small" variant="primary" style="margin-left:5px"
-                                                       @click=${async (e) => {
+                                                       @click=${async (_e:any) => {
                                                            this.dispatchEvent(new CustomEvent<EntryId>('selected', {
                                                                detail: new EntryId(ppEh),
                                                                bubbles: true,
@@ -173,11 +173,11 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
                                     } else {
                                         // TODO: Optimize. Should have a better way to get the item here instead of doing a search for each item.
                                         const item = this.items.filter((item) => item.ppEh == ppEh);
-                                        const isPublic = item.length > 0 && !item[0].isPrivate;
+                                        const isPublic = item.length > 0 && !item[0]!.isPrivate;
                                         //console.log("isPublic", isPublic, item, ppEh)
                                         return html`
                                             <sl-button size="small" variant="primary" style="margin-left:5px"
-                                                       @click=${async (e) => {
+                                                       @click=${async (_e:any) => {
                                                           this.dispatchEvent(new CustomEvent<EntryId>('download', {
                                                               detail: new EntryId(ppEh),
                                                               bubbles: true,
@@ -188,7 +188,7 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
                                             </sl-button>
                                             ${!isPublic? html`
                                             <sl-button size="small" variant="primary"
-                                                       @click=${async (e) => {
+                                                       @click=${async (_e:any) => {
                                                           this.dispatchEvent(new CustomEvent<EntryId>('send', {
                                                               detail: new EntryId(ppEh),
                                                               bubbles: true,
@@ -198,7 +198,7 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
                                                 <sl-icon name="send"></sl-icon>
                                             </sl-button>`: html``}
                                             <sl-button size="small" variant="neutral"
-                                                       @click=${async (e) => {
+                                                       @click=${async (_e:any) => {
                                                           this.dispatchEvent(new CustomEvent<EntryId>('view', {
                                                               detail: new EntryId(ppEh),
                                                               bubbles: true,
@@ -209,7 +209,7 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
                                             </sl-button>
                                             ${isPublic? html`
                                             <sl-button size="small" variant="danger"
-                                                       @click=${async (e) => {
+                                                       @click=${async (_e:any) => {
                                                 console.log("Dispatching delete Event", ppEh)
                                                 this.dispatchEvent(new CustomEvent<EntryId>('delete', {
                                                     detail: new EntryId(ppEh),
@@ -232,7 +232,7 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
 
 
     /** */
-    static get styles() {
+    static override get styles() {
         return [
             filesSharedStyles,
             css`

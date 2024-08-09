@@ -46,8 +46,11 @@ export class EditProfile extends ZomeElement<unknown, FilesZvm> {
     console.log("fireSaveProfile()", formFields);
     const nickname = formFields['nickname'];
     delete formFields['nickname'];
+    if (!nickname) {
+      throw Promise.reject("Missing nickname field");
+    }
 
-    const fields = {}
+    const fields: Record<string, string> = {};
     //fields['email'] = formFields['email'];
     fields['avatar'] = formFields['avatar']? formFields['avatar'] : "";
     fields['lang'] = formFields['option']? formFields['option'] : "";
@@ -101,7 +104,7 @@ export class EditProfile extends ZomeElement<unknown, FilesZvm> {
 
 
   /** */
-  render() {
+  override render() {
     console.log("<edit-profile>.render()", this.profile);
 
     // /** decrypt token */
@@ -115,7 +118,7 @@ export class EditProfile extends ZomeElement<unknown, FilesZvm> {
     //     this._zvm.zomeProxy.decryptData(wtf).then((data) => {
     //       this._mailgun_token = new TextDecoder().decode(data)
     //     });
-    //   } catch(e) {
+    //   } catch(e:any) {
     //     console.error("Failed to decryptData()", e);
     //   }
     // }
@@ -147,41 +150,12 @@ export class EditProfile extends ZomeElement<unknown, FilesZvm> {
         
         <div class="row" style="justify-content: center; margin-bottom: 8px; align-self: start;" >
           <span style="font-size:18px;padding-right:10px;">${msg('Language')}:</span>
-          <sl-radio-group id="langRadioGroup" @click="${this.handleLangChange}" .value=${this.profile.fields['lang']}>
+          <sl-radio-group id="langRadioGroup" @click="${this.handleLangChange}" .value=${this.profile? this.profile.fields['lang'] : ""}>
             <sl-radio value="en">🇬🇧</sl-radio>
             <sl-radio value="fr-fr">🇫🇷</sl-radio>
           </sl-radio-group>
         </div>
-        
-          <!-- 
-        <h3>Notifications</h3>
-        <sl-input
-                name="email"
-                .label=${msg('email')}
-                .helpText=${msg(str``)}
-                .value=${this.profile.fields['email']? this.profile.fields['email'] : ''}
-                style="margin-left: 16px;"
-        ></sl-input>
-        <h4>Mailgun</h4>
-        <sl-input
-            name="mailgun_domain"
-            .label=${msg('domain')}
-            .value=${this.profile.fields['mailgun_domain']? this.profile.fields['mailgun_domain'] : ''}
-            style="margin-left: 16px;"
-        ></sl-input>
-        <sl-input
-            name="mailgun_email"
-            .label=${msg('email')}
-            .value=${this.profile.fields['mailgun_email']? this.profile.fields['mailgun_email'] : ''}
-            style="margin-left: 16px;"
-        ></sl-input>
-        <sl-input
-                name="mailgun_token"
-                .label=${msg('token')}
-                .value=${this._mailgun_token}
-                style="margin-left: 16px;"
-        ></sl-input>
-           -->
+
         <div class="row" style="margin-top: 8px;">
           <sl-button style="flex: 1;" variant="primary" type="submit"
             >${msg('Save Profile')}
@@ -192,7 +166,7 @@ export class EditProfile extends ZomeElement<unknown, FilesZvm> {
   }
 
 
-  static styles = [sharedStyles, css`
+  static override styles = [sharedStyles, css`
 
     sl-radio {
       font-size: larger;

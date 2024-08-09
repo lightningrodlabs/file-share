@@ -1,5 +1,5 @@
-import {css, html, LitElement, PropertyValues} from "lit";
-import {property, state, customElement} from "lit/decorators.js";
+import {css, html, LitElement} from "lit";
+import {property, customElement} from "lit/decorators.js";
 import {filesSharedStyles} from "../sharedStyles";
 
 /**
@@ -11,11 +11,11 @@ export class Filename extends LitElement {
     @property() filename: string = ''
 
     /** */
-    render() {
+    override render() {
         const fields = this.filename.split('.');
         let fileExt = ""
         if (fields.length > 1) {
-            fileExt = fields[fields.length - 1];
+            fileExt = fields[fields.length - 1]!;
         }
         const fileBase = this.filename.slice(0, -(fileExt.length + 1))
           //<sl-tooltip content=${this.filename} distance="10">
@@ -27,7 +27,7 @@ export class Filename extends LitElement {
     }
 
     /** */
-    static get styles() {
+    static override get styles() {
         return [
             filesSharedStyles,
             css`

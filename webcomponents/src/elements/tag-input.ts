@@ -1,7 +1,7 @@
-import {css, html, LitElement, PropertyValues} from "lit";
+import {css, html, LitElement} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
 import {filesSharedStyles} from "../sharedStyles";
-import {SlBlurEvent, SlInput} from "@shoelace-style/shoelace";
+import {SlInput} from "@shoelace-style/shoelace";
 import {msg} from "@lit/localize";
 
 
@@ -20,11 +20,11 @@ export class TagInput extends LitElement {
 
 
     get inputElem() : SlInput {
-        return this.shadowRoot.getElementById("tag-input") as SlInput;
+        return this.shadowRoot!.getElementById("tag-input") as SlInput;
     }
 
     /** */
-    onAddNewTag(e) {
+    onAddNewTag(_e: KeyboardEvent) {
         console.log("<tag-input> onAddNewTag", this.inputElem.value);
         if (this.inputElem.value.length <= 1) {
             return;
@@ -33,14 +33,14 @@ export class TagInput extends LitElement {
         //await this._dvm.taggingZvm.addPrivateTag(string_copy);
         this._selectedTags.push(string_copy);
         this.inputElem.value = "";
-        this.dispatchEvent(new CustomEvent('new-tag', {detail: string_copy, bubbles: true, composed: true}))
+        this.dispatchEvent(new CustomEvent<string>('new-tag', {detail: string_copy, bubbles: true, composed: true}))
         this.requestUpdate();
         //if(this.tagListElem) this.tagListElem.requestUpdate();
     }
 
 
     /** */
-    render() {
+    override render() {
         //console.log("<tag-input>.render()", this.tags, this._selectedTags);
 
         let tagResults = undefined;
@@ -53,7 +53,7 @@ export class TagInput extends LitElement {
             if (filteredTags.length) {
                 tagResults = html`
                     <tag-list .tags=${filteredTags} selectable
-                              @selected=${(e) => {
+                              @selected=${(e:any) => {
                                   console.log("selected tag", e.detail);
                                   this._selectedTags.push(e.detail);
                                   this.inputElem.value = "";
@@ -72,7 +72,7 @@ export class TagInput extends LitElement {
         }
 
 //     @sl-blur=${(e: SlBlurEvent) => {console.log("blur blur", e);this._canShowResults = false;}}
-// @sl-focus=${(e) => {console.log("blur focus", e); this._canShowResults = true}}
+// @sl-focus=${(e:any) => {console.log("blur focus", e); this._canShowResults = true}}
 
         /** */
         return html`
@@ -95,7 +95,7 @@ export class TagInput extends LitElement {
     }
 
     /** */
-    static get styles() {
+    static override get styles() {
         return [
             filesSharedStyles,
             css`

@@ -38,20 +38,20 @@ export class FileView extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** */
-    protected async willUpdate(changedProperties: PropertyValues<this>) {
+    protected override async willUpdate(changedProperties: PropertyValues<this>) {
         super.willUpdate(changedProperties);
         //console.log("<file-view>.willUpdate()", changedProperties, !!this._dvm, this.hash);
         if (this._dvm && (changedProperties.has("hash") || (!this._manifest && this.hash))) {
             console.log("<file-view>.willUpdate()", this.hash);
             this._loading = true;
-            this._manifest = await this._dvm.filesZvm.zomeProxy.getFileInfo(this.hash.hash);
+            this._manifest = await this._dvm.filesZvm.zomeProxy.getFileInfo(this.hash!.hash);
             this._loading = false;
         }
     }
 
 
     /** */
-    render() {
+    override render() {
         console.log("<file-view>.render()", this.hash);
         if (!this.hash) {
             return html`<div style="color:#c10a0a">${msg("No file selected")}</div>`;
@@ -70,14 +70,14 @@ export class FileView extends DnaElement<FilesDvmPerspective, FilesDvm> {
             <div style="padding-bottom: 10px;">MIME: ${kind2mime(this._manifest.description.kind_info)}</div>
             <file-preview .hash=${this.hash}></file-preview>
             ${this.showActionBar
-                    ? html`<sl-button variant="primary" @click=${(e) => {this._dvm.downloadFile(this.hash)}}>Download</sl-button>`
+                    ? html`<sl-button variant="primary" @click=${(_e:any) => {this._dvm.downloadFile(this.hash!)}}>Download</sl-button>`
                     : html``
             }
         `;
     }
 
     /** */
-    static get styles() {
+    static override get styles() {
         return [
             filesSharedStyles,
           css`

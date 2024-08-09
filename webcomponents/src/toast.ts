@@ -12,7 +12,7 @@ export function toastError(msg: string): void {
 
 
 /** Emit toast notifications */
-export function createAlert(title: string, message: string, variant = 'primary', icon = 'info-circle', duration = 3000, extraHtml = "", id?) {
+export function createAlert(title: string, message: string, variant = 'primary', icon = 'info-circle', duration = 3000, extraHtml = "", id?: any) {
     const alert = Object.assign(document.createElement('sl-alert'), {
         id,
         variant,
@@ -33,7 +33,7 @@ export function createAlert(title: string, message: string, variant = 'primary',
 
 
 /** */
-export function escapeHtml(html) {
+export function escapeHtml(html: any) {
     const div = document.createElement('div');
     div.textContent = html;
     return div.innerHTML;

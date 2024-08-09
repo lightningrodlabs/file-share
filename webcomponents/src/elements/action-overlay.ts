@@ -1,5 +1,5 @@
-import {css, html, LitElement, PropertyValues} from "lit";
-import {property, state, customElement} from "lit/decorators.js";
+import {css, html, LitElement} from "lit";
+import {property, customElement} from "lit/decorators.js";
 import {SlDialog} from "@shoelace-style/shoelace";
 import {filesSharedStyles} from "../sharedStyles";
 import {msg} from '@lit/localize';
@@ -18,7 +18,7 @@ export class ActionOverlay extends LitElement {
 
     /** */
     get dialogElem() : SlDialog {
-        return this.shadowRoot.querySelector("sl-dialog") as SlDialog;
+        return this.shadowRoot!.querySelector("sl-dialog") as SlDialog;
     }
 
     /** */
@@ -38,18 +38,18 @@ export class ActionOverlay extends LitElement {
 
 
     /** */
-    render() {
+    override render() {
         return html`
             <sl-dialog id="action-overlay" class="action-dialog" noHeader>
-                <sl-button variant="neutral" @click=${(e) => {this.onClick("send")}}>
+                <sl-button variant="neutral" @click=${(_e: any) => {this.onClick("send")}}>
                     <sl-icon slot="prefix" name="send"></sl-icon>
                     ${msg("Send")}
                 </sl-button>
-                <sl-button variant="neutral" @click=${(e) => {this.onClick("publish")}}>
+                <sl-button variant="neutral" @click=${(_e: any) => {this.onClick("publish")}}>
                     <sl-icon slot="prefix" name="people"></sl-icon>
                     ${msg("Share with the group")}
                 </sl-button>
-                <sl-button variant="neutral" @click=${(e) => {this.onClick("add")}}>
+                <sl-button variant="neutral" @click=${(_e: any) => {this.onClick("add")}}>
                     <sl-icon slot="prefix" name="hdd"></sl-icon>
                     ${msg("Add to my personal files")}
                 </sl-button>
@@ -59,7 +59,7 @@ export class ActionOverlay extends LitElement {
     }
 
     /** */
-    static get styles() {
+    static override get styles() {
         return [
             filesSharedStyles,
             css`

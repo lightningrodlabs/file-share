@@ -1,9 +1,8 @@
-import {css, html, LitElement, TemplateResult} from "lit";
+import {css, html, TemplateResult} from "lit";
 import {customElement, property, state} from "lit/decorators.js";
 import {AgentId, DnaElement, EntryId, HAPP_ENV, HappEnvType} from "@ddd-qc/lit-happ";
-import {Dictionary} from "@ddd-qc/cell-proxy";
 import {Timestamp} from "@holochain/client";
-import {AppletInfo, GroupProfile, FrameNotification, WeaveServices} from "@lightningrodlabs/we-applet";
+import {GroupProfile, FrameNotification, WeaveServices} from "@lightningrodlabs/we-applet";
 import {consume} from "@lit/context";
 import {createContext} from "@lit/context";
 
@@ -31,7 +30,7 @@ import {
     ProfileInfo,
     FilesNotificationVariantPublicSharingRemoved,
 } from "@ddd-qc/files";
-import {DeliveryPerspective, DeliveryState} from "@ddd-qc/delivery";
+import {DeliveryPerspective, DeliveryState, Distribution} from "@ddd-qc/delivery";
 import {
     FilesDvmPerspective,
     FilesNotification,
@@ -89,6 +88,13 @@ export const REPORT_BUG_URL = `https://github.com/lightningrodlabs/files/issues/
 const weClientContext = createContext<WeaveServices>('weave_client');
 
 
+type OutboundItem = {
+    distribution: Distribution,
+    nickname: string,
+    timestamp: Timestamp,
+    state: DeliveryState,
+};
+
 /**
  * @element
  */
@@ -100,29 +106,29 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
     @state() private _initialized = false;
     @state() private _viewFileEh?: EntryId;
 
-    @property() appletId: string;
-    @property() groupProfiles: GroupProfile[];
+    @property() appletId: string = "";
+    @property() groupProfiles: GroupProfile[] = [];
 
-    private _typeFilter?: FileType;
+    private _typeFilter: FileType | undefined = undefined;
 
     private _notifCount = 0;
 
-    @state() private _deletableFile?: EntryId;
+    @state() private _deletableFile: EntryId | undefined = undefined;
 
-    private _groupName = "";
+    //private _groupName = "";
 
     /** Observed perspective from zvm */
     @property({type: Object, attribute: false, hasChanged: (_v, _old) => true})
     deliveryPerspective!: DeliveryPerspective;
 
     @consume({ context: weClientContext, subscribe: true })
-    weServices: WeaveServices;
+    weServices!: WeaveServices;
 
 
     /** AppletId -> AppletInfo */
-    @state() private _appletInfos: Dictionary<AppletInfo> = {}
+    //@state() private _appletInfos: Dictionary<AppletInfo> = {};
 
-    @state() private _selectedMenuItem?: SelectedEvent = {type: SelectedType.Home}
+    @state() private _selectedMenuItem: SelectedEvent = {type: SelectedType.Home};
 
 
     /** -- Getters -- */
@@ -136,30 +142,30 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
     }
 
     get actionOverlayElem() : ActionOverlay {
-        return this.shadowRoot.querySelector("action-overlay") as ActionOverlay;
+        return this.shadowRoot!.querySelector("action-overlay") as ActionOverlay;
     }
 
     get storeDialogElem() : StoreDialog {
-        return this.shadowRoot.querySelector("store-dialog") as StoreDialog;
+        return this.shadowRoot!.querySelector("store-dialog") as StoreDialog;
     }
     get sendDialogElem() : SendDialog {
-        return this.shadowRoot.querySelector("send-dialog") as SendDialog;
+        return this.shadowRoot!.querySelector("send-dialog") as SendDialog;
     }
     get deleteDialogElem() : SlDialog {
-        return this.shadowRoot.getElementById("delete-dialog") as SlDialog;
+        return this.shadowRoot!.getElementById("delete-dialog") as SlDialog;
     }
 
     get searchInputElem() : SlInput {
-        return this.shadowRoot.getElementById("search-input") as SlInput;
+        return this.shadowRoot!.getElementById("search-input") as SlInput;
     }
 
     get menuElem() : FilesMenu {
-        return this.shadowRoot.querySelector("files-menu") as FilesMenu;
+        return this.shadowRoot!.querySelector("files-menu") as FilesMenu;
     }
 
 
     get fabElem() : SlButton {
-        return this.shadowRoot.getElementById("fab-publish") as SlButton;
+        return this.shadowRoot!.getElementById("fab-publish") as SlButton;
     }
 
 
@@ -171,21 +177,31 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
     onViewFile(e: CustomEvent<EntryId>) {this._viewFileEh = e.detail; this.viewFileDialogElem.open = true;}
     onDeleteFile(e: CustomEvent<EntryId>) {console.log("@delete", e.detail); this._deletableFile = e.detail; this.deleteDialogElem.open = true;}
 
-    connectedCallback() {
+
+    override connectedCallback() {
         super.connectedCallback();
+        // @ts-ignore
         this.addEventListener('download', this.onDownload);
+        // @ts-ignore
         this.addEventListener('send', this.onSend);
+        // @ts-ignore
         this.addEventListener('view', this.onViewFile);
+        // @ts-ignore
         this.addEventListener('delete', this.onDeleteFile);
     }
 
-    disconnectedCallback() {
+    override disconnectedCallback() {
         super.disconnectedCallback();
+        // @ts-ignore
         this.removeEventListener('download', this.onDownload);
+        // @ts-ignore
         this.removeEventListener('send', this.onSend);
+        // @ts-ignore
         this.removeEventListener('view', this.onViewFile);
+        // @ts-ignore
         this.removeEventListener('delete', this.onDeleteFile);
     }
+
 
     /** -- Methods -- */
 
@@ -193,7 +209,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
      * In dvmUpdated() this._dvm is not already set!
      * Subscribe to ZVMs
      */
-    protected async dvmUpdated(newDvm: FilesDvm, oldDvm?: FilesDvm): Promise<void> {
+    protected override async dvmUpdated(newDvm: FilesDvm, oldDvm?: FilesDvm): Promise<void> {
         console.log("<files-main-page>.dvmUpdated()");
         if (oldDvm) {
             console.log("\t Unsubscribed to Zvms roleName = ", oldDvm.filesZvm.cell.name)
@@ -208,7 +224,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** After first render only */
-    async firstUpdated() {
+    override async firstUpdated() {
         console.log("<files-main-page> firstUpdated()", this.appletId);
 
         // /** Notifier */
@@ -225,7 +241,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** */
-    async initializeMailgunNotifier(email: string, domain: string, auth_token: string) {
+    async initializeMailgunNotifier(_email: string, _domain: string, _auth_token: string) {
         // console.log("initializeNotifier()", auth_token);
         // await this._dvm.notificationsZvm.zomeProxy.claimNotifier(this.cell.agentPubKey);
         // this._dvm.notificationsZvm.setConfig({"mailgun": {
@@ -241,14 +257,18 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** */
-    updated() {
+    override updated() {
         //console.log("<files-main-page> UPDATED START");
         /** Add behavior to buttons in reply notification */
         const acceptButton = document.getElementById("accept-notice-btn") as HTMLInputElement;
         const declineButton = document.getElementById("decline-notice-btn") as HTMLInputElement;
         if (acceptButton) {
             //console.log("UPDATED button found!", acceptButton);
-            const acceptEh = new EntryId(acceptButton.getAttribute("eh"));
+            const mustEh = acceptButton.getAttribute("eh");
+            if (!mustEh) {
+                throw Error("Missing eh attribute in acceptButton");
+            }
+            const acceptEh = new EntryId(mustEh);
             const alert = document.getElementById("new-notice-" + acceptEh.b64) as SlAlert;
             //console.log("UPDATED alert", alert);
             //const declineEh = declineButton.getAttribute("eh");
@@ -264,13 +284,17 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
     /** */
     async onAddFile(): Promise<SplitObject | undefined> {
         const fileInput = this.shadowRoot!.getElementById("addLocalFile") as HTMLInputElement;
-        console.log("onAddFile():", fileInput.files.length);
-        if (fileInput.files.length > 0) {
-            let res = await this._dvm.startCommitPrivateFile(fileInput.files[0], []);
+        if (!fileInput) {
+            throw Promise.reject("Missing HTML element addLocalFile");
+        }
+        console.log("onAddFile():", fileInput.files);
+        if (fileInput.files && fileInput.files.length > 0) {
+            let res = await this._dvm.startCommitPrivateFile(fileInput.files[0]!, []);
             console.log("onAddFile() res:", res);
             fileInput.value = "";
             return res;
         }
+        return undefined;
     }
 
 
@@ -334,11 +358,12 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
         if (FilesNotificationType.DeliveryRequestSent == type) {
             const manifestEh = (notifLog[2] as FilesNotificationVariantDeliveryRequestSent).manifestEh;
-            const privateManifest = this.deliveryPerspective.privateManifests.get(manifestEh)[0];
+            const tuple = this.deliveryPerspective.privateManifests.get(manifestEh)!;
+            const privateManifest = tuple[0];
             const recipients = (notifLog[2] as FilesNotificationVariantDeliveryRequestSent).recipients;
             let recipientName = "" + recipients.length + " peers";
             if (recipients.length == 1) {
-                const maybeProfile = this._dvm.profilesZvm.perspective.getProfile(recipients[0]);
+                const maybeProfile = this._dvm.profilesZvm.perspective.getProfile(recipients[0]!);
                 recipientName = maybeProfile ? maybeProfile.nickname : "unknown";
             }
             console.log("DeliveryRequestSent", notifLog, recipients, recipientName);
@@ -350,7 +375,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         if (FilesNotificationType.ReceptionComplete == type) {
             const manifestEh = (notifLog[2] as FilesNotificationVariantReceptionComplete).manifestEh;
             //const noticeEh = (notifLog[2] as FileShareNotificationVariantReceptionComplete).noticeEh;
-            const privateManifest = this.deliveryPerspective.privateManifests.get(manifestEh)[0];
+            const privateManifest = this.deliveryPerspective.privateManifests.get(manifestEh)![0];
             variant = 'success';
             icon = "check2-circle";
             title = msg("File succesfully received");
@@ -359,8 +384,8 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         if (FilesNotificationType.DistributionToRecipientComplete == type) {
             const distribAh = (notifLog[2] as FilesNotificationVariantDistributionToRecipientComplete).distribAh;
             const recipient = (notifLog[2] as FilesNotificationVariantDistributionToRecipientComplete).recipient;
-            const manifestEh = new EntryId(this.deliveryPerspective.distributions.get(distribAh)[0].delivery_summary.parcel_reference.parcel_eh);
-            const privateManifest = this.deliveryPerspective.privateManifests.get(manifestEh)[0];
+            const manifestEh = new EntryId(this.deliveryPerspective.distributions.get(distribAh)![0].delivery_summary.parcel_reference.parcel_eh);
+            const privateManifest = this.deliveryPerspective.privateManifests.get(manifestEh)![0];
             const maybeProfile = this._dvm.profilesZvm.perspective.getProfile(recipient);
             const recipientName = maybeProfile? maybeProfile.nickname : msg("Unknown");
             variant = 'success';
@@ -370,7 +395,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         }
         if (FilesNotificationType.PublicSharingComplete == type) {
             const manifestEh = (notifLog[2] as FilesNotificationVariantPublicSharingComplete).manifestEh;
-            const publicParcel = this.deliveryPerspective.publicParcels.get(manifestEh);
+            const publicParcel = this.deliveryPerspective.publicParcels.get(manifestEh)!;
             variant = 'success';
             icon = "check2-circle";
             title = msg("New file published");
@@ -378,7 +403,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         }
         if (FilesNotificationType.PublicSharingRemoved == type) {
             const manifestEh = (notifLog[2] as FilesNotificationVariantPublicSharingRemoved).manifestEh;
-            const publicManifest = this.deliveryPerspective.publicParcels.get(manifestEh);
+            const publicManifest = this.deliveryPerspective.publicParcels.get(manifestEh)!;
             variant = 'warning';
             icon = "x-octagon";
             title = msg("File unpublished");
@@ -386,7 +411,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         }
         if (FilesNotificationType.PrivateCommitComplete == type) {
             const manifestEh = (notifLog[2] as FilesNotificationVariantPrivateCommitComplete).manifestEh;
-            const privateManifest = this.deliveryPerspective.privateManifests.get(manifestEh)[0];
+            const privateManifest = this.deliveryPerspective.privateManifests.get(manifestEh)![0];
             variant = 'success';
             icon = "check2-circle";
             title = msg("File succesfully added");
@@ -417,7 +442,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         }
         if (FilesNotificationType.ReplyReceived == type) {
             const notif = notifLog[2] as FilesNotificationVariantReplyReceived;
-            const distrib = this.deliveryPerspective.distributions.get(notif.distribAh)[0];
+            const distrib = this.deliveryPerspective.distributions.get(notif.distribAh)![0];
             const description = distrib.delivery_summary.parcel_reference.description;
             const maybeProfile = this._dvm.profilesZvm.perspective.getProfile(notif.recipient);
             const recipientName = maybeProfile? maybeProfile.nickname : "unknown";
@@ -473,7 +498,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         //         const data = await this._dvm.filesZvm.zomeProxy.decryptData(wtf);
         //         const mailgun_token = new TextDecoder().decode(data);
         //         await this.initializeMailgunNotifier(profile.fields['mailgun_email'], profile.fields['mailgun_domain'], mailgun_token);
-        //     } catch(e) {
+        //     } catch(e:any) {
         //         console.error("Failed to initializeMailgunNotifier()", e);
         //     }
         // }
@@ -485,7 +510,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         const profile: ProfileMat = profileInfo.profile;
         try {
             await this._dvm.profilesZvm.updateMyProfile(profile);
-        } catch(e) {
+        } catch(e:any) {
             await this._dvm.profilesZvm.createMyProfile(profile);
         }
         // /** mailgun */
@@ -510,7 +535,11 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
     /** */
     async deletePublicFile() {
-        console.log("deletePublicFile()", this._deletableFile)
+        console.log("deletePublicFile()", this._deletableFile);
+        if(!this._deletableFile) {
+            console.warn("No PublicFile to delete");
+            return;
+        }
         await this._dvm.removePublicParcel(this._deletableFile);
         this._deletableFile = undefined;
         this.deleteDialogElem.open = false;
@@ -539,7 +568,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** */
-    renderHome(unrepliedInbounds) {
+    renderHome(unrepliedInbounds: TemplateResult<1>[]) {
         const initialized = !!(this._initialized && this._dvm.deliveryZvm.probeDhtCount);
 
         /** Count files per type */
@@ -549,7 +578,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             .filter((pprm) => !pprm.deleteInfo)
             .map((pprm) => pprm.description);
 
-        let countMap: Record<string, number>;
+        let countMap: Record<string, number> = {};
         if (initialized) {
             countMap = countFileTypes(privDescriptions.concat(pubDescriptions));
         }
@@ -558,27 +587,27 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         return html`
             <!-- File type cards -->
             <div id="card-row">
-                <div class="card" @click=${(e) => {this.onCardClick(FileType.Document)}}>
+                <div class="card" @click=${(_e:any) => {this.onCardClick(FileType.Document)}}>
                     <sl-icon name=${type2Icon(FileType.Document)}></sl-icon>
                     <div>${msg("Documents")}</div>
                     ${initialized? html`<div class="subtext">${countMap[FileType.Document]} ${msg("file(s)")}</div>`: html`<sl-skeleton effect="pulse"></sl-skeleton>`}
                 </div>                
-                <div class="card" @click=${(e) => {this.onCardClick(FileType.Image)}}>
+                <div class="card" @click=${(_e:any) => {this.onCardClick(FileType.Image)}}>
                     <sl-icon name=${type2Icon(FileType.Image)}></sl-icon>
                     <div>${msg("Images")}</div>
                     ${initialized? html`<div class="subtext">${countMap[FileType.Image]} ${msg("file(s)")}</div>`: html`<sl-skeleton effect="pulse"></sl-skeleton>`}
                 </div>
-                <div class="card" @click=${(e) => {this.onCardClick(FileType.Video)}}>
+                <div class="card" @click=${(_e:any) => {this.onCardClick(FileType.Video)}}>
                     <sl-icon name=${type2Icon(FileType.Video)}></sl-icon>
                     <div>${msg("Video")}</div>
                     ${initialized? html`<div class="subtext">${countMap[FileType.Video]} ${msg("file(s)")}</div>`: html`<sl-skeleton effect="pulse"></sl-skeleton>`}
                 </div>
-                <div class="card" @click=${(e) => {this.onCardClick(FileType.Audio)}}>
+                <div class="card" @click=${(_e:any) => {this.onCardClick(FileType.Audio)}}>
                     <sl-icon name=${type2Icon(FileType.Audio)}></sl-icon>
                     <div>${msg("Audio")}</div>
                     ${initialized? html`<div class="subtext">${countMap[FileType.Audio]} ${msg("file(s)")}</div>`: html`<sl-skeleton effect="pulse"></sl-skeleton>`}
                 </div>
-                <div class="card" @click=${(e) => {this.onCardClick(FileType.Zip)}}>
+                <div class="card" @click=${(_e:any) => {this.onCardClick(FileType.Zip)}}>
                     <sl-icon name=${type2Icon(FileType.Zip)}></sl-icon>
                     <div>${msg("Zip")}</div>
                     ${initialized? html`<div class="subtext">${countMap[FileType.Zip]} ${msg("file(s)")}</div>`: html`<sl-skeleton effect="pulse"></sl-skeleton>`}
@@ -599,7 +628,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** */
-    render() {
+    override render() {
         //console.log("<files-main-page>.render()")
         const isInDev = HAPP_ENV == HappEnvType.Devtest || HAPP_ENV == HappEnvType.DevtestWe || HAPP_ENV == HappEnvType.DevTestHolo;
         //const isInDev = true;
@@ -629,7 +658,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         setLocale(lang);
 
         /** Search results */
-        let searchResultItems = [];
+        let searchResultItems: TemplateResult<1>[] = [];
         if (this.searchInputElem) {
             const filter = this.searchInputElem.value.toLowerCase();
             const results = this._dvm.searchParcel(filter);
@@ -647,7 +676,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         if (newNotifDiff > 0) {
             console.log("New notifications diff:", newNotifDiff, this._notifCount);
             for(let i = this._notifCount; i < this.perspective.notificationLogs.length; i++) {
-                const notifLog = this.perspective.notificationLogs[i];
+                const notifLog = this.perspective.notificationLogs[i]!;
                 console.log("New notifications:", notifLog);
                 this.toastNotif(notifLog);
             }
@@ -677,7 +706,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
         /** Unreplied inbounds */
         //let unrepliedInbounds: TemplateResult<1>[] = [];
-        let unrepliedInbounds = Array.from(this._dvm.deliveryZvm.inbounds()[0].entries())
+        let unrepliedInbounds: TemplateResult<1>[] = Array.from(this._dvm.deliveryZvm.inbounds()[0].entries())
                 .map(([noticeEh, [notice, _ts]]) => {
                 console.log("" + noticeEh.b64, this.deliveryPerspective.notices.get(noticeEh));
                 const senderKey = new AgentId(notice.sender);
@@ -717,7 +746,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                             nickname: maybe? maybe.nickname : "",
                             timestamp: ts,
                             state,
-                        }
+                        } as OutboundItem;
                 });
                 return outboundItems;
             })
@@ -726,13 +755,13 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         let outboundTable = html`
                     <vaadin-grid .items=${outboundList}>
                         <vaadin-grid-column path="distribution" header=${msg("Filename")}
-                                            ${columnBodyRenderer(
+                                            ${columnBodyRenderer<OutboundItem>(
                                                     ({ distribution }) => html`<span>${distribution.delivery_summary.parcel_reference.description.name}</span>`,
                                                     [],
                                             )}>
                         </vaadin-grid-column>                        
                         <vaadin-grid-column path="nickname" header=${msg("Recipient")}
-                                            ${columnBodyRenderer(
+                                            ${columnBodyRenderer<OutboundItem>(
                                                     ({ nickname }) => {
                                                         return nickname != ""
                                                                 ? html`<span>${nickname}</span>`
@@ -742,7 +771,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                                             )}
                         ></vaadin-grid-column>                        
                         <vaadin-grid-column path="state" header=${msg("State")}
-                            ${columnBodyRenderer(
+                            ${columnBodyRenderer<OutboundItem>(
                             ({ state }) => {
                                 if (DeliveryState.Unsent == state) {
                                     return html`<span>${msg("Delivery notice unsent")}</span>`
@@ -759,7 +788,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                         )}>
                         </vaadin-grid-column>
                         <vaadin-grid-column path="timestamp" header=${msg("Sent Date")}
-                                            ${columnBodyRenderer(
+                                            ${columnBodyRenderer<OutboundItem>(
                                                     ({ timestamp }) => html`<span>${prettyTimestamp(timestamp)}</span>`,
                                                     [],
                                             )}
@@ -874,7 +903,10 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     .map(([ppEh, pprm]) => {
                     //const [description, timestamp, author] = this.deliveryPerspective.publicParcels[ppEh];
                     const isLocal = !!this.deliveryPerspective.localPublicManifests.get(ppEh);
-                    return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: this._dvm.profilesZvm.perspective.getProfile(pprm.author), isLocal, isPrivate: false};
+                    if (!pprm.author) {
+                        console.error("Missing author for PPRM");
+                    }
+                    return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: this._dvm.profilesZvm.perspective.getProfile(pprm.author!), isLocal, isPrivate: false} as FileTableItem;
                 });
                 const allItems = privateItems.concat(publicItems/*, myPublicItems*/);
                 mainArea = html`
@@ -886,7 +918,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 const personalItems: FileTableItem[] = Array.from(this.deliveryPerspective.privateManifests.entries())
                   .map(([ppEh, [pm, timestamp]]) => {
                     //const timestamp = this.deliveryPerspective.privateManifests[ppEh][1];
-                    return {ppEh: ppEh.b64, description:pm.description, timestamp, author: this._dvm.profilesZvm.perspective.getProfile(this.cell.address.agentId), isPrivate:true, isLocal:true};
+                    return {ppEh: ppEh.b64, description:pm.description, timestamp, author: this._dvm.profilesZvm.perspective.getProfile(this.cell.address.agentId), isPrivate:true, isLocal:true} as FileTableItem;
                 })
                 mainArea = html`
                     <h2>${msg("Personal Files")}</h2>
@@ -904,7 +936,10 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                   .map(([ppEh, pprm]) => {
                     //const [description, timestamp, author] = this.deliveryPerspective.publicParcels[ppEh];
                     const isLocal = !!this.deliveryPerspective.localPublicManifests.get(ppEh);
-                    return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: this._dvm.profilesZvm.perspective.getProfile(pprm.author), isLocal, isPrivate: false} as FileTableItem;
+                    if (!pprm.author) {
+                      console.error("Missing author for PPRM");
+                    }
+                    return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: this._dvm.profilesZvm.perspective.getProfile(pprm.author!), isLocal, isPrivate: false} as FileTableItem;
                 });
                 //const publicItems = dhtPublicItems.concat(myPublicItems);
 
@@ -929,8 +964,8 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                             let receptionTs = 0;
                             let deliveryState = DeliveryState.ParcelRefused;
                             /** If recipient refused, no receptionAck should be found */
-                            if (this.deliveryPerspective.receptionAcks.get(distribAh) && this.deliveryPerspective.receptionAcks.get(distribAh).get(recipient)) {
-                                const [_receptionAck, receptionTs2] = this.deliveryPerspective.receptionAcks.get(distribAh).get(recipient);
+                            if (this.deliveryPerspective.receptionAcks.get(distribAh) && this.deliveryPerspective.receptionAcks.get(distribAh)!.get(recipient)) {
+                                const [_receptionAck, receptionTs2] = this.deliveryPerspective.receptionAcks.get(distribAh)!.get(recipient)!;
                                 receptionTs = receptionTs2;
                                 deliveryState = DeliveryState.ParcelDelivered;
                             }
@@ -962,19 +997,22 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 `;
 
             }
-            if (this._selectedMenuItem.type == SelectedType.PublicTag) {
+            if (this._selectedMenuItem.type == SelectedType.PublicTag && this._selectedMenuItem.tag) {
                 console.log("Public taggedItems 0", this.deliveryPerspective.publicParcels);
                 let taggedItems = Array.from(this.deliveryPerspective.publicParcels.entries())
                   .filter(([_ppEh, pprm]) => !pprm.deleteInfo)
                   .map(([ppEh, pprm]) => {
                         const isLocal = !!this.deliveryPerspective.localPublicManifests.get(ppEh);
-                        return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: this._dvm.profilesZvm.perspective.getProfile(pprm.author), isLocal, isPrivate:false} as FileTableItem;
+                          if (!pprm.author) {
+                              console.error("Missing author for PPRM");
+                          }
+                        return {ppEh: ppEh.b64, description: pprm.description, timestamp: pprm.creationTs, author: this._dvm.profilesZvm.perspective.getProfile(pprm.author!), isLocal, isPrivate:false} as FileTableItem;
                     })
                 console.log("Public taggedItems 1", this._selectedMenuItem.tag, taggedItems);
                 taggedItems = taggedItems.filter((item) => {
                     const publicTags = this._dvm.taggingZvm.perspective.getTargetPublicTags(new EntryId(item.ppEh));
                     console.log("public taggedItems tags", publicTags, item.ppEh);
-                    return publicTags && publicTags.includes(this._selectedMenuItem.tag);
+                    return publicTags && publicTags.includes(this._selectedMenuItem.tag!);
                 });
                 console.log("Public taggedItems 2", this._selectedMenuItem.tag, taggedItems, this.deliveryPerspective.publicParcels);
                 /** */
@@ -984,7 +1022,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 `;
                 this.menuElem.setSelected(this._selectedMenuItem.tag);
             }
-            if (this._selectedMenuItem.type == SelectedType.PrivateTag) {
+            if (this._selectedMenuItem.type == SelectedType.PrivateTag && this._selectedMenuItem.tag) {
                 let taggedItems = Array.from(this.deliveryPerspective.privateManifests.entries()).map(([ppEh, [pm, timestamp]]) => {
                     //const timestamp = this.deliveryPerspective.privateManifests[ppEh][1];
                     return {ppEh: ppEh.b64, description: pm.description, timestamp, isLocal: false, isPrivate: true} as FileTableItem;
@@ -993,7 +1031,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 taggedItems = taggedItems.filter((item) => {
                     const tags = this._dvm.taggingZvm.perspective.getTargetPrivateTags(new EntryId(item.ppEh));
                     console.log("private taggedItems tags", tags, item.ppEh);
-                    return tags && tags.includes(this._selectedMenuItem.tag);
+                    return tags && tags.includes(this._selectedMenuItem.tag!);
                 });
                 console.log("private taggedItems 2", this._selectedMenuItem.tag, taggedItems, this.deliveryPerspective.privateManifests);
                 mainArea = html`
@@ -1010,7 +1048,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         /** Render all */
         return html`
         <div id="main">
-             <files-menu @selected=${(e) => {this._selectedMenuItem = e.detail; this._typeFilter = undefined;}}></files-menu>
+             <files-menu @selected=${(e:any) => {this._selectedMenuItem = e.detail; this._typeFilter = undefined;}}></files-menu>
              <div id="rhs">
                 <div id="topBar">
                     <sl-tooltip placement="bottom-end" content=${myProfile.nickname} style="--show-delay: 400;">
@@ -1029,7 +1067,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                         </sl-button>
                     </sl-tooltip>
                     <sl-tooltip placement="bottom-end" content=${msg('Export file list')} style="--show-delay: 400;">
-                        <sl-button class="top-btn" variant="default" size="medium" @click=${async (e) => {
+                        <sl-button class="top-btn" variant="default" size="medium" @click=${async (_e:any) => {
                             const json = await this._dvm.exportPerspective();
                             this.downloadTextFile("files_dump.json", json);
                         }}>
@@ -1071,7 +1109,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     <sl-popup placement="bottom-start" sync="width" active>                    
                     <sl-input id="search-input" placeholder=${msg("Search")} size="large" clearable
                               slot="anchor"
-                              @sl-input=${(e) => {console.log("sl-change", this.searchInputElem.value);this.requestUpdate();}}
+                              @sl-input=${(_e:any) => {console.log("sl-change", this.searchInputElem.value);this.requestUpdate();}}
                               style="flex-grow: 2">
                         <sl-icon name="search" slot="prefix"></sl-icon>
                     </sl-input>
@@ -1103,8 +1141,8 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         </sl-dialog>
         <action-overlay
                 .profile=${myProfile}
-                @sl-after-hide=${(e) => {this.fabElem.style.display = "block"}}
-                @selected=${(e) => {
+                @sl-after-hide=${(_e:any) => {this.fabElem.style.display = "block"}}
+                @selected=${(e:any) => {
                     if (e.detail == "send") {
                         this.sendDialogElem.open();
                     }
@@ -1121,27 +1159,27 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
             <div>Remove Public file?</div>
             <file-preview .hash=${this._deletableFile}></file-preview>
             <sl-button slot="footer" variant="neutral"
-                       @click=${(e) => {this._deletableFile = undefined; this.deleteDialogElem.open = false;}}>
+                       @click=${(_e:any) => {this._deletableFile = undefined; this.deleteDialogElem.open = false;}}>
                 ${msg("Cancel")}
             </sl-button>
             <sl-button slot="footer" variant="danger"
-                       @click=${async (e) => this.deletePublicFile()}>
+                       @click=${async (_e:any) => this.deletePublicFile()}>
                 ${msg("Delete")}
             </sl-button>
         </sl-dialog>
         <!-- stack -->
         <div id="bottom-stack">
             <!-- commit button & panel -->
-            ${maybeUploading? html`
+            ${maybeUploading && this.perspective.uploadStates[maybeUploading]? html`
                         <div id="uploadingView">
                             <div style="display:flex; flex-direction:row; gap:35px;">
                                 <sl-progress-bar style="flex-grow:1;--indicator-color:#3dd23d;"
-                                                 .value=${Math.ceil(this.perspective.uploadStates[maybeUploading].chunks.length / this.perspective.uploadStates[maybeUploading].splitObj.numChunks * 100)}></sl-progress-bar>
+                                                 .value=${Math.ceil(this.perspective.uploadStates[maybeUploading]!.chunks.length / this.perspective.uploadStates[maybeUploading]!.splitObj.numChunks * 100)}></sl-progress-bar>
                             </div>
                             <div style="display:flex; flex-direction:row; gap:5px;color:white;">
                                 <sl-icon class="prefixIcon"
-                                         name=${kind2Icon({Manifest: this.perspective.uploadStates[maybeUploading].file.type})}></sl-icon>
-                                <files-filename filename=${this.perspective.uploadStates[maybeUploading].file.name} 
+                                         name=${kind2Icon({Manifest: this.perspective.uploadStates[maybeUploading]!.file.type})}></sl-icon>
+                                <files-filename filename=${this.perspective.uploadStates[maybeUploading]!.file.name} 
                                                  style="font-weight: bold; max-width: 175px; width:inherit; margin-right:3px;"></files-filename>
                                 <sl-icon style="margin-right:3px;" name="arrow-right"></sl-icon>
                                 <sl-icon name="hdd"></sl-icon>
@@ -1151,7 +1189,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 : html`
                 <sl-tooltip placement="left" content="Send/Share file" style="--show-delay: 200;">
                     <sl-button id="fab-publish" size="large" variant="primary" circle
-                               @click=${(_e) => {this.actionOverlayElem.open(); this.fabElem.style.display = "none"}}>
+                               @click=${(_e:any) => {this.actionOverlayElem.open(); this.fabElem.style.display = "none"}}>
                         <sl-icon name="plus-lg" label="Add"></sl-icon>
                     </sl-button>
                 </sl-tooltip>
@@ -1163,7 +1201,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** */
-    static get styles() {
+    static override get styles() {
         return [
             filesSharedStyles,
             css`

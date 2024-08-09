@@ -1,4 +1,4 @@
-import {css, html, PropertyValues} from "lit";
+import {css, html} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
 import {AgentId, DnaElement, EntryId} from "@ddd-qc/lit-happ";
 import {FilesDvm} from "../viewModels/files.dvm";
@@ -7,8 +7,6 @@ import {FilesDvmPerspective} from "../viewModels/files.perspective";
 import {SlDialog, SlInput,} from "@shoelace-style/shoelace";
 import {prettyFileSize, splitFile, SplitObject} from "../utils";
 import {toastError} from "../toast";
-import {ComboBoxFilterChangedEvent} from "@vaadin/combo-box";
-import {ComboBoxLitRenderer} from "@vaadin/combo-box/lit";
 import {TagList} from "./tag-list";
 import {kind2Icon} from "../fileTypeUtils";
 import {ProfilesPerspective} from "@ddd-qc/profiles-dvm";
@@ -27,12 +25,12 @@ interface AgentItem {
 export class SendDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
     @state() private _allAgents: AgentItem[] = [];
-    @state() private _filteredAgents: AgentItem[] = [];
+    //@state() private _filteredAgents: AgentItem[] = [];
     //@state() private _recipient?: AgentPubKeyB64;
     @state() private _recipients: AgentId[] = [];
 
 
-    @state() private _file?: File;
+    @state() private _file: File | undefined = undefined;
     private _splitObj?: SplitObject;
 
     @property({type: Object, attribute: false, hasChanged: (_v, _old) => true})
@@ -42,11 +40,11 @@ export class SendDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
     /** -- Getters -- */
 
     get dialogElem() : SlDialog {
-        return this.shadowRoot.querySelector("sl-dialog") as SlDialog;
+        return this.shadowRoot!.querySelector("sl-dialog") as SlDialog;
     }
 
     get recipientElem() : HTMLElement {
-        return this.shadowRoot.getElementById("recipientSelector") as HTMLElement;
+        return this.shadowRoot!.getElementById("recipientSelector") as HTMLElement;
     }
 
 
@@ -81,15 +79,15 @@ export class SendDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
     }
 
 
-    /** */
-    private filterChanged(event: ComboBoxFilterChangedEvent) {
-        const filter = event.detail.value;
-        console.log("filter", filter);
-        this._filteredAgents = this._allAgents.filter(({ name }) =>
-            name.toLowerCase().startsWith(filter.toLowerCase())
-        );
-        console.log("_filteredAgents", this._filteredAgents);
-    }
+    // /** */
+    // private filterChanged(event: ComboBoxFilterChangedEvent) {
+    //     const filter = event.detail.value;
+    //     console.log("filter", filter);
+    //     this._filteredAgents = this._allAgents.filter(({ name }) =>
+    //         name.toLowerCase().startsWith(filter.toLowerCase())
+    //     );
+    //     console.log("_filteredAgents", this._filteredAgents);
+    // }
 
 
 //     private agentRenderer: ComboBoxLitRenderer<AgentItem> = (agent) => html`
@@ -105,29 +103,29 @@ export class SendDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
 //   </div>
 // `;
 
-    /** */
-    private agentRenderer: ComboBoxLitRenderer<AgentItem> = (agent) => html`
-      <div style="display: flex; width: 100%;">
-        <div>
-          ${agent.name}
-        </div>
-      </div>
-    `;
+    // /** */
+    // private agentRenderer: ComboBoxLitRenderer<AgentItem> = (agent) => html`
+    //   <div style="display: flex; width: 100%;">
+    //     <div>
+    //       ${agent.name}
+    //     </div>
+    //   </div>
+    // `;
 
 
     @state() private _selectedTags: string[] = [];
 
     get inputElem() : SlInput {
-        return this.shadowRoot.getElementById("tag-input") as SlInput;
+        return this.shadowRoot!.getElementById("tag-input") as SlInput;
     }
 
     get tagListElem() : TagList {
-        return this.shadowRoot.getElementById("selected-tag-list") as TagList;
+        return this.shadowRoot!.getElementById("selected-tag-list") as TagList;
     }
 
 
     /** */
-    async onAddNewPrivateTag(e) {
+    async onAddNewPrivateTag(e:any) {
         console.log("onAddNewPrivateTag", e);
         await this._dvm.taggingZvm.commitPrivateTag(e.detail);
         this._selectedTags.push(e.detail);
@@ -137,7 +135,7 @@ export class SendDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** */
-    render() {
+    override render() {
         console.log("<send-dialog>.render()", this._recipients.length, this._file, this._allAgents, this._selectedTags);
 
         let myNotifier = html`<div slot="footer" style="color:red;"></div>`;
@@ -169,14 +167,14 @@ export class SendDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 </div> -->
                 ${msg("To")}:
                 <profile-input
-                        @selected=${(e) => {
+                        @selected=${(e:any) => {
                             console.log("profile selected:", e.detail);
                             if (e.detail) {
                                 this._recipients.push(e.detail);
                                 this.requestUpdate();
                             }
                         }}
-                        @cleared=${(e) => {
+                        @cleared=${(e:any) => {
                             console.log("profile cleared:", e.detail);
                             if (e.detail) {
                                 const index = this._recipients.map(id => id.b64).indexOf(e.detail);
@@ -197,7 +195,7 @@ export class SendDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 : html`
                             <tag-list id="selected-tag-list" selectable deletable
                                       .tags=${this._selectedTags}
-                                      @deleted=${(e) => {
+                                      @deleted=${(e:any) => {
                     console.log("deleted tag", e.detail);
                     const index = this._selectedTags.indexOf(e.detail);
                     if (index > -1) {
@@ -211,16 +209,16 @@ export class SendDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     `}
                 </div>
                 <tag-input .tags=${allTags}
-                           @new-tag=${(e) => {console.log("e", e); this.onAddNewPrivateTag(e)}}
-                           @selected=${(e) => {this._selectedTags.push(e.detail); this.requestUpdate(); if (this.tagListElem) this.tagListElem.requestUpdate();}}
+                           @new-tag=${(e:any) => {console.log("e", e); this.onAddNewPrivateTag(e)}}
+                           @selected=${(e:any) => {this._selectedTags.push(e.detail); this.requestUpdate(); if (this.tagListElem) this.tagListElem.requestUpdate();}}
                 ></tag-input>
 
                 ${myNotifier}
-                <sl-button slot="footer" variant="neutral" @click=${(e) => {this._file = undefined; this.dialogElem.open = false;}}>${msg("Cancel")}</sl-button>
-                <sl-button slot="footer" variant="primary" ?disabled=${this._recipients.length <= 0} @click=${async (e) => {
+                <sl-button slot="footer" variant="neutral" @click=${(_e:any) => {this._file = undefined; this.dialogElem.open = false;}}>${msg("Cancel")}</sl-button>
+                <sl-button slot="footer" variant="primary" ?disabled=${this._recipients.length <= 0} @click=${async (_e:any) => {
                 this.dispatchEvent(new CustomEvent('send-started', {detail: {splitObj: this._splitObj, recipients: this._recipients}, bubbles: true, composed: true}));
                 //const _splitObject = await this._dvm.startCommitPrivateAndSendFile(this._file, this._recipient, this._selectedTags.map((item) => item.value));
-                const _splitObject = await this._dvm.startCommitPrivateAndSendFile(this._file, this._recipients, this._selectedTags);
+                /*const _splitObject =*/ await this._dvm.startCommitPrivateAndSendFile(this._file!, this._recipients, this._selectedTags);
                 this._file = undefined;
                 this._selectedTags = [];
                 this._recipients = [];
@@ -237,7 +235,7 @@ export class SendDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
         /** render all */
         return html`
             <sl-dialog class="action-dialog"
-                       @sl-request-close=${e => this._file = undefined}>
+                       @sl-request-close=${(_e:any) => this._file = undefined}>
                 <div slot="label">
                     <sl-icon class="prefixIcon" name="send"></sl-icon>
                     ${msg("Sending")}
@@ -249,7 +247,7 @@ export class SendDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
 /** */
-static get styles() {
+static override get styles() {
 return [
 filesSharedStyles,
 css`              

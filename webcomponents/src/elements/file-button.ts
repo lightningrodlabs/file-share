@@ -1,5 +1,5 @@
-import {css, html, PropertyValues} from "lit";
-import {property, state, customElement} from "lit/decorators.js";
+import {css, html, TemplateResult} from "lit";
+import {property, customElement} from "lit/decorators.js";
 import {consume} from "@lit/context";
 import {delay, DnaElement, EntryId} from "@ddd-qc/lit-happ";
 import {FilesDvm} from "../viewModels/files.dvm";
@@ -36,7 +36,7 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
     @property() description?: ParcelDescription;
 
     @consume({ context: weClientContext, subscribe: true })
-    weServices: WeaveServices;
+    weServices!: WeaveServices;
 
 
     /** -- Methods -- */
@@ -51,7 +51,7 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
      * In dvmUpdated() this._dvm is not already set!
      * Subscribe to ZVMs
      */
-    protected async dvmUpdated(newDvm: FilesDvm, oldDvm?: FilesDvm): Promise<void> {
+    protected override async dvmUpdated(newDvm: FilesDvm, oldDvm?: FilesDvm): Promise<void> {
         console.log("<file-button>.dvmUpdated()");
         if (oldDvm) {
             console.log("\t Unsubscribed to Zvms roleName = ", oldDvm.taggingZvm.cell.name)
@@ -63,14 +63,14 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** */
-    render() {
+    override render() {
         console.log("<file-button>.render()", this.hash, this.description);
         if (!this.hash && !this.description) {
             return html`<sl-button class="fileButton" disabled>N/A</sl-button>`;
         }
 
         /** Retrieve File description */
-        let fileDescription = this.description;
+        let fileDescription = this.description!;
         let isPrivate = true;
         //let author = this.author? this.author : this.cell.agentPubKey;
         if (this.hash) {
@@ -97,11 +97,11 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
         }
 
         /** Retrieve tags */
-        let tagList: string[] = [];
+        let tagList: TemplateResult<1>[] = [];
         let actionButtons = [];
         if (this.hash) {
             let tags;
-            let type;
+            let type: SelectedType;
             if (isPrivate) {
                 tags = this._dvm.taggingZvm.perspective.getTargetPrivateTags(this.hash);
                 type = SelectedType.PrivateTag;
@@ -112,7 +112,7 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
             tagList = tags.map((tag) => {
                 return html`
                     <sl-button class="hide tag-button pop" size="small" variant="primary" style="margin-left:5px"
-                               @click=${async (e) => {
+                               @click=${async (_e:any) => {
                                    this.dispatchEvent(new CustomEvent<SelectedEvent>('tag', {
                                        detail: {type, tag},
                                        bubbles: true,
@@ -126,16 +126,16 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
             /** action bar */
             actionButtons.push(html`
                 <sl-tooltip placement="top" content=${msg("Download")} style="--show-delay: 200;">
-                <sl-button class="hide pop action" size="small" variant="primary" style="margin-left:5px" @click=${async (e) => {
-                    this.dispatchEvent(new CustomEvent<EntryId>('download', {detail: this.hash, bubbles: true, composed: true}));
+                <sl-button class="hide pop action" size="small" variant="primary" style="margin-left:5px" @click=${async (_e:any) => {
+                    this.dispatchEvent(new CustomEvent<EntryId>('download', {detail: this.hash!, bubbles: true, composed: true}));
                 }}>
                     <sl-icon name="download"></sl-icon>
                 </sl-button></sl-tooltip>`);
             if (fileDescription.visibility == 'Private') {
                 actionButtons.push(html`
                     <sl-tooltip placement="top" content=${msg("Send")} style="--show-delay: 200;">
-                        <sl-button class="hide pop action" size="small" variant="primary" @click=${async (e) => {
-                            this.dispatchEvent(new CustomEvent<EntryId>('send', {detail: this.hash, bubbles: true, composed: true}));
+                        <sl-button class="hide pop action" size="small" variant="primary" @click=${async (_e:any) => {
+                            this.dispatchEvent(new CustomEvent<EntryId>('send', {detail: this.hash!, bubbles: true, composed: true}));
                         }}>
                             <sl-icon name="send"></sl-icon>
                         </sl-button>
@@ -149,7 +149,7 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
             //         for (const [attName, attType] of Object.entries(attDict)) {
             //             actionButtons.push(html`
             //                 <sl-tooltip placement="top" content=${attName} style="--show-delay: 200;">
-            //     <sl-button class="hide pop action" size="small" variant="primary" @click=${async (e) => {
+            //     <sl-button class="hide pop action" size="small" variant="primary" @click=${async (e:any) => {
             //             const hrl: Hrl = [decodeHashFromBase64(this.cell.dnaHash), decodeHashFromBase64(this.hash)];
             //             const context = {
             //                 subjectType: "File",
@@ -176,7 +176,11 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 <div slot="anchor">
                     <sl-popup class="fileButton" placement="right" active>
                         
-                        <div slot="anchor" @click=${async (e) => {
+                        <div slot="anchor" @click=${async (_e:any) => {
+                            if (!this.hash) {
+                                console.warn("Missing file hash");
+                                return;
+                            }
                             const obj: WAL = {
                                 hrl: [this.cell.address.dnaId.hash, this.hash.hash],
                                 context: {
@@ -192,7 +196,7 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
                                 this.weServices.walToPocket(obj);
                             }
                             await delay(1200);
-                            const tt = this.shadowRoot.getElementById("file-tip") as SlTooltip;
+                            const tt = this.shadowRoot!.getElementById("file-tip") as SlTooltip;
                             tt.hide();
                             //this.requestUpdate();
                         }}>
@@ -214,7 +218,7 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** */
-    static get styles() {
+    static override get styles() {
         return [
             filesSharedStyles,
             css`

@@ -9,7 +9,7 @@ import {DistributionStrategy} from "@ddd-qc/delivery/dist/bindings/delivery.type
 /** */
 export class FilesZvm extends ZomeViewModel {
 
-    static readonly ZOME_PROXY = FilesProxy;
+    static override readonly ZOME_PROXY = FilesProxy;
 
     //private _allAppletIds: EntryHashB64[] = [];
 
@@ -37,14 +37,14 @@ export class FilesZvm extends ZomeViewModel {
 
 
     /** */
-    async initializePerspectiveOffline(): Promise<void> {
+    override async initializePerspectiveOffline(): Promise<void> {
         // N/A
         this._dvmParent.dumpCallLogs();
     }
 
 
     /** */
-    async initializePerspectiveOnline(): Promise<void> {
+    override async initializePerspectiveOnline(): Promise<void> {
         // N/A
     }
 

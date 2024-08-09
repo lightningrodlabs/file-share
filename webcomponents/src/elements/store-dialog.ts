@@ -1,4 +1,4 @@
-import {css, html, PropertyValues} from "lit";
+import {css, html} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
 import {DnaElement, EntryId} from "@ddd-qc/lit-happ";
 import {FilesDvm} from "../viewModels/files.dvm";
@@ -21,8 +21,8 @@ export class StoreDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
     @property() wait: boolean = false;
 
-    @state() private _file?: File;
-    @state() private _selectedTags = [];
+    @state() private _file: File | undefined = undefined;
+    @state() private _selectedTags: any[] = [];
 
     private _splitObj?: SplitObject;
 
@@ -32,16 +32,16 @@ export class StoreDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     get inputElem() : SlInput {
-        return this.shadowRoot.getElementById("tag-input") as SlInput;
+        return this.shadowRoot!.getElementById("tag-input") as SlInput;
     }
 
     get dialogElem() : SlDialog {
-        return this.shadowRoot.querySelector("sl-dialog") as SlDialog;
+        return this.shadowRoot!.querySelector("sl-dialog") as SlDialog;
     }
 
 
     get tagListElem() : TagList {
-        return this.shadowRoot.querySelector("tag-list") as TagList;
+        return this.shadowRoot!.querySelector("tag-list") as TagList;
     }
 
     /** -- Methods -- */
@@ -70,7 +70,7 @@ export class StoreDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** */
-    async onAddNewTag(e) {
+    async onAddNewTag(e:CustomEvent<string>) {
         console.log("onAddNewTag", e);
         if (this._localOnly) {
             await this._dvm.taggingZvm.commitPrivateTag(e.detail);
@@ -84,13 +84,13 @@ export class StoreDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** */
-    render() {
+    override render() {
         console.log("<store-dialog>.render()", this.wait, this._file, this.perspective.uploadStates);
 
         let content = html`<sl-spinner></sl-spinner>`;
 
         if (this.wait && this._splitObj && this.perspective.uploadStates[this._splitObj.dataHash]) {
-            let pct = Math.ceil(this.perspective.uploadStates[this._splitObj.dataHash].written_chunks / this.perspective.uploadStates[this._splitObj.dataHash].splitObj.numChunks * 100);
+            let pct = Math.ceil(this.perspective.uploadStates[this._splitObj.dataHash]!.written_chunks / this.perspective.uploadStates[this._splitObj.dataHash]!.splitObj.numChunks * 100);
             content = html`<sl-progress-bar .value=${pct}>${pct}%</sl-progress-bar>`;
         }
 
@@ -122,7 +122,7 @@ export class StoreDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 : html`
                     <tag-list selectable deletable
                               .tags=${this._selectedTags}
-                              @deleted=${(e) => {
+                              @deleted=${(e:any) => {
                                 console.log("deleted tag", e.detail);
                                 const index = this._selectedTags.indexOf(e.detail);
                                 if (index > -1) {
@@ -136,12 +136,12 @@ export class StoreDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
                     `}
                 </div>
                 <tag-input .tags=${allTags}
-                           @new-tag=${(e) => {console.log("e", e); this.onAddNewTag(e)}}
-                           @selected=${(e) => {this._selectedTags.push(e.detail); this.requestUpdate(); if (this.tagListElem) this.tagListElem.requestUpdate();}}
+                           @new-tag=${(e:CustomEvent<string>) => {console.log("e", e); this.onAddNewTag(e)}}
+                           @selected=${(e:any) => {this._selectedTags.push(e.detail); this.requestUpdate(); if (this.tagListElem) this.tagListElem.requestUpdate();}}
                 ></tag-input>
                 
                 <sl-button slot="footer" variant="neutral" 
-                           @click=${(e) => {
+                           @click=${(_e:any) => {
                                 this._file = undefined; 
                                 this.dialogElem.open = false;
                                 this.dispatchEvent(new CustomEvent('cancel', {detail: null, bubbles: true, composed: true}))
@@ -150,10 +150,10 @@ export class StoreDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 </sl-button>
                 <sl-button slot="footer" variant="primary" 
                            ?disabled=${!this._file} 
-                           @click=${async (e) => {
+                           @click=${async (e:any) => {
                                e.preventDefault(); e.stopPropagation();
                                if (this._localOnly) {
-                                   const res = await this._dvm.startCommitPrivateFile(this._file, this._selectedTags);
+                                   const res = await this._dvm.startCommitPrivateFile(this._file!, this._selectedTags);
                                    if (!res) {
                                        const str = msg("File already stored locally");
                                        toastError(str);
@@ -164,13 +164,13 @@ export class StoreDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
                                    let maybeSplitObj;
                                    let str = msg("File already published to group or stored locally")
                                    try {
-                                       maybeSplitObj = await this._dvm.startPublishFile(this._file, this._selectedTags, this._dvm.profilesZvm.perspective.agents,(manifestEh: EntryId) => {
+                                       maybeSplitObj = await this._dvm.startPublishFile(this._file!, this._selectedTags, this._dvm.profilesZvm.perspective.agents,(manifestEh: EntryId) => {
                                            console.log("<store-dialog>.onUploadDone()", manifestEh, this);
                                            this.dispatchEvent(new CustomEvent<EntryId>('created', {detail: manifestEh, bubbles: true, composed: true}));
                                            if (this.dialogElem) this.dialogElem.open = false;
                                        }
                                    );
-                                   } catch(e) {
+                                   } catch(e:any) {
                                        console.warn("filesDvm.startPublishFile() Failed", e);
                                        str = e;
                                    }
@@ -197,7 +197,7 @@ export class StoreDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
         /** render all */
         return html`
             <sl-dialog class="action-dialog" 
-                       @sl-request-close=${(e) => {
+                       @sl-request-close=${(e:any) => {
                            console.log("<store-dialog> sl-request-close", e); 
                            if (!this.wait) {
                                this._file = undefined;
@@ -217,7 +217,7 @@ export class StoreDialog extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** */
-    static get styles() {
+    static override get styles() {
         return [
             filesSharedStyles,
             css`

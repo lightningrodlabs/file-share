@@ -1,6 +1,6 @@
-import {css, html, PropertyValues, TemplateResult} from "lit";
+import {css, html, TemplateResult} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
-import {delay, DnaElement, ActionId, EntryId, AgentId} from "@ddd-qc/lit-happ";
+import {DnaElement, ActionId, EntryId, AgentId} from "@ddd-qc/lit-happ";
 import {msg} from '@lit/localize';
 import {FilesDvm} from "../viewModels/files.dvm";
 import {
@@ -56,7 +56,7 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
 
     /** */
     get fileViewElem() : FileView {
-        return this.shadowRoot.getElementById("file-view") as FileView;
+        return this.shadowRoot!.getElementById("file-view") as FileView;
     }
 
 
@@ -64,7 +64,7 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
      * In dvmUpdated() this._dvm is not already set!
      * Subscribe to ZVMs
      */
-    protected async dvmUpdated(newDvm: FilesDvm, oldDvm?: FilesDvm): Promise<void> {
+    protected override async dvmUpdated(newDvm: FilesDvm, oldDvm?: FilesDvm): Promise<void> {
         console.log("<activity-timeline>.dvmUpdated()");
         if (oldDvm) {
             //console.log("\t Unsubscribed to Zvms roleName = ", oldDvm.fileShareZvm.cell.name)
@@ -81,12 +81,15 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
 
         /** Remove Received files from private files */
         const receivedManifestEhs: EntryHashB64[] = Array.from(this.deliveryPerspective.receptions.values())
-            .map(([rp,_ts]) => new EntryId(this.deliveryPerspective.notices.get(new EntryId(rp.notice_eh))[0].summary.parcel_reference.parcel_eh).b64);
-
+            .map(([rp,_ts]) => {
+                const tuple = this.deliveryPerspective.notices.get(new EntryId(rp.notice_eh))!;
+                const parcel_eh = tuple[0].summary.parcel_reference.parcel_eh;
+                return new EntryId(parcel_eh).b64
+            });
 
         const ReceivedFiles: ActivityLog[] = Array.from(this.deliveryPerspective.receptions.entries())
             .map(([noticeEh, [rp, timestamp]]) => {
-                const notice = this.deliveryPerspective.notices.get(noticeEh)[0];
+                const notice = this.deliveryPerspective.notices.get(noticeEh)![0];
                 return {
                         timestamp,
                         type: ActivityLogType.ReceivedFile,
@@ -122,19 +125,19 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
 
         const newPersonalFiles: ActivityLog[] = Array.from(this.deliveryPerspective.privateManifests.entries())
             .filter(([eh, [_rp, _ts]]) => !receivedManifestEhs.includes(eh.b64))
-            .map(([eh, [rp, timestamp]]) => {
+            .map(([eh, [_rp, timestamp]]) => {
                 return {timestamp, type: ActivityLogType.NewPersonalFile, value: {manifestEh: eh} as ActivityLogTypeVariantNewPersonalFile};
             });
         //console.log("sortedPrivateParcels", sortedPrivateParcels);
 
         const addGroupFiles: ActivityLog[] = Array.from(this.deliveryPerspective.publicParcels.entries())
             .map(([eh, pprm]) => {
-                return {timestamp: pprm.creationTs, type: ActivityLogType.NewGroupFile, value: {manifestEh: eh, peer: pprm.author}}
+                return {timestamp: pprm.creationTs, type: ActivityLogType.NewGroupFile, value: {manifestEh: eh, peer: pprm.author}} as ActivityLog;
             });
         const removeGroupFiles: ActivityLog[] = Array.from(this.deliveryPerspective.publicParcels.entries())
           .filter(([_ppEh, pprm]) => pprm.deleteInfo)
           .map(([eh, pprm]) => {
-              return {timestamp: pprm.deleteInfo[0] , type: ActivityLogType.RemovedGroupFile, value: {manifestEh: eh, peer: pprm.deleteInfo[1]}};
+              return {timestamp: pprm.deleteInfo![0] , type: ActivityLogType.RemovedGroupFile, value: {manifestEh: eh, peer: pprm.deleteInfo![1]}} as ActivityLog;
           });
         //console.log("sortedPublicParcels", sortedPublicParcels);
 
@@ -163,13 +166,15 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
         switch (log.type) {
             case ActivityLogType.DeliveryDeclined: {
                 const variant = log.value as ActivityLogTypeVariantDeliveryDeclined;
-                manifestEh = new EntryId(this.deliveryPerspective.distributions.get(variant.distributionAh)[0].delivery_summary.parcel_reference.parcel_eh);
+                const tuple = this.deliveryPerspective.distributions.get(variant.distributionAh)!;
+                manifestEh = new EntryId(tuple[0].delivery_summary.parcel_reference.parcel_eh);
                 message = msg(`was declined by`);
                 peer = variant.peer;
                 break;}
             case ActivityLogType.DeliveryReceived: {
                 const variant = log.value as ActivityLogTypeVariantDeliveryReceived;
-                manifestEh = new EntryId(this.deliveryPerspective.distributions.get(variant.distributionAh)[0].delivery_summary.parcel_reference.parcel_eh);
+                const tuple = this.deliveryPerspective.distributions.get(variant.distributionAh)!;
+                manifestEh = new EntryId(tuple[0].delivery_summary.parcel_reference.parcel_eh);
                 message = msg(`was received by`);
                 peer = variant.peer;
                 break;}
@@ -228,7 +233,7 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
 
 
     /** */
-    render() {
+    override render() {
         console.log("<activity-timeline>.render()", this._initialized);
 
         if (!this._initialized) {
@@ -261,7 +266,7 @@ export class ActivityTimeline extends DnaElement<FilesDvmPerspective, FilesDvm> 
 
 
     /** */
-    static get styles() {
+    static override get styles() {
         return [
             filesSharedStyles,
             css`

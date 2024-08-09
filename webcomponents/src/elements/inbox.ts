@@ -1,6 +1,6 @@
-import {css, html, PropertyValues, TemplateResult} from "lit";
+import {css, html, TemplateResult} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
-import {AgentId, delay, DnaElement} from "@ddd-qc/lit-happ";
+import {AgentId, DnaElement} from "@ddd-qc/lit-happ";
 import {FilesDvm} from "../viewModels/files.dvm";
 import {
     DeliveryPerspective,
@@ -26,7 +26,7 @@ export class Inbox extends DnaElement<unknown, FilesDvm> {
 
     /** */
     get fileViewElem() : FileView {
-        return this.shadowRoot.getElementById("file-view") as FileView;
+        return this.shadowRoot!.getElementById("file-view") as FileView;
     }
 
 
@@ -34,7 +34,7 @@ export class Inbox extends DnaElement<unknown, FilesDvm> {
      * In dvmUpdated() this._dvm is not already set!
      * Subscribe to ZVMs
      */
-    protected async dvmUpdated(newDvm: FilesDvm, oldDvm?: FilesDvm): Promise<void> {
+    protected override async dvmUpdated(newDvm: FilesDvm, oldDvm?: FilesDvm): Promise<void> {
         console.log("<activity-timeline>.dvmUpdated()");
         if (oldDvm) {
             //console.log("\t Unsubscribed to Zvms roleName = ", oldDvm.fileShareZvm.cell.name)
@@ -119,7 +119,7 @@ export class Inbox extends DnaElement<unknown, FilesDvm> {
 
 
     /** */
-    render() {
+    override render() {
         console.log("<files-inbox>.render()", this._initialized);
 
         let items = [
@@ -226,7 +226,7 @@ export class Inbox extends DnaElement<unknown, FilesDvm> {
 
 
     /** */
-    static get styles() {
+    static override get styles() {
         return [
             filesSharedStyles,
             css`

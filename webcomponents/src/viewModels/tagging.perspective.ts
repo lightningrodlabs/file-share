@@ -19,7 +19,7 @@ export class TaggingPerspective {
   /** tagEh -> tag string */
   publicTags: EntryIdMap<string> = new EntryIdMap();
   /** tag string -> (target_eh -> link_ah) */
-  publicTargetsByTag: Dictionary<EntryIdMap<ActionId | null>> = {};
+  publicTargetsByTag: Dictionary<EntryIdMap<ActionId | undefined>> = {};
   /** tagEh -> tag string */
   privateTags: EntryIdMap<string> = new EntryIdMap();
   /** tag string -> (target_eh -> link_ah) */
@@ -41,14 +41,14 @@ export class TaggingPerspective {
     if (!this.privateTagsByTarget.get(eh)) {
       return [];
     }
-    return this.privateTagsByTarget.get(eh);
+    return this.privateTagsByTarget.get(eh)!;
   }
   /** */
   getTargetPublicTags(eh: EntryId): string[] {
     if (!this.publicTagsByTarget.get(eh)) {
       return [];
     }
-    return this.publicTagsByTarget.get(eh);
+    return this.publicTagsByTarget.get(eh)!;
   }
 
 
@@ -64,6 +64,10 @@ export class TaggingPerspective {
     /** Public */
     for (const [tagEh, tag] of (this.publicTags.entries())) {
       const map = this.publicTargetsByTag[tag];
+      if (!map) {
+        console.warn("No public targets found for tag", tag);
+        continue;
+      }
       const targets: EntryHashB64[] = Array.from(map.keys()).map((id) => id.b64);
       publicTags.push([tagEh.b64, tag, targets]);
       for (const [targetEh, linkAh] of map.entries()) {
@@ -75,6 +79,10 @@ export class TaggingPerspective {
     /** Private */
     for (const [tagEh, tag] of (this.privateTags.entries())) {
       const map = this.privateTargetsByTag[tag];
+      if (!map) {
+        console.warn("No private targets found for tag", tag);
+        continue;
+      }
       const targets: EntryHashB64[] = Array.from(map.keys()).map((id) => id.b64);
       privateTags.push([tagEh.b64, tag, targets]);
       for (const [targetEh, linkAh] of map.entries()) {
@@ -123,21 +131,21 @@ export class TaggingPerspectiveMutable extends TaggingPerspective  {
 
 
   /** */
-  storePublicTagging(tag: string, targetEh: EntryId, linkAh: ActionId | null) {
+  storePublicTagging(tag: string, targetEh: EntryId, linkAh: ActionId | undefined) {
     console.debug("Tagging.storePublicTagging()", tag, targetEh.short, this);
     if (!this.publicTargetsByTag[tag]) {
       this.publicTargetsByTag[tag] = new EntryIdMap();
     }
-    const maybeLinkAh = this.publicTargetsByTag[tag].get(targetEh);
+    const maybeLinkAh = this.publicTargetsByTag[tag]!.get(targetEh);
     if (!maybeLinkAh || maybeLinkAh == null) {
-      this.publicTargetsByTag[tag].set(targetEh, linkAh);
+      this.publicTargetsByTag[tag]!.set(targetEh, linkAh);
     }
     /** publicTagsByTarget */
     if (!this.publicTagsByTarget.get(targetEh)) {
       this.publicTagsByTarget.set(targetEh, []);
     }
-    if (!this.publicTagsByTarget.get(targetEh).includes(tag)) {
-      this.publicTagsByTarget.get(targetEh).push(tag);
+    if (!this.publicTagsByTarget.get(targetEh)!.includes(tag)) {
+      this.publicTagsByTarget.get(targetEh)!.push(tag);
     }
   }
   /** */
@@ -162,11 +170,11 @@ export class TaggingPerspectiveMutable extends TaggingPerspective  {
     if (!this.privateTargetsByTag[tag]) {
       this.privateTargetsByTag[tag] = new EntryIdMap();
     }
-    this.privateTargetsByTag[tag].set(targetEh, linkAh);
+    this.privateTargetsByTag[tag]!.set(targetEh, linkAh);
     if (!this.privateTagsByTarget.get(targetEh)) {
       this.privateTagsByTarget.set(targetEh, []);
     }
-    this.privateTagsByTarget.get(targetEh).push(tag);
+    this.privateTagsByTarget.get(targetEh)!.push(tag);
   }
 
 
@@ -220,7 +228,12 @@ export class TaggingPerspectiveMutable extends TaggingPerspective  {
       this.storePrivateTag(tagId, tag);
       for (const targetEh of targets) {
         const targetId = new EntryId(targetEh);
-        this.storePrivateTagging(tag, targetId, privateLinkMap.get(targetId));
+        const privateLink = privateLinkMap.get(targetId);
+        if (!privateLink) {
+          console.error("Missing private link for target", targetId)
+          continue;
+        }
+        this.storePrivateTagging(tag, targetId, privateLink);
       }
     }
   }

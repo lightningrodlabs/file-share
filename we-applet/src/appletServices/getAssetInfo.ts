@@ -27,6 +27,10 @@ export async function getAssetInfo(
     }
 
     const mainAppInfo = await appletClient.appInfo();
+    if (!mainAppInfo) {
+        throw Promise.reject("No main appInfo found");
+    }
+
     const pEntryType = pascal(recordInfo.entryType);
 
     console.log("Files/we-applet/getAssetInfo(): pEntryType", pEntryType);

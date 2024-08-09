@@ -1,4 +1,4 @@
-import {css, html, PropertyValues} from "lit";
+import {css, html} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
 import {ActionId, DnaElement, EntryIdMap} from "@ddd-qc/lit-happ";
 import {FilesDvm} from "../viewModels/files.dvm";
@@ -51,7 +51,7 @@ export class FilesMenu extends DnaElement<FilesDvmPerspective, FilesDvm> {
      * In dvmUpdated() this._dvm is not already set!
      * Subscribe to ZVMs
      */
-    protected async dvmUpdated(newDvm: FilesDvm, oldDvm?: FilesDvm): Promise<void> {
+    protected override async dvmUpdated(newDvm: FilesDvm, oldDvm?: FilesDvm): Promise<void> {
         console.log("<files-menu>.dvmUpdated()");
         if (oldDvm) {
             console.log("\t Unsubscribed to Zvms roleName = ", oldDvm.deliveryZvm.cell.name)
@@ -65,16 +65,16 @@ export class FilesMenu extends DnaElement<FilesDvmPerspective, FilesDvm> {
     }
 
 
-    /** */
-    updated() {
-        //const menu = this.shadowRoot.querySelector("sl-menu") as SlMenu;
-        //console.log("SlMenu", menu);
-    }
+    // /** */
+    // override updated() {
+    //     //const menu = this.shadowRoot!.querySelector("sl-menu") as SlMenu;
+    //     //console.log("SlMenu", menu);
+    // }
 
 
     // /** Set "selectedItem" class */
     // setSelected(selectedItem) {
-    //     const menu = this.shadowRoot.getElementById("lhs-menu") as SlMenu;
+    //     const menu = this.shadowRoot!.getElementById("lhs-menu") as SlMenu;
     //     const items = menu.getAllItems();
     //     for (const item  of items) {
     //         item.classList.remove("selectedItem");
@@ -84,9 +84,10 @@ export class FilesMenu extends DnaElement<FilesDvmPerspective, FilesDvm> {
     // }
 
 
+    /** */
     setSelected(text: string) {
         console.log("SlMenuItem setSelected()", text)
-        const menu = this.shadowRoot.getElementById("lhs-menu") as SlMenu;
+        const menu = this.shadowRoot!.getElementById("lhs-menu") as SlMenu;
         const items = menu.getAllItems();
         for (const item  of items) {
             //console.log("SlMenuItem", item.innerText, item);
@@ -102,7 +103,7 @@ export class FilesMenu extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** */
-    onSelected(e) {
+    onSelected(e:any) {
         console.log("<files-menu> onSelected", e.detail.item);
         //console.log("<files-menu> onSelected", e.detail.item.getTextLabel().trim());
 
@@ -137,9 +138,9 @@ export class FilesMenu extends DnaElement<FilesDvmPerspective, FilesDvm> {
             `;
         }
         console.log("renderTags()", this.taggingPerspective.publicTargetsByTag, this.taggingPerspective.privateTargetsByTag);
-        const tags: Dictionary<EntryIdMap<ActionId | null>> = isPrivate
+        const tags: Dictionary<EntryIdMap<ActionId | undefined>> = isPrivate
             ? this.taggingPerspective.privateTargetsByTag
-            : this.taggingPerspective.publicTargetsByTag
+            : this.taggingPerspective.publicTargetsByTag;
         const groupTags = Object.entries(tags)
             .filter(([_tag, idMap]) => idMap.size > 0)
             .map(([tag, array]) => {
@@ -163,7 +164,7 @@ export class FilesMenu extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** */
-    render() {
+    override render() {
         console.log("<files-menu>.render()", this._initialized, this._dvm.deliveryZvm.probeDhtCount, this.taggingPerspective);
 
         const initialized = !!(this._initialized && this._dvm.deliveryZvm.probeDhtCount);
@@ -247,7 +248,7 @@ export class FilesMenu extends DnaElement<FilesDvmPerspective, FilesDvm> {
     }
 
     /** */
-    static get styles() {
+    static override get styles() {
         return [
             filesSharedStyles,
             css`

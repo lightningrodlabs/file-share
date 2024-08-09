@@ -1,5 +1,5 @@
-import {html, css, render} from "lit";
-import {property, state, customElement} from "lit/decorators.js";
+import {html, css} from "lit";
+import {state, customElement} from "lit/decorators.js";
 import {ContextProvider} from "@lit/context";
 import {
   AdminWebsocket,
@@ -26,7 +26,7 @@ import {DELIVERY_INTERGRITY_ZOME_NAME, DELIVERY_ZOME_NAME, DeliveryEntryType} fr
 import {buildBlock} from "./files-blocks";
 import {DEFAULT_FILES_DEF} from "./happDef";
 import {setLocale} from "./localization";
-import { localized, msg, str } from '@lit/localize';
+import { msg } from '@lit/localize';
 
 import "./files-main-page"
 import "@ddd-qc/files";
@@ -43,7 +43,7 @@ export class FilesApp extends HappElement {
 
   /** -- Fields -- */
 
-  static readonly HVM_DEF: HvmDef = DEFAULT_FILES_DEF;
+  static override readonly HVM_DEF: HvmDef = DEFAULT_FILES_DEF;
 
   @state() private _hasHolochainFailed = true;
   @state() private _loaded = false;
@@ -85,7 +85,7 @@ export class FilesApp extends HappElement {
   /**  */
   static async fromWe(
       appWs: AppWebsocket,
-      adminWs: AdminWebsocket,
+      adminWs: AdminWebsocket | undefined,
       canAuthorizeZfns: boolean,
       appId: InstalledAppId,
       profilesAppId: InstalledAppId,
@@ -118,6 +118,9 @@ export class FilesApp extends HappElement {
                             profilesCloneId: CloneId | undefined,
                             _profilesZomeName: ZomeName): Promise<void> {
     const profilesAppInfo = await profilesProxy.appInfo();
+    if (!profilesAppInfo) {
+      throw Promise.reject("Profiles AppInfo not found");
+    }
     const profilesDef: DvmDef = {ctor: ProfilesDvm, baseRoleName: profilesBaseRoleName, isClonable: false};
     const cell_infos = Object.values(profilesAppInfo.cell_info);
     console.log("createProfilesDvm() cell_infos:", cell_infos);
@@ -164,7 +167,7 @@ export class FilesApp extends HappElement {
 
 
   /** */
-  async hvmConstructed() {
+  override async hvmConstructed() {
     console.log("hvmConstructed()", this._adminWs, this._canAuthorizeZfns);
 
     // /** Authorize all zome calls */
@@ -190,7 +193,7 @@ export class FilesApp extends HappElement {
       const allAppEntryTypes = await this.filesDvm.fetchAllEntryDefs();
       console.log("happInitialized(), allAppEntryTypes", allAppEntryTypes);
       console.log(`${DELIVERY_ZOME_NAME} entries`, allAppEntryTypes[DELIVERY_ZOME_NAME]);
-      const deliveryEntryTypes = allAppEntryTypes[DELIVERY_ZOME_NAME];
+      const deliveryEntryTypes = allAppEntryTypes[DELIVERY_ZOME_NAME]!;
       if (Object.keys(deliveryEntryTypes).length == 0) {
         console.warn(`No entries found for ${DELIVERY_ZOME_NAME}`);
         await delay(1000);
@@ -206,7 +209,7 @@ export class FilesApp extends HappElement {
 
 
   /** */
-  async perspectiveInitializedOffline(): Promise<void> {
+  override async perspectiveInitializedOffline(): Promise<void> {
     console.log("<files-app>.perspectiveInitializedOffline()");
     const maybeProfile = await this.filesDvm.profilesZvm.findProfile(this.filesDvm.cell.address.agentId);
     console.log("perspectiveInitializedOffline() maybeProfile", maybeProfile, this.filesDvm.cell.address.agentId);
@@ -216,7 +219,7 @@ export class FilesApp extends HappElement {
 
 
   /** */
-  async perspectiveInitializedOnline(): Promise<void> {
+  override async perspectiveInitializedOnline(): Promise<void> {
     console.log("<files-app>.perspectiveInitializedOnline()");
     if (this.appletView && this.appletView.type == "main") {
       await this.hvm.probeAll();
@@ -226,7 +229,7 @@ export class FilesApp extends HappElement {
 
 
   /** */
-  render() {
+  override render() {
     console.log("<files-app> render()", this._loaded, this._hasHolochainFailed);
 
     if (!this._loaded || !this._offlinePerspectiveloaded || !this._onlinePerspectiveloaded) {
@@ -301,12 +304,12 @@ export class FilesApp extends HappElement {
                   console.log("@created event", e.detail);
                   const wal: WAL = {hrl: [this.filesDvm.cell.address.dnaId.hash, e.detail.hash], context: null}
                   await creatableViewInfo.resolve(wal);
-                } catch(e) {
+                } catch(e:any) {
                   creatableViewInfo.reject(e)
                 }
               }}
-              @cancel=${(_e) => creatableViewInfo.cancel()}
-              @reject=${(e) => creatableViewInfo.reject(e.detail)}
+              @cancel=${(_e:any) => creatableViewInfo.cancel()}
+              @reject=${(e:any) => creatableViewInfo.reject(e.detail)}
             ></store-dialog>`;
           } else {
             throw new Error(`Unhandled creatable type ${creatableViewInfo.name}.`)
@@ -336,7 +339,7 @@ export class FilesApp extends HappElement {
                   ${msg('Import Profile into Files applet')}
                 </div>
                 <files-edit-profile
-                    .profile=${this._weProfilesDvm.profilesZvm.getMyProfile()}
+                    .profile=${this._weProfilesDvm? this._weProfilesDvm.profilesZvm.getMyProfile() : undefined}
                     @save-profile=${async (e: CustomEvent<ProfileInfo>) => {
                       console.log("onSaveProfile() app ", e.detail);
                       await this.filesDvm.profilesZvm.createMyProfile(e.detail.profile);
@@ -378,7 +381,7 @@ export class FilesApp extends HappElement {
   }
 
   /** */
-  static get styles() {
+  static override get styles() {
     return [
       css`
         :host {

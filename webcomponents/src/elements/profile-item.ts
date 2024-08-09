@@ -1,5 +1,5 @@
-import {css, html, LitElement, PropertyValues} from "lit";
-import {property, state, customElement} from "lit/decorators.js";
+import {css, html} from "lit";
+import {property, customElement} from "lit/decorators.js";
 import {filesSharedStyles} from "../sharedStyles";
 import {
     getInitials,
@@ -27,7 +27,7 @@ export class ProfileItem extends ZomeElement<ProfilesAltPerspective, ProfilesAlt
 
 
     /** */
-    render() {
+    override render() {
         console.log("<profile-item>.render()", this.clearable);
 
         const profile = this._zvm.perspective.getProfile(this.key);
@@ -43,7 +43,7 @@ export class ProfileItem extends ZomeElement<ProfilesAltPerspective, ProfilesAlt
             clearButton = html`
                 <sl-icon-button class="hide" 
                                 name="x" label="Clear"
-                                @click=${(e) => {this.dispatchEvent(new CustomEvent<AgentId>('cleared', {detail: this.key, bubbles: true, composed: true}));}}
+                                @click=${(_e:any) => {this.dispatchEvent(new CustomEvent<AgentId>('cleared', {detail: this.key, bubbles: true, composed: true}));}}
                 ></sl-icon-button>
             `;
             // clearButton = html`
@@ -57,7 +57,7 @@ export class ProfileItem extends ZomeElement<ProfilesAltPerspective, ProfilesAlt
 
         /** render all */
         return html`
-            <div id="item" class="${this.selectable == ""? "selectable" : ""}" @click=${(e) => {
+            <div id="item" class="${this.selectable == ""? "selectable" : ""}" @click=${(_e:any) => {
                 if (this.selectable == "") {
                     this.dispatchEvent(new CustomEvent<AgentId>('selected', {detail: this.key, bubbles: true, composed: true}))
                 }
@@ -71,7 +71,7 @@ export class ProfileItem extends ZomeElement<ProfilesAltPerspective, ProfilesAlt
 
 
     /** */
-    static get styles() {
+    static override get styles() {
         return [
             filesSharedStyles,
             css`

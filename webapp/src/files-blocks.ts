@@ -1,4 +1,4 @@
-import {TemplateResult, html} from "lit";
+import {TemplateResult, /*html*/} from "lit";
 import {FilesApp} from "./files-app";
 
 /** */
@@ -15,15 +15,15 @@ export enum FilesBlockType {
 
 export /*async*/ function buildBlock(happElem: FilesApp, blockViewInfo: any): TemplateResult<1> {
     //await happElem.filesDvm.probeAll();
-    const deliveryPerspective = happElem.filesDvm.deliveryZvm.perspective;
+    /*const deliveryPerspective =*/ happElem.filesDvm.deliveryZvm.perspective;
     switch (blockViewInfo.block) {
          case FilesBlockType.StoreFile:
         //     return html`
-        //         <button @click=${(e) => {
+        //         <button @click=${(e:any) => {
         //             const storeDialogElem = happElem.shadowRoot.querySelector("store-dialog") as StoreDialog;
         //             storeDialogElem.open(false);
         //         }}>Add Public file</button>
-        //         <button @click=${(e) => {
+        //         <button @click=${(e:any) => {
         //             const storeDialogElem = happElem.shadowRoot.querySelector("store-dialog") as StoreDialog;
         //             storeDialogElem.open(true);
         //         }}>Add Private file</button>
@@ -56,7 +56,7 @@ export /*async*/ function buildBlock(happElem: FilesApp, blockViewInfo: any): Te
         //         <h2>Select File</h2>
         //         <file-table selectable
         //                 .items=${allItems}
-        //                 @selected${async (e) => {
+        //                 @selected${async (e:any) => {
         //                     console.log("PickFile Block: File selected", e);
         //                     const input = {
         //                         hrl: pickFileContext.hrl,

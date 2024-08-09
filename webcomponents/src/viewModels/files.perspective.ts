@@ -6,7 +6,7 @@ import {SplitObject} from "../utils";
 export type FilesCb = (manifestEh: EntryId) => void;
 
 /** */
-interface UploadState {
+export interface UploadState {
     isPrivate: boolean,
     file: File,
     splitObj: SplitObject,

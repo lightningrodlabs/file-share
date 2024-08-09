@@ -24,6 +24,11 @@ export async function search(appletClient: AppClient, appletHash: AppletHash, we
 
     /** Get Cell proxy */
     const mainAppInfo = await appletClient.appInfo();
+    const appletInfo = await weServices.appletInfo(appletHash);
+    if (!mainAppInfo || !appletInfo) {
+        throw Promise.reject("No main appInfo found");
+    }
+
     const cellProxy = await asCellProxy(
         appletClient,
         undefined,
@@ -44,7 +49,7 @@ export async function search(appletClient: AppClient, appletHash: AppletHash, we
     /** Search Public Files */
     const publicFiles: [ParcelReference, Timestamp, AgentId][] = []; // FIXME: await proxy.pullPublicFiles();
     const matchingPublic: [EntryId, ParcelDescription, AgentId, boolean][] = publicFiles
-        .filter(([ref, _, author]) => ref.description.name.toLowerCase().includes(searchLC))
+        .filter(([ref, _, _author]) => ref.description.name.toLowerCase().includes(searchLC))
         .map(([ref, _, author]) => [new EntryId(ref.parcel_eh), ref.description, author, false]);
 
     //console.log("Files/we-applet/search(): publicFiles", matchingPublic.length, publicFiles.length);
@@ -56,7 +61,7 @@ export async function search(appletClient: AppClient, appletHash: AppletHash, we
     /** Transform results into WAL */
     const results: Array<WAL> = concat
         .map(([eh, description, author, isPrivate]) => { return {
-            hrl: [this.cell.address.dnaId.hash, eh.hash],
+            hrl: [appletInfo.groupsHashes[0]!, eh.hash],
             context: {
                 subjectName: description.name,
                 subjectType: "File",

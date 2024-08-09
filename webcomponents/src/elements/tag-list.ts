@@ -1,5 +1,5 @@
-import {css, html, LitElement, PropertyValues} from "lit";
-import {property, state, customElement} from "lit/decorators.js";
+import {css, html, LitElement} from "lit";
+import {property, customElement} from "lit/decorators.js";
 import {filesSharedStyles} from "../sharedStyles";
 
 
@@ -22,11 +22,11 @@ export class TagList extends LitElement {
 
 
     /** */
-    render() {
+    override render() {
         //console.log("<tag-list>.render()", this.tags, this.selectable, this.deletable);
         const tagItems = this.tags.map((str) => {
             return html`
-                <div class="tag ${this.selectable == ""? "selectable" : ""}" @click=${(e) => {
+                <div class="tag ${this.selectable == ""? "selectable" : ""}" @click=${(_e:any) => {
                 if (this.selectable == "") {
                     this.dispatchEvent(new CustomEvent('selected', {detail: str, bubbles: true, composed: true}))
                 }
@@ -35,7 +35,7 @@ export class TagList extends LitElement {
                     ${this.deletable == ""
                         ? html`
                         <sl-icon-button class="hide" name="x" label="remove" style=""
-                                   @click=${async (_e) => {this.onTagDelete(str)}}>
+                                   @click=${async (_e:any) => {this.onTagDelete(str)}}>
                         </sl-icon-button>`
                         : html``
                     }            
@@ -46,7 +46,7 @@ export class TagList extends LitElement {
 
 
     /** */
-    static get styles() {
+    static override get styles() {
         return [
             filesSharedStyles,
             css`

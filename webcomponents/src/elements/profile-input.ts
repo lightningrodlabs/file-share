@@ -1,5 +1,5 @@
-import {css, html, LitElement, PropertyValues} from "lit";
-import {property, state, customElement} from "lit/decorators.js";
+import {css, html} from "lit";
+import {state, customElement} from "lit/decorators.js";
 import {filesSharedStyles} from "../sharedStyles";
 import {SlInput} from "@shoelace-style/shoelace";
 import {AgentId, ZomeElement} from "@ddd-qc/lit-happ";
@@ -22,7 +22,7 @@ export class ProfileInput extends ZomeElement<ProfilesAltPerspective, ProfilesAl
     @state() private _canShowResults: boolean = true;  // FIXME
 
     get inputElem() : SlInput {
-        return this.shadowRoot.getElementById("tag-input") as SlInput;
+        return this.shadowRoot!.getElementById("tag-input") as SlInput;
     }
 
     /** */
@@ -35,7 +35,7 @@ export class ProfileInput extends ZomeElement<ProfilesAltPerspective, ProfilesAl
 
 
     /** */
-    render() {
+    override render() {
         console.log("<profile-input>.render()", this._selectedAgents);
 
         const profiles = Array.from(this.perspective.profileByAgent.entries());
@@ -45,7 +45,7 @@ export class ProfileInput extends ZomeElement<ProfilesAltPerspective, ProfilesAl
                 const profile = this._zvm.perspective.getProfile(key);
                 if (!profile) return html``;
                 //return html`<div>${profile.nickname}</div>`;
-                return html`<profile-item .key=${key} clearable @cleared=${(e) => {
+                return html`<profile-item .key=${key} clearable @cleared=${(e:any) => {
                     const index = this._selectedAgents.indexOf(e.detail);
                     console.log("<profile-input> clear", e.detail, index);
                     if (index > -1) {
@@ -63,24 +63,24 @@ export class ProfileInput extends ZomeElement<ProfilesAltPerspective, ProfilesAl
             const profilePairs: [AgentId, Profile][] = profiles
                 .filter(([key, _profile]) => !key.equals(this._zvm.cell.address.agentId)) // exclude self
                 .filter(([key, _profile]) => this._selectedAgents.indexOf(key) < 0) // Don't show already selected agents
-                .map(([key, profileId]) => [key, this.perspective.profiles.get(profileId)[0]]);
+                .map(([key, profileId]) => [key, this.perspective.profiles.get(profileId)![0]]);
             agentResults = profilePairs
                 .filter(([_key, profile]) => profile.nickname.toLowerCase().includes(filter)) // Must match filter
                 .map(([key, profile]) => {
                     console.log("<profile-input> map", key, profile);
-                    return html`<profile-item class="selectable-profile" .key=${key} selectable @selected=${(_e) => {this.onAddAgent(key);}}></profile-item>`;
+                    return html`<profile-item class="selectable-profile" .key=${key} selectable @selected=${(_e:any) => {this.onAddAgent(key);}}></profile-item>`;
                 });
         }
 
         console.log("agentResults", agentResults);
 
-//    @sl-blur=${(e) => {this._canShowResults = false}}
-//@sl-focus=${(e) => {this._canShowResults = true}}
+//    @sl-blur=${(e:any) => {this._canShowResults = false}}
+//@sl-focus=${(e:any) => {this._canShowResults = true}}
 
         /** */
         return html`
             <sl-input id="tag-input" placeholder="Add Recipients" clearable
-                      @keydown=${(e: KeyboardEvent) => {this.requestUpdate();}}
+                      @keydown=${(_e:KeyboardEvent) => {this.requestUpdate();}}
             >
                 <sl-icon name="person-plus" slot="prefix"></sl-icon>
             </sl-input>
@@ -96,7 +96,7 @@ export class ProfileInput extends ZomeElement<ProfilesAltPerspective, ProfilesAl
 
 
     /** */
-    static get styles() {
+    static override get styles() {
         return [
             filesSharedStyles,
             css`

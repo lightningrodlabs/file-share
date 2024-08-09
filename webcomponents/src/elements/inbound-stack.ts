@@ -1,6 +1,6 @@
-import {css, html, PropertyValues} from "lit";
+import {css, html} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
-import {AgentIdMap, ZomeElement, AgentId, ActionId, EntryId, ActionIdMap} from "@ddd-qc/lit-happ";
+import {AgentIdMap, ZomeElement, AgentId, ActionId, ActionIdMap} from "@ddd-qc/lit-happ";
 import {DeliveryPerspective, DeliveryZvm} from "@ddd-qc/delivery";
 import {filesSharedStyles} from "../sharedStyles";
 import {kind2Icon} from "../fileTypeUtils";
@@ -25,7 +25,7 @@ export class InboundStack extends ZomeElement<DeliveryPerspective, DeliveryZvm> 
     @state() private _canDisplay: ActionIdMap<boolean> = new ActionIdMap();
 
     /** */
-    render() {
+    override render() {
         const windowInnerWidth  = document.documentElement.clientWidth; // window.innerWidth;
         console.log("<inbound-stack>.render()", windowInnerWidth);
 
@@ -50,7 +50,7 @@ export class InboundStack extends ZomeElement<DeliveryPerspective, DeliveryZvm> 
                         <div style="display:flex; flex-direction:row; gap:35px;">
                             <sl-progress-bar style="flex-grow:1;" .value=${pct}>${pct}%</sl-progress-bar>
                             <sl-icon-button name="x" label="close"
-                                            @click=${async (_e) => {this._canDisplay.set(distribAh, false); this.requestUpdate()}}>
+                                            @click=${async (_e:any) => {this._canDisplay.set(distribAh, false); this.requestUpdate()}}>
                             </sl-icon-button>
                         </div>
                         <div style="display:flex; flex-direction:row; gap:5px;">
@@ -73,7 +73,7 @@ export class InboundStack extends ZomeElement<DeliveryPerspective, DeliveryZvm> 
     }
 
     /** */
-    static get styles() {
+    static override get styles() {
         return [
             filesSharedStyles,
             css`

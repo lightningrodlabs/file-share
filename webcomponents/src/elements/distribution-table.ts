@@ -1,5 +1,5 @@
-import {css, html, LitElement} from "lit";
-import {property, state, customElement} from "lit/decorators.js";
+import {html, LitElement} from "lit";
+import {property, customElement} from "lit/decorators.js";
 import {prettyFileSize, prettyTimestamp} from "../utils";
 import {columnBodyRenderer, columnFooterRenderer} from "@vaadin/grid/lit";
 import {EntryId} from "@ddd-qc/lit-happ";
@@ -34,7 +34,7 @@ export class DistributionTable extends LitElement {
     @property() items: DistributionTableItem[] = [];
 
     /** */
-    render() {
+    override render() {
         console.log("<distribution-table>.render()", this.items);
         // if (!this.items.length) {
         //     return html`No items found`;
@@ -99,18 +99,18 @@ export class DistributionTable extends LitElement {
                         ${columnBodyRenderer<DistributionTableItem>(
                                 ({parcelEh}) => {
                                     return html`
-                                        <sl-button size="small" variant="primary" style="margin-left:5px" @click=${async (e) => {
+                                        <sl-button size="small" variant="primary" style="margin-left:5px" @click=${async (_e: any) => {
                                             this.dispatchEvent(new CustomEvent<EntryId>('download', {detail: new EntryId(parcelEh), bubbles: true, composed: true}));
                                         }}>
                                             <sl-icon name="download"></sl-icon>
                                         </sl-button>
-                                        <sl-button size="small" variant="primary" @click=${async (e) => {
+                                        <sl-button size="small" variant="primary" @click=${async (_e: any) => {
                                             this.dispatchEvent(new CustomEvent<EntryId>('send', {detail: new EntryId(parcelEh), bubbles: true, composed: true}));
                                         }}>
                                             <sl-icon name="send"></sl-icon>
                                         </sl-button>
                                         <sl-button size="small" variant="neutral"
-                                                   @click=${async (e) => {
+                                                   @click=${async (_e: any) => {
                                                        this.dispatchEvent(new CustomEvent<EntryId>('view', {
                                                            detail: new EntryId(parcelEh),
                                                            bubbles: true,
@@ -131,7 +131,7 @@ export class DistributionTable extends LitElement {
 
 
     /** */
-    static get styles() {
+    static override get styles() {
         return [
             filesSharedStyles,
         ];

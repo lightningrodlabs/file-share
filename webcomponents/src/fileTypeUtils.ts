@@ -42,7 +42,7 @@ export function kind2mime(kindInfo: ParcelKind): string {
     //console.log("prettyFiletype()", filetype);
     const fields = filetype.split('::');
     if (fields.length > 1) {
-        filetype = fields[1];
+        filetype = fields[1]!;
     }
     //console.log("prettyFiletype() res ", filetype);
     return filetype;
@@ -98,7 +98,7 @@ export function countFileTypes(descs: ParcelDescription[]): Record<string, numbe
     let map: Record<string, number> = {};
     /** Init map */
     const keys = Object.keys(FileType);
-    keys.forEach((key, index) => {
+    keys.forEach((key, _index) => {
         map[key] = 0;
     })
     /** */

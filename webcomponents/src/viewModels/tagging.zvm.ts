@@ -1,5 +1,4 @@
 import {
-    delay,
     EntryId,
     ZomeViewModelWithSignals,
     EntryPulseMat, AgentId, LinkPulseMat, StateChangeType, holoIdReviver
@@ -16,7 +15,7 @@ import {TaggingPerspective, TaggingPerspectiveMutable, TaggingSnapshot} from "./
 /** */
 export class TaggingZvm extends ZomeViewModelWithSignals {
 
-    static readonly ZOME_PROXY = TaggingProxy;
+    static override readonly ZOME_PROXY = TaggingProxy;
 
     get zomeProxy(): TaggingProxy {
         return this._zomeProxy as TaggingProxy;
@@ -59,7 +58,7 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
     /** -- Init -- */
 
     /** */
-    async initializePerspectiveOffline(): Promise<void> {
+    override async initializePerspectiveOffline(): Promise<void> {
         const tuples = await this.zomeProxy.queryAllPrivateTag();
         console.log("tagging tuples", tuples);
         for (const [_eh, _ts, tag] of tuples) {
@@ -69,7 +68,7 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
 
 
     /** */
-    async initializePerspectiveOnline(): Promise<void> {
+    override async initializePerspectiveOnline(): Promise<void> {
         const tuples = await this.zomeProxy.probePublicTags();
         console.log("taggingZvm.initializePerspectiveOnline()", tuples);
         for (const [_eh, tag] of tuples) {
@@ -81,7 +80,7 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
     /** -- Signals -- */
 
     /** */
-    async handleEntryPulse(pulse: EntryPulseMat, _from: AgentId) {
+    override async handleEntryPulse(pulse: EntryPulseMat, _from: AgentId) {
         switch (pulse.entryType) {
             case TaggingUnitEnum.PrivateTag:
                 const privateTag = decode(pulse.bytes) as PrivateTag;
@@ -97,7 +96,7 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
 
 
     /** */
-    async handleLinkPulse(pulse: LinkPulseMat, _from: AgentId): Promise<void> {
+    override async handleLinkPulse(pulse: LinkPulseMat, _from: AgentId): Promise<void> {
         //console.log("TaggingZvm.handleLinkPulse()", pulse);
         /** */
         switch (pulse.link_type) {
@@ -135,7 +134,7 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
                 const tag = decoder.decode(pulse.tag);
                 console.log("TaggingZvm.handleLinkPulse() PublicTags", tag, pulse.tag, targetEh);
                 if (pulse.state != StateChangeType.Delete) {
-                    this._perspective.storePublicTagging(tag, targetEh, null/*pulse.create_link_hash*/);
+                    this._perspective.storePublicTagging(tag, targetEh, undefined/*pulse.create_link_hash*/);
                 } else {
                     this._perspective.unstorePublicTagging(tag, targetEh);
                 }
@@ -183,7 +182,7 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
         if (!tag || tag == "") {
             return Promise.reject("tag argument is empty");
         }
-        const _res = await this.zomeProxy.findPublicEntriesWithTag(tag);
+        await this.zomeProxy.findPublicEntriesWithTag(tag);
     }
 
 
@@ -243,7 +242,7 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
             return Promise.reject("Not tags found for Target");
         }
         for (const tag of tags) {
-            const linkAh = this._perspective.publicTargetsByTag[tag].get(targetEh);
+            const linkAh = this._perspective.publicTargetsByTag[tag]!.get(targetEh);
             if (linkAh && linkAh != null) {
                 await this.zomeProxy.untagPublicEntry(linkAh.hash);
             } else {
@@ -279,7 +278,7 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
             tags,
             link_tag_to_entry: targetInfo,
         } as TaggingInput;
-        const _link_ahs = await this.zomeProxy.tagPublicEntry(input);
+        await this.zomeProxy.tagPublicEntry(input);
     }
 
 }

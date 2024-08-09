@@ -25,16 +25,16 @@ export class FilePreview extends DnaElement<FilesDvmPerspective, FilesDvm> {
     // filesPerspective!: FileSharePerspective;
 
     @state() private _loading = true;
-    @state() private _manifest?: ParcelManifest;
-             private _maybeFile?: File;
+    @state() private _manifest: ParcelManifest | undefined = undefined;
+             private _maybeFile: File | undefined = undefined;
              //private _maybeDataUrl?: string | ArrayBuffer;
-             private _maybeBlobUrl?: string;
+             private _maybeBlobUrl: string | undefined = undefined;
 
 
     /** -- Methods -- */
 
     /** */
-    protected async willUpdate(changedProperties: PropertyValues<this>) {
+    protected override async willUpdate(changedProperties: PropertyValues<this>) {
         super.willUpdate(changedProperties);
         console.log("<file-preview>.willUpdate()", changedProperties, !!this._dvm, this.hash);
         if (this._dvm && (changedProperties.has("hash") || (!this._manifest && this.hash))) {
@@ -61,8 +61,8 @@ export class FilePreview extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 //this._maybeBlobUrl = URL.createObjectURL(this._maybeFile);
                 reader.onload = (event) => {
                     console.log("FileReader onload", event, mime)
-                    //this._maybeDataUrl = event.target.result;
-                    const blob = new Blob([event.target.result], { type: mime });
+                    const res = event.target!.result!;
+                    const blob = new Blob([res], { type: mime });
                     this._maybeBlobUrl = URL.createObjectURL(blob);
                     console.log("FileReader blob", blob, this._maybeBlobUrl)
                     //this.requestUpdate();
@@ -78,7 +78,7 @@ export class FilePreview extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** */
-    render() {
+    override render() {
         console.log("<file-preview>.render()", this.hash, this._maybeBlobUrl);
         if (!this.hash) {
             return html`<div style="color:#c10a0a">${msg("No file selected")}</div>`;
@@ -141,7 +141,7 @@ export class FilePreview extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** */
-    static get styles() {
+    static override get styles() {
         return [
             filesSharedStyles,
           css`

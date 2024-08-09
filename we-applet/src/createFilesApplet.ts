@@ -25,7 +25,7 @@ export async function createFilesApplet(
 ): Promise<FilesApp> {
 
   if (renderInfo.type =="cross-applet-view") {
-    throw Error("cross-applet-view not implemented by Files");
+    throw Promise.reject("cross-applet-view not implemented by Files");
   }
 
   const appletViewInfo = renderInfo as unknown as AppletViewInfo;
@@ -35,6 +35,9 @@ export async function createFilesApplet(
   console.log("createFilesApplet() thisAppletId", appletViewInfo.appletHash);
 
   const mainAppInfo = await appletViewInfo.appletClient.appInfo();
+  if (!mainAppInfo) {
+    throw Promise.reject("No main appInfo found");
+  }
   const agentId = new AgentId(mainAppInfo.agent_pub_key);
   console.log("createFilesApplet() mainAppInfo", mainAppInfo, agentId);
 
@@ -45,6 +48,9 @@ export async function createFilesApplet(
   //const mainAppWs = mainAppAgentWs.appWebsocket;
   let profilesAppInfo = await profilesClient.client.appInfo();
   console.log("createFilesApplet() profilesAppInfo", profilesAppInfo, agentId);
+  if (!profilesAppInfo) {
+    throw Promise.reject("No profiles appInfo found");
+  }
   /** Check if roleName is actually a cloneId */
   let maybeCloneId = undefined;
   let baseRoleName = profilesClient.roleName;

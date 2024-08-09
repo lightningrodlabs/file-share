@@ -1,4 +1,5 @@
 import {DeliveryNotice, DeliveryZvm} from "@ddd-qc/delivery";
+// @ts-ignore
 import _sodium from 'libsodium-wrappers-sumo';
 import {EntryId} from "@ddd-qc/lit-happ";
 import {encodeHashToBase64, EntryHashB64} from "@holochain/client";
@@ -33,7 +34,7 @@ export function arrayBufferToBase64(buffer: ArrayBuffer): string {
     const bytes = new Uint8Array(buffer);
     const len = bytes.byteLength;
     for (let i = 0; i < len; i++) {
-        binary += String.fromCharCode(bytes[i]);
+        binary += String.fromCharCode(bytes[i]!);
     }
     const base64 = window.btoa(binary);
     //const binary_string = window.atob(base64); // Check if correct
@@ -141,10 +142,10 @@ export function decodeComponentUtf32(input: Uint8Array): string {
     for (let i = 0; i < array.length; i += 4) {
         // Read 4 bytes and convert to a single 32-bit code point
         const codePoint = (
-          (array[i + 3] << 24) |
-          (array[i + 2] << 16) |
-          (array[i + 1] << 8) |
-          array[i]
+          (array[i + 3]! << 24) |
+          (array[i + 2]! << 16) |
+          (array[i + 1]! << 8) |
+          array[i]!
         ) >>> 0; // >>> 0 ensures unsigned conversion
         codePoints.push(codePoint);
     }
