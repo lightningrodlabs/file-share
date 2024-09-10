@@ -45,8 +45,9 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
 
     @property() selectable?: string;
 
-    //@state() private _selectedItems: FileTableItem[] = [];
+    @property({type: Boolean}) view: boolean = false;
 
+    @property({type: Boolean}) notag: boolean = false;
 
     /** */
     get gridElem(): LitElement {
@@ -56,7 +57,7 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
 
     /** */
     override render() {
-        console.log("<file-table>.render()", this.type, this.items, this._zvm.perspective);
+        console.log("<file-table>.render()", this.type, this.view, this.items, this._zvm.perspective);
         if (!this.items.length) {
             return html`${msg("No items found")}`;
         }
@@ -99,6 +100,7 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
                                     )}
                 ></vaadin-grid-column>
                     
+                ${this.notag? html``: html`
                 <vaadin-grid-column path="ppEh" header=${msg("Group Tags")}
                                     ${columnBodyRenderer<FileTableItem>(
                                             ({ ppEh }) => html`<tag-list .tags=${this._zvm.perspective.getTargetPublicTags(new EntryId(ppEh))}></tag-list>`,
@@ -123,6 +125,7 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
                                             [],
                                     )}
                 ></vaadin-grid-column>
+                `}
                 <vaadin-grid-column path="author" header=${msg("Author")}
                                     ${columnBodyRenderer<FileTableItem>(
                                             ({ author }) => {
@@ -186,7 +189,7 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
                                                       }}>
                                                 <sl-icon name="download"></sl-icon>
                                             </sl-button>
-                                            ${!isPublic? html`
+                                            ${!isPublic && !this.view? html`
                                             <sl-button size="small" variant="primary"
                                                        @click=${async (_e:any) => {
                                                           this.dispatchEvent(new CustomEvent<EntryId>('send', {
@@ -207,7 +210,7 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
                                                       }}>
                                                 <sl-icon name="info-lg"></sl-icon>
                                             </sl-button>
-                                            ${isPublic? html`
+                                            ${isPublic && !this.view? html`
                                             <sl-button size="small" variant="danger"
                                                        @click=${async (_e:any) => {
                                                 console.log("Dispatching delete Event", ppEh)
