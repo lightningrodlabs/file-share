@@ -2,7 +2,7 @@ import {css, html, TemplateResult} from "lit";
 import {customElement, property, state} from "lit/decorators.js";
 import {AgentId, DnaElement, EntryId, HAPP_ENV, HappEnvType} from "@ddd-qc/lit-happ";
 import {Timestamp} from "@holochain/client";
-import {GroupProfile, FrameNotification, WeaveServices} from "@lightningrodlabs/we-applet";
+import {GroupProfile, FrameNotification, WeaveServices, weaveUrlFromWal, Hrl} from "@lightningrodlabs/we-applet";
 import {consume} from "@lit/context";
 import {createContext} from "@lit/context";
 
@@ -171,15 +171,23 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
 
     /** -- Handle global events -- */
-
     onDownload(e: CustomEvent<EntryId>) {this._dvm.downloadFile(e.detail)}
     onSend(e: CustomEvent<EntryId>) {this.sendDialogElem.open(e.detail)}
     onViewFile(e: CustomEvent<EntryId>) {this._viewFileEh = e.detail; this.viewFileDialogElem.open = true;}
     onDeleteFile(e: CustomEvent<EntryId>) {console.log("@delete", e.detail); this._deletableFile = e.detail; this.deleteDialogElem.open = true;}
+    onCopy(e: CustomEvent<Hrl>) {
+        const wurl = weaveUrlFromWal({hrl: e.detail});
+        navigator.clipboard.writeText(wurl);
+        if (this.weServices) {
+          this.weServices.walToPocket({hrl: e.detail});
+        }
+    }
 
 
     override connectedCallback() {
         super.connectedCallback();
+        // @ts-ignore
+        this.addEventListener('copy', this.onCopy);
         // @ts-ignore
         this.addEventListener('download', this.onDownload);
         // @ts-ignore
@@ -192,6 +200,8 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
 
     override disconnectedCallback() {
         super.disconnectedCallback();
+        // @ts-ignore
+        this.removeEventListener('copy', this.onCopy);
         // @ts-ignore
         this.removeEventListener('download', this.onDownload);
         // @ts-ignore

@@ -4,7 +4,7 @@ import {prettyFileSize, prettyTimestamp} from "../utils";
 import {columnBodyRenderer, columnFooterRenderer} from "@vaadin/grid/lit";
 import {ParcelDescription} from "@ddd-qc/delivery/dist/bindings/delivery.types";
 import {filesSharedStyles} from "../sharedStyles";
-import {EntryId, ZomeElement} from "@ddd-qc/lit-happ";
+import {EntryId, intoDhtId, ZomeElement} from "@ddd-qc/lit-happ";
 import {TaggingZvm} from "../viewModels/tagging.zvm";
 import {TagList} from "./tag-list";
 import {kind2Type} from "../fileTypeUtils";
@@ -12,6 +12,9 @@ import {Profile as ProfileMat} from "@ddd-qc/profiles-dvm/dist/bindings/profiles
 import {msg} from "@lit/localize";
 import {EntryHashB64} from "@holochain/client";
 import {TaggingPerspectiveMutable} from "../viewModels/tagging.perspective";
+import {Hrl} from "@lightningrodlabs/we-applet";
+import {intoHrl} from "@ddd-qc/we-utils";
+import {DhtId} from "@ddd-qc/cell-proxy";
 
 
 /** Don't use HolochainId directly as the vaadin will try to autoconvert to string for default rendering */
@@ -54,6 +57,12 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
         return this.shadowRoot!.getElementById("grid") as LitElement;
     }
 
+
+    /** */
+    copyMessageLink(dhtId: DhtId) {
+      const hrl: Hrl = intoHrl(this.cell.address.dnaId, dhtId);
+      this.dispatchEvent(new CustomEvent<Hrl>("copy", {detail: hrl, bubbles: true, composed: true}))
+    }
 
     /** */
     override render() {
@@ -126,7 +135,7 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
                                     )}
                 ></vaadin-grid-column>
                 `}
-                <vaadin-grid-column path="author" header=${msg("Author")}
+                <vaadin-grid-column path="author" header=${msg("Shared by")}
                                     ${columnBodyRenderer<FileTableItem>(
                                             ({ author }) => {
                                                 return author
@@ -162,16 +171,18 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
                                 ({ppEh}) => {
                                     if (this.selectable == "") {
                                         return html`
-                                            <sl-button size="small" variant="primary" style="margin-left:5px"
-                                                       @click=${async (_e:any) => {
-                                                           this.dispatchEvent(new CustomEvent<EntryId>('selected', {
-                                                               detail: new EntryId(ppEh),
-                                                               bubbles: true,
-                                                               composed: true
-                                                           }));
-                                                       }}>
-                                                <sl-icon name="link-45deg"></sl-icon>
-                                            </sl-button>
+                                            <sl-tooltip content=${msg("Select")} hoist>
+                                              <sl-button size="small" variant="primary"
+                                                         @click=${async (_e:any) => {
+                                                             this.dispatchEvent(new CustomEvent<EntryId>('selected', {
+                                                                 detail: new EntryId(ppEh),
+                                                                 bubbles: true,
+                                                                 composed: true
+                                                             }));
+                                                         }}>
+                                                  <sl-icon name="check2-square"></sl-icon>
+                                              </sl-button>
+                                            </sl-tooltip>
                                         `;
                                     } else {
                                         // TODO: Optimize. Should have a better way to get the item here instead of doing a search for each item.
@@ -179,49 +190,66 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
                                         const isPublic = item.length > 0 && !item[0]!.isPrivate;
                                         //console.log("isPublic", isPublic, item, ppEh)
                                         return html`
-                                            <sl-button size="small" variant="primary" style="margin-left:5px"
-                                                       @click=${async (_e:any) => {
-                                                          this.dispatchEvent(new CustomEvent<EntryId>('download', {
-                                                              detail: new EntryId(ppEh),
-                                                              bubbles: true,
-                                                              composed: true
-                                                          }));
-                                                      }}>
-                                                <sl-icon name="download"></sl-icon>
-                                            </sl-button>
+                                            <sl-tooltip content=${msg("Download")} hoist>
+                                              <sl-button size="small" variant="primary"
+                                                         @click=${async (_e:any) => {
+                                                            this.dispatchEvent(new CustomEvent<EntryId>('download', {
+                                                                detail: new EntryId(ppEh),
+                                                                bubbles: true,
+                                                                composed: true
+                                                            }));
+                                                        }}>
+                                                  <sl-icon name="download"></sl-icon>
+                                              </sl-button>
+                                            </sl-tooltip>
                                             ${!isPublic && !this.view? html`
-                                            <sl-button size="small" variant="primary"
-                                                       @click=${async (_e:any) => {
-                                                          this.dispatchEvent(new CustomEvent<EntryId>('send', {
-                                                              detail: new EntryId(ppEh),
-                                                              bubbles: true,
-                                                              composed: true
-                                                          }));
-                                                      }}>
-                                                <sl-icon name="send"></sl-icon>
-                                            </sl-button>`: html``}
-                                            <sl-button size="small" variant="neutral"
-                                                       @click=${async (_e:any) => {
-                                                          this.dispatchEvent(new CustomEvent<EntryId>('view', {
-                                                              detail: new EntryId(ppEh),
-                                                              bubbles: true,
-                                                              composed: true
-                                                          }));
-                                                      }}>
-                                                <sl-icon name="info-lg"></sl-icon>
-                                            </sl-button>
+                                            <sl-tooltip content=${msg("Send")} hoist>
+                                              <sl-button size="small" variant="primary"
+                                                         @click=${async (_e:any) => {
+                                                            this.dispatchEvent(new CustomEvent<EntryId>('send', {
+                                                                detail: new EntryId(ppEh),
+                                                                bubbles: true,
+                                                                composed: true
+                                                            }));
+                                                        }}>
+                                                  <sl-icon name="send"></sl-icon>
+                                              </sl-button>
+                                            </sl-tooltip>`: html``}
+                                            
+                                            <sl-tooltip content=${msg("Copy File Link")} hoist>
+                                              <sl-button size="small" variant="neutral"
+                                                         @click=${async (_e:any) => this.copyMessageLink(intoDhtId(ppEh))}>
+                                                  <sl-icon name="link-45deg"></sl-icon>
+                                              </sl-button>
+                                            </sl-tooltip>
+
+                                            <sl-tooltip content=${msg("View")} hoist>
+                                              <sl-button size="small" variant="neutral"
+                                                         @click=${async (_e:any) => {
+                                                            this.dispatchEvent(new CustomEvent<EntryId>('view', {
+                                                                detail: new EntryId(ppEh),
+                                                                bubbles: true,
+                                                                composed: true
+                                                            }));
+                                                        }}>
+                                                  <sl-icon name="info-lg"></sl-icon>
+                                              </sl-button>
+                                            </sl-tooltip>  
                                             ${isPublic && !this.view? html`
-                                            <sl-button size="small" variant="danger"
-                                                       @click=${async (_e:any) => {
-                                                console.log("Dispatching delete Event", ppEh)
-                                                this.dispatchEvent(new CustomEvent<EntryId>('delete', {
-                                                    detail: new EntryId(ppEh),
-                                                    bubbles: true,
-                                                    composed: true
-                                                }));
-                                            }}>
-                                                <sl-icon name="trash"></sl-icon>
-                                            </sl-button>`: html``}
+                                            <sl-tooltip content=${msg("Unshare")} hoist>
+                                              <sl-button size="small" variant="danger"
+                                                         @click=${async (_e:any) => {
+                                                  console.log("Dispatching delete Event", ppEh)
+                                                  this.dispatchEvent(new CustomEvent<EntryId>('delete', {
+                                                      detail: new EntryId(ppEh),
+                                                      bubbles: true,
+                                                      composed: true
+                                                  }));
+                                              }}>
+                                                  <sl-icon name="trash"></sl-icon>
+                                              </sl-button>
+                                            </sl-tooltip>
+                                            `: html``}
                                         `
                                     }
                                 },
@@ -241,7 +269,7 @@ export class FileTable extends ZomeElement<TaggingPerspectiveMutable, TaggingZvm
             css`
               :host {
                 flex: 1 1 auto;
-                padding-bottom: 80px;
+                padding-bottom: 10px;
                 padding-right: 10px;                
               }
               #grid {
