@@ -22,7 +22,7 @@ import {HC_ADMIN_PORT, HC_APP_PORT} from "./globals";
 import {AppletId, AppletView, CreatableName, GroupProfile, WAL, WeaveServices} from "@lightningrodlabs/we-applet";
 import {ProfilesDvm} from "@ddd-qc/profiles-dvm";
 import {AssetViewInfo} from "@ddd-qc/we-utils";
-import {DELIVERY_INTERGRITY_ZOME_NAME, DELIVERY_ZOME_NAME, DeliveryEntryType} from "@ddd-qc/delivery";
+import {DELIVERY_INTERGRITY_ZOME_NAME, DeliveryEntryType} from "@ddd-qc/delivery";
 import {buildBlock} from "./files-blocks";
 import {DEFAULT_FILES_DEF} from "./happDef";
 import {setLocale} from "./localization";
@@ -169,41 +169,7 @@ export class FilesApp extends HappElement {
   /** */
   override async hvmConstructed() {
     console.log("hvmConstructed()", this._adminWs, this._canAuthorizeZfns);
-
-    // /** Authorize all zome calls */
-    // if (!this._adminWs && this._canAuthorizeZfns) {
-    //   this._adminWs = await AdminWebsocket.connect({url: new URL(`ws://localhost:${HC_ADMIN_PORT}`)});
-    //   console.log("hvmConstructed() connect() called", this._adminWs);
-    // }
-    // if (this._adminWs && this._canAuthorizeZfns) {
-    //   await this.hvm.authorizeAllZomeCalls(this._adminWs);
-    //   console.log("*** Zome call authorization complete");
-    // } else {
-    //   if (!this._canAuthorizeZfns) {
-    //     console.warn("No adminWebsocket provided (Zome call authorization done)")
-    //   } else {
-    //     console.log("Zome call authorization done externally")
-    //   }
-    // }
-
-    /** Attempt Probe EntryDefs */
-    let attempts = 5;
-    while(this._hasHolochainFailed && attempts > 0) {
-      attempts -= 1;
-      const allAppEntryTypes = await this.filesDvm.fetchAllEntryDefs();
-      console.log("happInitialized(), allAppEntryTypes", allAppEntryTypes);
-      console.log(`${DELIVERY_ZOME_NAME} entries`, allAppEntryTypes[DELIVERY_ZOME_NAME]);
-      const deliveryEntryTypes = allAppEntryTypes[DELIVERY_ZOME_NAME]!;
-      if (Object.keys(deliveryEntryTypes).length == 0) {
-        console.warn(`No entries found for ${DELIVERY_ZOME_NAME}`);
-        await delay(1000);
-      } else {
-        this._hasHolochainFailed = false;
-        break;
-      }
-    }
-
-    /** Done */
+    this._hasHolochainFailed = false;
     this._loaded = true;
   }
 

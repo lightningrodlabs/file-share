@@ -115,6 +115,10 @@ export class FilesProxy extends ZomeProxy {
     return this.call('get_private_files_from', sender);
   }
 
+  async getRecordAuthor(dh: AnyDhtArray): Promise<AgentArray> {
+    return this.call('get_record_author', dh);
+  }
+
   async processInbox(): Promise<void> {
     return this.call('process_inbox', null);
   }

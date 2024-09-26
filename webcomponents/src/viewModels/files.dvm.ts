@@ -649,6 +649,21 @@ export class FilesDvm extends DnaViewModel {
 
 
     /** */
+    async fetchFileInfo(eh: EntryId): Promise<ParcelManifest> {
+        const maybe = this.deliveryZvm.perspective.privateManifests.get(eh);
+        if (maybe) {
+            return maybe[0];
+        }
+        const maybePublic = this.deliveryZvm.perspective.localPublicManifests.get(eh);
+        if (maybePublic) {
+            return maybePublic[0];
+        }
+        const [manifest, _ts] = await this.deliveryZvm.fetchPublicManifest(eh);
+        return manifest;
+    }
+
+
+    /** */
     async fetchFile(ppEh: EntryId): Promise<[ParcelManifest, File]> {
         assertIsDefined(ppEh);
         const [manifest, _ts] = await this.deliveryZvm.fetchPublicManifest(ppEh);

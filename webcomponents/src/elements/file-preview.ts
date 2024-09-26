@@ -36,7 +36,7 @@ export class FilePreview extends DnaElement<FilesDvmPerspective, FilesDvm> {
     /** */
     protected override async willUpdate(changedProperties: PropertyValues<this>) {
         super.willUpdate(changedProperties);
-        console.log("<file-preview>.willUpdate()", changedProperties, !!this._dvm, this.hash);
+        //console.log("<file-preview>.willUpdate()", changedProperties, !!this._dvm, this.hash);
         if (this._dvm && (changedProperties.has("hash") || (!this._manifest && this.hash))) {
             console.log("<file-preview>.willUpdate()", this.hash);
             if (!this.hash) {
@@ -46,7 +46,8 @@ export class FilePreview extends DnaElement<FilesDvmPerspective, FilesDvm> {
                 return;
             }
             this._loading = true;
-            this._manifest = await this._dvm.filesZvm.zomeProxy.getFileInfo(this.hash.hash);
+            //this._manifest = await this._dvm.filesZvm.zomeProxy.getFileInfo(this.hash.hash);
+            this._manifest = await this._dvm.fetchFileInfo(this.hash);
             //console.log(`<file-preview>.willUpdate() ${this._manifest.description.size} < ${this._dvm.dnaProperties.maxChunkSize}?`);
             if (this._manifest && this._manifest.description.size < this._dvm.dnaProperties.maxChunkSize) {
                 const mime = kind2mime(this._manifest.description.kind_info);

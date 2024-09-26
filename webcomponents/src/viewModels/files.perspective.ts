@@ -21,6 +21,7 @@ export interface UploadState {
 export interface FilesDvmPerspective {
     /** ManifestEh -> File */
     fileCache: EntryIdMap<File>;
+    //fileInfoCache: EntryIdMap<ParcelManifest>;
     /** dataHash -> UploadState */
     uploadStates: Record<string, UploadState>;
     /** Notifications */
