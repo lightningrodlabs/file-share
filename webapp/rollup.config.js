@@ -6,7 +6,8 @@ import copy from "rollup-plugin-copy";
 //import builtins from "rollup-plugin-node-builtins";
 //import globals from "rollup-plugin-node-globals";
 
-import workerLoader from 'rollup-plugin-web-worker-loader';
+import builtins from "rollup-plugin-node-builtins";
+//import workerLoader from 'rollup-plugin-web-worker-loader';
 
 import babel from "@rollup/plugin-babel";
 import html from "@web/rollup-plugin-html";
@@ -21,20 +22,20 @@ const DIST_FOLDER = "dist"
 export default {
   input: "index.html",
   output: {
-    entryFileNames: "[hash].js",
-    chunkFileNames: "[hash].js",
-    assetFileNames: "[hash][extname]",
+    entryFileNames: "index.js",
+    //chunkFileNames: "[hash].js",
+    assetFileNames: "assets[extname]",
     format: "es",
     dir: DIST_FOLDER,
   },
+  external: [],
   watch: {
     clearScreen: false,
   },
-  //external: [],
   plugins: [
     /** Enable using HTML as rollup entrypoint */
     html({
-      minify: true,
+      //minify: true,
       //injectServiceWorker: true,
       //serviceWorkerPath: "dist/sw.js",
     }),
@@ -44,7 +45,7 @@ export default {
       preferBuiltins: false,
     }),
     //typescript({ experimentalDecorators: true, outDir: DIST_FOLDER }),
-    //builtins(),
+    builtins(),
     //globals(),
     /** Minify JS */
     //terser(),
@@ -91,13 +92,14 @@ export default {
       ],
     }),
     commonjs(),
-    workerLoader(),
+    //workerLoader(),
     copy({
-      copyOnce: true,
+      //copyOnce: true,
       targets: [
-        { src: "icon.png", dest: DIST_FOLDER },
-        { src: "logo.svg", dest: DIST_FOLDER },
-        { src: "favicon.ico", dest: DIST_FOLDER },
+        { src: "../assets/icon.png", dest: DIST_FOLDER },
+        { src: "../assets/favicon.png", dest: DIST_FOLDER },
+        { src: "../assets/favicon.ico", dest: DIST_FOLDER },
+        //{ src: "index.html", dest: DIST_FOLDER },
         {
           src: '../node_modules/@shoelace-style/shoelace/dist/assets',
           dest: 'dist/shoelace',

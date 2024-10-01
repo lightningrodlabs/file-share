@@ -1,7 +1,7 @@
 /** -- HC_APP_PORT & friends -- */
 
-export let HC_APP_PORT: number = 42;
-export let HC_ADMIN_PORT: number = 42;
+export let HC_APP_PORT: number | undefined = undefined;
+export let HC_ADMIN_PORT: number | undefined = undefined;
 try {
   HC_APP_PORT = Number(process.env.HC_APP_PORT);
   HC_ADMIN_PORT = Number(process.env.HC_ADMIN_PORT);

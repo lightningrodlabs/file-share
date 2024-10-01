@@ -63,7 +63,21 @@ export class FilesApp extends HappElement {
       : HC_ADMIN_PORT
         ? new URL(`ws://localhost:${HC_ADMIN_PORT}`)
         : undefined;
-    super(appWs ? appWs : HC_APP_PORT, appId, adminUrl, 20 * 1000);
+    let appPort = HC_APP_PORT;
+    if (!appWs && !HC_APP_PORT) {
+      console.log({window});
+      const __HC_LAUNCHER_ENV__: string = "__HC_LAUNCHER_ENV__";
+      const isLauncher = window && __HC_LAUNCHER_ENV__ in window;
+      if (isLauncher) {
+        // @ts-ignore
+        const env = window[__HC_LAUNCHER_ENV__];
+        console.log("env.APP_INTERFACE_PORT", env!.APP_INTERFACE_PORT);
+        appPort = env!.APP_INTERFACE_PORT;
+      } else {
+        throw Error("No appWebsocket or APP_PORT set");
+      }
+    }
+    super(appWs ? appWs : appPort!, appId, adminUrl, 20 * 1000);
     console.log("FilesApp.HVM_DEF", FilesApp.HVM_DEF);
     if (_canAuthorizeZfns == undefined) {
       this._canAuthorizeZfns = true;
