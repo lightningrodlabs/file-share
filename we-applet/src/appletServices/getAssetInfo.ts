@@ -5,8 +5,8 @@ import {FILES_DEFAULT_ROLE_NAME, FilesProxy} from "@ddd-qc/files";
 import {intoDhtId, pascal} from "@ddd-qc/cell-proxy";
 import {DELIVERY_INTERGRITY_ZOME_NAME, DeliveryEntryType} from "@ddd-qc/delivery";
 import {mdiFileOutline} from "@mdi/js";
-import {AssetInfo, WAL} from "@lightningrodlabs/we-applet/dist/types";
-import {RecordInfo} from "@lightningrodlabs/we-applet";
+import {AssetInfo, WAL} from "@theweave/api";
+import {RecordInfo} from "@theweave/api";
 
 
 /** */

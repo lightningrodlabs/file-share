@@ -4,7 +4,7 @@ import {emptyEntryAppletView} from "@ddd-qc/we-utils/dist/mocks/renderInfoMock";
 import {EntryId, snake} from "@ddd-qc/cell-proxy";
 import {createFilesApplet, ViewFileContext} from "./createFilesApplet";
 import {DELIVERY_INTERGRITY_ZOME_NAME, DeliveryEntryType} from "@ddd-qc/delivery";
-import {AppletView} from "@lightningrodlabs/we-applet";
+import {AppletView} from "@theweave/api";
 
 export const devtestNames: DevTestNames = {
     installed_app_id: "Files",

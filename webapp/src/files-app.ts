@@ -19,7 +19,7 @@ import {
   FILES_DEFAULT_ROLE_NAME, ProfileInfo,
 } from "@ddd-qc/files";
 import {HC_ADMIN_PORT, HC_APP_PORT} from "./globals";
-import {AppletId, AppletView, CreatableName, GroupProfile, WAL, WeaveServices} from "@lightningrodlabs/we-applet";
+import {AppletId, AppletView, CreatableName, GroupProfile, WAL, WeaveServices} from "@theweave/api";
 import {ProfilesDvm} from "@ddd-qc/profiles-dvm";
 import {AssetViewInfo} from "@ddd-qc/we-utils";
 import {DELIVERY_INTERGRITY_ZOME_NAME, DeliveryEntryType} from "@ddd-qc/delivery";

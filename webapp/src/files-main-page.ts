@@ -2,7 +2,7 @@ import {css, html, TemplateResult} from "lit";
 import {customElement, property, state} from "lit/decorators.js";
 import {AgentId, DnaElement, EntryId, HAPP_ENV, HappEnvType} from "@ddd-qc/lit-happ";
 import {Timestamp} from "@holochain/client";
-import {GroupProfile, FrameNotification, WeaveServices, weaveUrlFromWal, Hrl} from "@lightningrodlabs/we-applet";
+import {GroupProfile, FrameNotification, WeaveServices, weaveUrlFromWal, Hrl} from "@theweave/api";
 import {consume} from "@lit/context";
 import {createContext} from "@lit/context";
 

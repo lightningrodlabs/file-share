@@ -5,7 +5,7 @@ import {
 import {
   RenderInfo,
   WeaveServices,
-} from "@lightningrodlabs/we-applet";
+} from "@theweave/api";
 import {FilesApp} from "@files/app";
 import {AppletViewInfo, ProfilesApi} from "@ddd-qc/we-utils";
 import {ExternalAppProxy} from "@ddd-qc/cell-proxy/";

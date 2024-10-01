@@ -12,7 +12,7 @@ import {Profile as ProfileMat} from "@ddd-qc/profiles-dvm/dist/bindings/profiles
 import {msg} from "@lit/localize";
 import {EntryHashB64} from "@holochain/client";
 import {TaggingPerspectiveMutable} from "../viewModels/tagging.perspective";
-import {Hrl} from "@lightningrodlabs/we-applet";
+import {Hrl} from "@theweave/api";
 import {intoHrl} from "@ddd-qc/we-utils";
 import {DhtId} from "@ddd-qc/cell-proxy";
 

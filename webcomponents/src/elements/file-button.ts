@@ -10,10 +10,10 @@ import {kind2Icon} from "../fileTypeUtils";
 import {SelectedEvent, SelectedType} from "./files-menu";
 import {prettyFileSize} from "../utils";
 import {ParcelDescription} from "@ddd-qc/delivery";
-import {weaveUrlFromWal, WeaveServices} from "@lightningrodlabs/we-applet";
+import {weaveUrlFromWal, WeaveServices} from "@theweave/api";
 //import {weClientContext} from "@lightningrodlabs/we-applet/context";
 import {createContext} from "@lit/context";
-import {WAL} from "@lightningrodlabs/we-applet/dist/types";
+import {WAL} from "@theweave/api";
 import {msg} from "@lit/localize";
 import {SlTooltip} from "@shoelace-style/shoelace";
 
