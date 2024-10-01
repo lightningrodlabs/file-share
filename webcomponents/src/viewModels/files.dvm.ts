@@ -100,26 +100,6 @@ export class FilesDvm extends DnaViewModel {
 
 
     /** */
-    protected hasChanged(): boolean {
-        return true;
-        // //console.log("filesDvm.hasChanged()");
-        // if (!this._previousPerspective) {
-        //     return true;
-        // }
-        // const prev = this._previousPerspective as FilesDvmPerspective;
-        // if (Object.values(this._perspective.unrepliedOutbounds).length != Object.values(prev.unrepliedOutbounds).length) {
-        //     return true;
-        // }
-        // if (Object.values(this._perspective.unrepliedInbounds).length != Object.values(prev.unrepliedInbounds).length) {
-        //     return true;
-        // }
-        // // TODO implement faster deep compare
-        // return JSON.stringify(this._perspective) == JSON.stringify(prev);
-        // //return false;
-    }
-
-
-    /** */
     get perspective(): FilesDvmPerspective { return this._perspective }
 
 

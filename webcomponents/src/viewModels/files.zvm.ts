@@ -24,15 +24,8 @@ export class FilesZvm extends ZomeViewModel {
 
 
     /* */
-    get perspective(): unknown {
+    get perspective(): Object {
         return {};
-    }
-
-
-    /* */
-    protected hasChanged(): boolean {
-        // TODO
-        return true;
     }
 
 

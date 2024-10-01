@@ -32,14 +32,7 @@ export class TaggingZvm extends ZomeViewModelWithSignals {
         return this._perspective.readonly;
     }
 
-
-    /* */
-    protected hasChanged(): boolean {
-        // TODO
-        return true;
-    }
-
-
+    
     /** Dump perspective as JSON  (caller should call getAllPublicManifest() first) */
     export(/*originalsZvm: AuthorshipZvm*/): string {
         const snapshot = this._perspective.makeSnapshot();
