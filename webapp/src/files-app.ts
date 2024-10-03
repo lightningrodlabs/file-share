@@ -346,7 +346,13 @@ export class FilesApp extends HappElement {
         const profile = { nickname: "guest_" + Math.floor(Math.random() * 100),
           fields: {lang: 'en', email: 'guest@ac.me', mailgun_domain: "mg.flowplace.org", mailgun_email: "whosin@mg.flowplace.org"}};
         console.log("<files-app> createMyProfile", this.filesDvm.profilesZvm.cell.address.agentId);
-        this.filesDvm.profilesZvm.createMyProfile(profile).then(() => this.requestUpdate());
+        try {
+          this.filesDvm.profilesZvm.createMyProfile(profile).then(() => this.requestUpdate());
+        } catch(e:any) {
+          if (!e.throttled) {
+            console.error({e});
+          }
+        }
         guardedView = html`<sl-spinner></sl-spinner>`;
       }
     }

@@ -28,7 +28,6 @@ export default {
     format: "es",
     dir: DIST_FOLDER,
   },
-  external: [],
   watch: {
     clearScreen: false,
   },
@@ -94,16 +93,12 @@ export default {
     commonjs(),
     //workerLoader(),
     copy({
-      //copyOnce: true,
+      copyOnce: true,
       targets: [
         { src: "../assets/icon.png", dest: DIST_FOLDER },
         { src: "../assets/favicon.png", dest: DIST_FOLDER },
         { src: "../assets/favicon.ico", dest: DIST_FOLDER },
-        //{ src: "index.html", dest: DIST_FOLDER },
-        {
-          src: '../node_modules/@shoelace-style/shoelace/dist/assets',
-          dest: 'dist/shoelace',
-        },
+        //{ src: '../node_modules/@shoelace-style/shoelace/dist/assets', dest: DIST_FOLDER + "/shoelace" },
         //{ src: "../node_modules/@shoelace-style/shoelace/dist/themes/light.css", dest: DIST_FOLDER, rename: "styles.css" }
       ],
     }),
