@@ -14,9 +14,7 @@
     "start:happ"       :  "RUST_LOG=warn WASM_LOG=debug echo \"pass\" | ../$npm_package_config_bin/hc s --piped -f=$HC_ADMIN_PORT generate ../artifacts/files.happ --run=$HC_APP_PORT -a Files network mem",
     "start:happ:local" :  "RUST_LOG=warn WASM_LOG=debug echo \"pass\" | ../$npm_package_config_bin/hc s --piped -f=$HC_ADMIN_PORT generate ../artifacts/files.happ --run=$HC_APP_PORT -a Files network --bootstrap http://127.0.0.1:$BOOT_PORT webrtc ws://127.0.0.1:$SIGNAL_PORT",
     "start:local"      :  "cross-env HC_APP_PORT=$(port) HC_ADMIN_PORT=$(port) HAPP_BUILD_MODE='Debug' concurrently \"npm run start:happ:local\" \"npm run start:ui\"",
-
     "start:ui"         :  "concurrently -k --names tsc,dev-server \"npm run build:watch\" \"wds --config web-dev-server.config.mjs\"",
-
     "serve:run"        : "hc run-local-services --bootstrap-port $BOOT_PORT --signal-port $SIGNAL_PORT",
     "network:local2"   : "npm run build && cross-env BOOT_PORT=$(port) SIGNAL_PORT=$(port) concurrently \"npm run serve:run\" \"npm run start:local\" \"sleep 1 && npm run start:local\""
   },

@@ -1,12 +1,10 @@
-
 import {asCellProxy, wrapPathInSvg} from "@ddd-qc/we-utils";
 import {AppClient} from "@holochain/client";
 import {FILES_DEFAULT_ROLE_NAME, FilesProxy} from "@ddd-qc/files";
 import {intoDhtId, pascal} from "@ddd-qc/cell-proxy";
 import {DELIVERY_INTERGRITY_ZOME_NAME, DeliveryEntryType} from "@ddd-qc/delivery";
 import {mdiFileOutline} from "@mdi/js";
-import {AssetInfo, WAL} from "@theweave/api";
-import {RecordInfo} from "@theweave/api";
+import {AssetInfo, WAL, RecordInfo} from "@theweave/api";
 
 
 /** */

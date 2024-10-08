@@ -95,6 +95,7 @@
     "typescript": "~5.2.0"
   },
   "dependencies": {
+    "@theweave/api": "=0.1.1",
     "@holochain/client": "=0.18.0-dev.13",
     "@ddd-qc/cell-proxy": "=0.30.0",
     "@ddd-qc/lit-happ": "=0.30.0",
@@ -103,8 +104,7 @@
     "@ddd-qc/path-explorer": "=0.7.0",
     "@ddd-qc/delivery": "=0.17.0",
     "@holochain-open-dev/core-types": "0.7.0",
-    "@holochain-open-dev/profiles": "=0.17.3",
-    "@theweave/api": "=0.1.1",
+    "@holochain-open-dev/profiles": "0.400.0-dev.4",
     "@shoelace-style/shoelace": "2.11.2",
     "@lit/context": "1.0.1",
     "@lit/localize": "0.12.1",

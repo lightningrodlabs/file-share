@@ -1,13 +1,12 @@
 import {setup, wrapPathInSvg} from "@ddd-qc/we-utils";
 import {createFilesApplet} from "./createFilesApplet";
-import {AppletServices, RecordInfo} from "@theweave/api";
+import {AppletServices, RecordInfo, WAL} from "@theweave/api";
 import {getAssetInfo} from "./appletServices/getAssetInfo";
 import {blockTypes} from "./appletServices/blockTypes";
 import {DeliveryEntryType} from "@ddd-qc/delivery";
 import {devtestNames, setupFilesEntryView} from "./devtest";
 import {search} from "./appletServices/search";
 import {AppClient} from "@holochain/client";
-import {WAL} from "@theweave/api";
 import {mdiFileOutline} from "@mdi/js";
 
 

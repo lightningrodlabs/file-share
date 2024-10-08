@@ -2,8 +2,7 @@ import {
     AppClient,
     Timestamp
 } from "@holochain/client";
-import {AppletHash, WAL} from "@theweave/api";
-import {WeaveServices} from "@theweave/api";
+import {AppletHash, WAL, WeaveServices} from "@theweave/api";
 import {asCellProxy} from "@ddd-qc/we-utils";
 import {FILES_DEFAULT_ROLE_NAME, FilesProxy} from "@ddd-qc/files";
 import {ParcelDescription, ParcelManifest, ParcelReference} from "@ddd-qc/delivery";
