@@ -28,8 +28,7 @@ import {
     ReceptionAck,
     ReceptionProof, ReplyAck,
 } from "@ddd-qc/delivery";
-import {AppSignalCb} from "@holochain/client";
-import {AppSignal} from "@holochain/client/lib/api/app/types";
+import {SignalCb, AppSignal, Signal, SignalType} from "@holochain/client";
 import {FilesZvm} from "./files.zvm";
 import {
     arrayBufferToBase64,
@@ -81,7 +80,7 @@ export class FilesDvm extends DnaViewModel {
         [ProfilesAltZvm, "profiles"],
     ];
 
-    readonly signalHandler?: AppSignalCb = this.mySignalHandler;
+    readonly signalHandler?: SignalCb = this.mySignalHandler;
 
 
     /** QoL Helpers */
@@ -243,8 +242,12 @@ export class FilesDvm extends DnaViewModel {
 
 
     /** */
-    mySignalHandler(appSignal: AppSignal): void {
-        console.log("FilesDvm.mySignalHandler()", appSignal);
+    mySignalHandler(signal: Signal): void {
+        console.log("FilesDvm.mySignalHandler()", signal);
+        if (!(SignalType.App in signal)) {
+            return;
+        }
+        const appSignal: AppSignal = signal.App;
         const zomeSignal = appSignal.payload as ZomeSignal;
         if (!("pulses" in zomeSignal)) {
             return;
