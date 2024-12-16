@@ -10,14 +10,6 @@
   <source>Min. <x id="0" equiv-text="${MIN_NICKNAME_LENGTH}"/> characters</source>
   <target>Min. <x id="0" equiv-text="${MIN_NICKNAME_LENGTH}"/> caractères</target>
 </trans-unit>
-<trans-unit id="s123467b419acbc07">
-  <source>email</source>
-  <target>courriel</target>
-</trans-unit>
-<trans-unit id="scbf29ce484222325">
-  <source></source>
-  <target/>
-</trans-unit>
 <trans-unit id="sc93a9aa3e5bcbf5d">
   <source>Save Profile</source>
   <target>Enregistrer Profile</target>
@@ -57,10 +49,6 @@
 <trans-unit id="s96aeb1a36b018d93">
   <source>was sent to you by</source>
   <target>vous a été envoyé par</target>
-</trans-unit>
-<trans-unit id="s39998e76aa573d71">
-  <source>has been shared by</source>
-  <target>a été partagé par</target>
 </trans-unit>
 <trans-unit id="s0fda85ff9e18687d">
   <source>was added privately by</source>
@@ -182,10 +170,6 @@
   <source>File already stored locally</source>
   <target>Le fichier est déjà stocké localement</target>
 </trans-unit>
-<trans-unit id="s7f8adcc816254de6">
-  <source>File already shared to group or stored locally</source>
-  <target>Le fichier est déjà stocké localement ou partagé par le groupe</target>
-</trans-unit>
 <trans-unit id="sf9aee319a006c9b4">
   <source>Add</source>
   <target>Ajouter</target>
@@ -206,14 +190,6 @@
   <source>None</source>
   <target>Aucun</target>
 </trans-unit>
-<trans-unit id="sfd2e9f676eec1711">
-  <source>domain</source>
-  <target>domaine</target>
-</trans-unit>
-<trans-unit id="s26c4b17d50b3c152">
-  <source>token</source>
-  <target>jeton</target>
-</trans-unit>
 <trans-unit id="s1e63fd9b893b416a">
   <source>No items found</source>
   <target>Aucun élément trouvé</target>
@@ -229,8 +205,41 @@
 <trans-unit id="sd3386a2ef42e80b9">
   <source>Download</source>
 </trans-unit>
-<trans-unit id="s06be75a0b4237688">
-  <source>No notifier</source>
+<trans-unit id="sc7f2197a918c181e">
+  <source>has been published by</source>
+</trans-unit>
+<trans-unit id="s7a6057ce864d1d0d">
+  <source>has been unpublished by</source>
+</trans-unit>
+<trans-unit id="se9d44adad3300549">
+  <source>is being sent by</source>
+</trans-unit>
+<trans-unit id="sec795b69e1bccdb9">
+  <source>Shared by</source>
+</trans-unit>
+<trans-unit id="sac8252732f2edb19">
+  <source>Date</source>
+</trans-unit>
+<trans-unit id="se9b1fec72ffd8f48">
+  <source>Local</source>
+</trans-unit>
+<trans-unit id="se7bee6e9a9b5394c">
+  <source>Private</source>
+</trans-unit>
+<trans-unit id="sfc63e31ac7c956ed">
+  <source>Select</source>
+</trans-unit>
+<trans-unit id="sbe9f70d653ccb2a6">
+  <source>Copy File Link</source>
+</trans-unit>
+<trans-unit id="s7f59f507e02a2f38">
+  <source>View</source>
+</trans-unit>
+<trans-unit id="s38f993ab6c147331">
+  <source>Unshare</source>
+</trans-unit>
+<trans-unit id="s8a772db3b9cf18c9">
+  <source>File already published to group or stored locally</source>
 </trans-unit>
 </body>
 </file>

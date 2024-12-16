@@ -81,7 +81,7 @@
 
   },
   "devDependencies": {
-    "@theweave/cli": "0.13.0-gamma.4",
+    "@theweave/cli": "0.13.0-epsilon.1",
     "@types/jest": "^29.5.1",
     "@types/ws": "^8.5.3",
     "bestzip": "^2.2.0",
@@ -91,16 +91,17 @@
     "jest": "^29.5.0",
     "new-port-cli": "^1.0.0",
     "ts-jest": "^29.1.0",
+    "json-parse-better-errors": "^1.0.1",
     "tslib": "^2.4.0",
     "typescript": "~5.2.0"
   },
   "dependencies": {
-    "@theweave/api": "=0.2.1",
-    "@holochain/client": "=0.18.0-dev.13",
-    "@ddd-qc/cell-proxy": "=0.30.0",
-    "@ddd-qc/lit-happ": "=0.30.0",
-    "@ddd-qc/profiles-dvm": "=0.30.0",
-    "@ddd-qc/we-utils": "=0.30.2",
+    "@theweave/api": "=0.4.0-alpha.0",
+    "@holochain/client": "=0.18.0-rc.1",
+    "@ddd-qc/cell-proxy": "=0.30.3",
+    "@ddd-qc/lit-happ": "=0.30.3",
+    "@ddd-qc/profiles-dvm": "=0.30.3",
+    "@ddd-qc/we-utils": "=0.30.3",
     "@ddd-qc/path-explorer": "=0.7.0",
     "@ddd-qc/delivery": "=0.17.0",
     "@holochain-open-dev/core-types": "0.7.0",

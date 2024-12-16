@@ -74,21 +74,9 @@
   <source>to</source>
   <target>à</target>
 </trans-unit>
-<trans-unit id="s147371d0357b3269">
-  <source>wants to send you a file</source>
-  <target>veux vous envoyer un fichier</target>
-</trans-unit>
 <trans-unit id="s7f845078d7a5c0b5">
   <source>from</source>
   <target>de</target>
-</trans-unit>
-<trans-unit id="s22316fb55c914102">
-  <source>would like to send you the file</source>
-  <target>souhaite vous envoyer un fichier</target>
-</trans-unit>
-<trans-unit id="sfb6640d4a18ca585">
-  <source>Please go to the Files app to Accept or Decline the request</source>
-  <target>Allez dans l'application Files pour Accepter ou Décliner la demande</target>
 </trans-unit>
 <trans-unit id="s5665eb6709700c3c">
   <source>File succesfully received</source>
@@ -97,26 +85,6 @@
 <trans-unit id="sd009a3da6a4ca1f5">
   <source>File successfully shared</source>
   <target>Fichier partagé avec succès</target>
-</trans-unit>
-<trans-unit id="s225ab28b20c4a252">
-  <source>File successfully published</source>
-  <target>Fichier publié avec succès</target>
-</trans-unit>
-<trans-unit id="sd96abf5a9773b643">
-  <source>shared a file</source>
-  <target>a partagé un fichier</target>
-</trans-unit>
-<trans-unit id="s7d2ee3ff82bdb1af">
-  <source>has shared the file</source>
-  <target>a partagé un fichier</target>
-</trans-unit>
-<trans-unit id="seda0396d6fb0609d">
-  <source>with the group</source>
-  <target>au groupe</target>
-</trans-unit>
-<trans-unit id="s6f1df14d03dbd1f7">
-  <source>You can download this file by going to the Files app.</source>
-  <target>Vous pouvez télécharger le fichier en allant dans l'application Files</target>
 </trans-unit>
 <trans-unit id="scc24c9e4477314c7">
   <source>File succesfully added</source>
@@ -190,6 +158,24 @@
 </trans-unit>
 <trans-unit id="s28f5c83a86c3ea50">
   <source>Failed to connect to Holochain Conductor and/or "Files" cell.</source>
+</trans-unit>
+<trans-unit id="s7ecfae0c8f46352f">
+  <source>New file published</source>
+</trans-unit>
+<trans-unit id="safa27ca1b6a177b4">
+  <source>File unpublished</source>
+</trans-unit>
+<trans-unit id="s86b9dde1be2ae8da">
+  <source>Report a Bug</source>
+</trans-unit>
+<trans-unit id="s6594524c9c17d979">
+  <source>Export file list</source>
+</trans-unit>
+<trans-unit id="s2ceb11be2290bb1b">
+  <source>Cancel</source>
+</trans-unit>
+<trans-unit id="sdc673e73b5c13aea">
+  <source>Delete</source>
 </trans-unit>
 </body>
 </file>

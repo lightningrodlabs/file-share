@@ -193,7 +193,7 @@ export class FileButton extends DnaElement<FilesDvmPerspective, FilesDvm> {
                             const wurl = weaveUrlFromWal(obj);
                             navigator.clipboard.writeText(wurl);
                             if (this.weServices) {
-                                this.weServices.walToPocket(obj);
+                                this.weServices.assets.assetToPocket(obj);
                             }
                             await delay(1200);
                             const tt = this.shadowRoot!.getElementById("file-tip") as SlTooltip;

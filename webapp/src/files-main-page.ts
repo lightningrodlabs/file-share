@@ -179,7 +179,7 @@ export class FilesMainPage extends DnaElement<FilesDvmPerspective, FilesDvm> {
         const wurl = weaveUrlFromWal({hrl: e.detail});
         navigator.clipboard.writeText(wurl);
         if (this.weServices) {
-          this.weServices.walToPocket({hrl: e.detail});
+          this.weServices.assets.assetToPocket({hrl: e.detail});
         }
     }
 

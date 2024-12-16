@@ -1,12 +1,11 @@
 import {setup, wrapPathInSvg} from "@ddd-qc/we-utils";
 import {createFilesApplet} from "./createFilesApplet";
-import {AppletServices, RecordInfo, WAL} from "@theweave/api";
+import {AppletServices} from "@theweave/api";
 import {getAssetInfo} from "./appletServices/getAssetInfo";
 import {blockTypes} from "./appletServices/blockTypes";
 import {DeliveryEntryType} from "@ddd-qc/delivery";
 import {devtestNames, setupFilesEntryView} from "./devtest";
 import {search} from "./appletServices/search";
-import {AppClient} from "@holochain/client";
 import {mdiFileOutline} from "@mdi/js";
 
 
@@ -46,7 +45,7 @@ async function setupFilesMainView() {
         blockTypes,
         getAssetInfo,
         search,
-        bindAsset,
+        //bindAsset,
     };
 
     return setup(appletServices, createFilesApplet, devtestNames);
@@ -54,14 +53,14 @@ async function setupFilesMainView() {
 
 
 
-/** */
-export async function bindAsset(
-  _appletClient: AppClient,
-  _srcWal: WAL,
-  _dstWal: WAL,
-  _dstRecordInfo?: RecordInfo,
-): Promise<void> {
-    /* FIXME */
-}
+// /** */
+// export async function bindAsset(
+//   _appletClient: AppClient,
+//   _srcWal: WAL,
+//   _dstWal: WAL,
+//   _dstRecordInfo?: RecordInfo,
+// ): Promise<void> {
+//     /* FIXME */
+// }
 
 export default setupFilesApplet;

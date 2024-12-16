@@ -24,7 +24,7 @@ export async function createFilesApplet(
   weServices: WeaveServices,
 ): Promise<FilesApp> {
 
-  if (renderInfo.type =="cross-applet-view") {
+  if (renderInfo.type =="cross-group-view") {
     throw Promise.reject("cross-applet-view not implemented by Files");
   }
 
